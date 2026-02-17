@@ -15,7 +15,8 @@ export const useBillState = () => {
 
         // 1. Calculate base item costs per person based on consumption
         items.forEach((item) => {
-            const assignmentEntries = Object.entries(item.assignments);
+            const assignments = item.assignments || {};
+            const assignmentEntries = Object.entries(assignments);
             const totalAssignedQty = assignmentEntries.reduce((sum, [_, qty]) => sum + qty, 0);
             const qty = item.quantity || 1;
             const unitPrice = item.price / qty;

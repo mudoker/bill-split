@@ -26,7 +26,8 @@ export function ItemRow({ item }: { item: Item }) {
     };
 
     const togglePerson = (personId: string) => {
-        const newAssignments = { ...item.assignments };
+        const assignments = item.assignments || {};
+        const newAssignments = { ...assignments };
         if (newAssignments[personId] !== undefined) {
             delete newAssignments[personId];
         } else {
@@ -36,12 +37,14 @@ export function ItemRow({ item }: { item: Item }) {
     };
 
     const updatePersonQty = (personId: string, qty: number) => {
-        const newAssignments = { ...item.assignments, [personId]: Math.max(0.1, qty) };
+        const assignments = item.assignments || {};
+        const newAssignments = { ...assignments, [personId]: Math.max(0.1, qty) };
         updateItem(item.id, { assignments: newAssignments });
     };
 
     const toggleAll = () => {
-        const allAssignedCount = people.filter(p => item.assignments[p.id] !== undefined).length;
+        const assignments = item.assignments || {};
+        const allAssignedCount = people.filter(p => assignments[p.id] !== undefined).length;
         const everyoneAssigned = people.length > 0 && allAssignedCount === people.length;
 
         if (everyoneAssigned) {
@@ -49,7 +52,7 @@ export function ItemRow({ item }: { item: Item }) {
         } else {
             const newAssignments: Record<string, number> = {};
             people.forEach(p => {
-                newAssignments[p.id] = item.assignments[p.id] || 1;
+                newAssignments[p.id] = assignments[p.id] || 1;
             });
             updateItem(item.id, { assignments: newAssignments });
         }
@@ -57,8 +60,9 @@ export function ItemRow({ item }: { item: Item }) {
 
     const qty = item.quantity || 1;
     const unitPrice = qty > 0 ? item.price / qty : 0;
-    const assignedPeopleIds = Object.keys(item.assignments);
-    const totalAssignedQty = Object.values(item.assignments).reduce((a, b) => a + b, 0);
+    const assignments = item.assignments || {};
+    const assignedPeopleIds = Object.keys(assignments);
+    const totalAssignedQty = Object.values(assignments).reduce((a, b) => a + b, 0);
 
     return (
         <div className="relative group bg-card border rounded-lg p-3 hover:shadow-md hover:border-primary/20 transition-all duration-200">
