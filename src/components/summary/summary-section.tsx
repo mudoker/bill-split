@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, Download, TableIcon, BarChart3, PieChartIcon } from "lucide-react";
+import { RefreshCw, Download, TableIcon, BarChart3, PieChartIcon, CheckCircle2, AlertTriangle } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import html2canvas from 'html2canvas';
 import { BillSettings } from "./bill-settings";
@@ -24,9 +24,15 @@ export function SummarySection() {
         resetBill
     } = useBillState();
 
-    const { rawCosts, finalPayables, totalBill, totalExtras, totalSurplus } = calculate();
+    const { totalCosts, finalPayables, totalBill, totalExtras, totalSurplus, totalItemCost } = calculate();
     const host = people.find(p => p.id === hostId);
-    const { pieData, barData, itemCostData } = buildChartData(people, items, rawCosts, finalPayables);
+    const { pieData, barData, itemCostData } = buildChartData(people, items, totalCosts, finalPayables);
+
+    // Verification: sum of all final payables + total surplus should equal total bill
+    const sumFinalPayables = Object.values(finalPayables).reduce((a, b) => a + b, 0);
+    const totalSponsored = people.reduce((sum, p) => sum + (p.sponsorAmount || 0), 0);
+    const verificationDiff = Math.abs(totalBill - sumFinalPayables - Math.min(totalSponsored, totalBill));
+    const isBalanced = verificationDiff < 1; // within 1 dong rounding tolerance
 
     const handleDownload = async () => {
         const element = document.getElementById('summary-card');
@@ -66,22 +72,25 @@ export function SummarySection() {
             <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
                 <ScrollArea className="flex-1 px-4 md:px-6">
                     <div className="space-y-4 py-4 pr-3">
-                        {/* Summary Cards */}
-                        <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-4 space-y-3">
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="bg-background/80 rounded-lg p-3 text-center backdrop-blur-sm">
-                                    <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Total Bill</div>
-                                    <div className="text-lg font-bold text-primary leading-tight">{formatCurrency(totalBill)}</div>
+                        {/* Summary Stats */}
+                        <div className="bg-gradient-to-br from-primary/5 via-primary/8 to-primary/5 rounded-xl p-4 space-y-3 border border-primary/10">
+                            <div className="grid grid-cols-3 gap-2">
+                                <div className="bg-background/80 rounded-lg p-2.5 text-center backdrop-blur-sm">
+                                    <div className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider mb-0.5">Items</div>
+                                    <div className="text-sm font-bold text-foreground leading-tight">{formatCurrency(totalItemCost)}</div>
                                 </div>
-                                <div className="bg-background/80 rounded-lg p-3 text-center backdrop-blur-sm">
-                                    <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Extras</div>
-                                    <div className="text-lg font-bold text-amber-600 leading-tight">{formatCurrency(totalExtras)}</div>
-                                    <div className="text-[10px] text-muted-foreground mt-0.5">Tax, Service, etc.</div>
+                                <div className="bg-background/80 rounded-lg p-2.5 text-center backdrop-blur-sm">
+                                    <div className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider mb-0.5">Extras</div>
+                                    <div className="text-sm font-bold text-amber-600 leading-tight">{formatCurrency(totalExtras)}</div>
+                                </div>
+                                <div className="bg-background/80 rounded-lg p-2.5 text-center backdrop-blur-sm border-2 border-primary/20">
+                                    <div className="text-[9px] text-primary uppercase font-bold tracking-wider mb-0.5">Total</div>
+                                    <div className="text-sm font-bold text-primary leading-tight">{formatCurrency(totalBill)}</div>
                                 </div>
                             </div>
-                            {totalSurplus > 0 && (
-                                <div className="bg-green-500/10 rounded-lg p-2 text-center">
-                                    <span className="text-xs text-green-600 font-medium">Sponsor Surplus: {formatCurrency(totalSurplus)}</span>
+                            {totalSurplus > 0.01 && (
+                                <div className="bg-green-500/10 rounded-lg p-2 text-center border border-green-500/20">
+                                    <span className="text-xs text-green-600 font-medium">💚 Sponsor surplus: {formatCurrency(totalSurplus)}</span>
                                 </div>
                             )}
                         </div>
@@ -90,10 +99,10 @@ export function SummarySection() {
                         <Tabs defaultValue="table" className="w-full">
                             <TabsList className="grid w-full grid-cols-3 h-9">
                                 <TabsTrigger value="table" className="text-xs gap-1.5">
-                                    <TableIcon className="w-3.5 h-3.5" /> Table
+                                    <TableIcon className="w-3.5 h-3.5" /> Splits
                                 </TabsTrigger>
                                 <TabsTrigger value="pie" className="text-xs gap-1.5">
-                                    <PieChartIcon className="w-3.5 h-3.5" /> Breakdown
+                                    <PieChartIcon className="w-3.5 h-3.5" /> Charts
                                 </TabsTrigger>
                                 <TabsTrigger value="bar" className="text-xs gap-1.5">
                                     <BarChart3 className="w-3.5 h-3.5" /> Compare
@@ -101,16 +110,16 @@ export function SummarySection() {
                             </TabsList>
 
                             {/* TABLE TAB */}
-                            <TabsContent value="table">
+                            <TabsContent value="table" className="mt-3">
                                 <div className="rounded-lg border bg-card overflow-hidden">
                                     <div className="overflow-x-auto">
-                                        <Table className="min-w-[320px]">
+                                        <Table className="min-w-[300px]">
                                             <TableHeader>
-                                                <TableRow>
-                                                    <TableHead className="w-[80px] px-2 py-2.5 text-xs">Person</TableHead>
-                                                    <TableHead className="text-right px-2 py-2.5 text-xs whitespace-nowrap">Ordered</TableHead>
-                                                    <TableHead className="text-right px-2 py-2.5 text-xs whitespace-nowrap">Sponsored</TableHead>
-                                                    <TableHead className="text-right font-bold px-2 py-2.5 text-xs whitespace-nowrap">To Pay</TableHead>
+                                                <TableRow className="bg-muted/30">
+                                                    <TableHead className="w-[90px] px-3 py-2 text-xs font-semibold">Person</TableHead>
+                                                    <TableHead className="text-right px-3 py-2 text-xs font-semibold whitespace-nowrap">Subtotal</TableHead>
+                                                    <TableHead className="text-right px-3 py-2 text-xs font-semibold whitespace-nowrap">Sponsored</TableHead>
+                                                    <TableHead className="text-right px-3 py-2 text-xs font-semibold whitespace-nowrap">To Pay</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
@@ -122,25 +131,30 @@ export function SummarySection() {
                                                     </TableRow>
                                                 )}
                                                 {people.map((p) => {
-                                                    const raw = rawCosts[p.id] || 0;
+                                                    const total = totalCosts[p.id] || 0;
                                                     const pay = finalPayables[p.id] || 0;
                                                     const isHost = p.id === hostId;
                                                     return (
-                                                        <TableRow key={p.id} className={isHost ? "bg-primary/5" : ""}>
-                                                            <TableCell className="font-medium px-2 py-2.5">
+                                                        <TableRow key={p.id} className={isHost ? "bg-primary/5" : "hover:bg-muted/30 transition-colors"}>
+                                                            <TableCell className="font-medium px-3 py-2.5">
                                                                 <div className="flex flex-col items-start gap-0.5">
-                                                                    <span className="truncate max-w-[75px] block text-sm" title={p.name}>{p.name}</span>
-                                                                    {isHost && <span className="text-[8px] px-1 py-0.5 rounded-full bg-primary text-primary-foreground font-bold inline-block leading-tight">HOST</span>}
+                                                                    <span className="truncate max-w-[80px] block text-sm font-semibold" title={p.name}>{p.name}</span>
+                                                                    {isHost && <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground font-bold inline-block leading-tight">HOST</span>}
                                                                 </div>
                                                             </TableCell>
-                                                            <TableCell className="text-right text-muted-foreground px-2 py-2.5 whitespace-nowrap text-xs">
-                                                                {formatCurrency(raw)}
+                                                            <TableCell className="text-right text-muted-foreground px-3 py-2.5 whitespace-nowrap text-xs tabular-nums">
+                                                                {formatCurrency(total)}
                                                             </TableCell>
-                                                            <TableCell className="text-right text-green-600 px-2 py-2.5 whitespace-nowrap text-xs">
-                                                                {p.sponsorAmount > 0 ? `-${formatCurrency(p.sponsorAmount)}` : "-"}
+                                                            <TableCell className="text-right px-3 py-2.5 whitespace-nowrap text-xs tabular-nums">
+                                                                {p.sponsorAmount > 0
+                                                                    ? <span className="text-green-600 font-medium">-{formatCurrency(p.sponsorAmount)}</span>
+                                                                    : <span className="text-muted-foreground/40">—</span>
+                                                                }
                                                             </TableCell>
-                                                            <TableCell className="text-right font-bold text-foreground px-2 py-2.5 whitespace-nowrap text-xs">
-                                                                {formatCurrency(pay)}
+                                                            <TableCell className="text-right font-bold px-3 py-2.5 whitespace-nowrap text-xs tabular-nums">
+                                                                <span className={pay < 0.01 ? "text-green-600" : "text-foreground"}>
+                                                                    {pay < 0.01 ? "✓ Covered" : formatCurrency(pay)}
+                                                                </span>
                                                             </TableCell>
                                                         </TableRow>
                                                     );
@@ -148,11 +162,26 @@ export function SummarySection() {
                                             </TableBody>
                                         </Table>
                                     </div>
+                                    {/* Verification Footer */}
+                                    {people.length > 0 && (
+                                        <div className="border-t px-3 py-2 bg-muted/20 flex items-center justify-between text-[10px]">
+                                            <div className="flex items-center gap-1.5">
+                                                {isBalanced
+                                                    ? <><CheckCircle2 className="w-3 h-3 text-green-600" /><span className="text-green-600 font-medium">Balanced</span></>
+                                                    : <><AlertTriangle className="w-3 h-3 text-amber-500" /><span className="text-amber-500 font-medium">Off by {formatCurrency(verificationDiff)}</span></>
+                                                }
+                                            </div>
+                                            <span className="text-muted-foreground">
+                                                Payable: {formatCurrency(sumFinalPayables)}
+                                                {totalSponsored > 0 && ` + Sponsor: ${formatCurrency(Math.min(totalSponsored, totalBill))}`}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             </TabsContent>
 
                             {/* PIE CHART TAB */}
-                            <TabsContent value="pie">
+                            <TabsContent value="pie" className="mt-3">
                                 <div className="space-y-4">
                                     <div className="rounded-lg border bg-card p-4">
                                         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Cost Share by Person</h4>
@@ -169,7 +198,7 @@ export function SummarySection() {
                             </TabsContent>
 
                             {/* BAR CHART TAB */}
-                            <TabsContent value="bar">
+                            <TabsContent value="bar" className="mt-3">
                                 <div className="rounded-lg border bg-card p-4">
                                     <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Ordered vs To Pay</h4>
                                     <CompareBarChart data={barData} />
@@ -179,20 +208,24 @@ export function SummarySection() {
 
                         {/* Payback Instructions */}
                         {host && (
-                            <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900 rounded-lg text-sm text-blue-800 dark:text-blue-300">
-                                <p className="font-semibold mb-2 text-xs uppercase tracking-wide">Payback to {host.name}</p>
+                            <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl text-sm">
+                                <p className="font-bold mb-2.5 text-xs uppercase tracking-wide text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                                    💸 Payback to {host.name}
+                                </p>
                                 <ul className="space-y-1.5">
                                     {people
                                         .filter(p => (finalPayables[p.id] || 0) > 0.01 && p.id !== hostId)
                                         .map(p => (
-                                            <li key={p.id} className="flex items-center justify-between text-xs bg-background/50 rounded-md px-2.5 py-1.5">
-                                                <span className="font-medium">{p.name}</span>
-                                                <span className="font-bold text-primary">{formatCurrency(finalPayables[p.id])}</span>
+                                            <li key={p.id} className="flex items-center justify-between text-xs bg-white/60 dark:bg-background/40 rounded-lg px-3 py-2 shadow-sm">
+                                                <span className="font-medium text-foreground">{p.name}</span>
+                                                <span className="font-bold text-primary text-sm tabular-nums">{formatCurrency(finalPayables[p.id])}</span>
                                             </li>
                                         ))
                                     }
                                     {people.filter(p => (finalPayables[p.id] || 0) > 0.01 && p.id !== hostId).length === 0 && (
-                                        <li className="text-xs text-center py-2 opacity-70">No one owes anything! 🎉</li>
+                                        <li className="text-xs text-center py-3 opacity-70 text-blue-600 dark:text-blue-400">
+                                            No one owes anything! 🎉
+                                        </li>
                                     )}
                                 </ul>
                             </div>
