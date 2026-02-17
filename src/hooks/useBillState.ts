@@ -15,15 +15,28 @@ export const useBillState = () => {
 
         // 1. Calculate base item costs per person based on consumption
         items.forEach((item) => {
-            const count = item.involvedPeopleIds.length;
-            if (count > 0) {
-                const share = item.price / count;
-                item.involvedPeopleIds.forEach((pId) => {
-                    rawCosts[pId] = (rawCosts[pId] || 0) + share;
+            const assignmentEntries = Object.entries(item.assignments);
+            const totalAssignedQty = assignmentEntries.reduce((sum, [_, qty]) => sum + qty, 0);
+            const qty = item.quantity || 1;
+            const unitPrice = item.price / qty;
+
+            if (assignmentEntries.length > 0) {
+                // Charge people for their specific assignments
+                assignmentEntries.forEach(([pId, consumedQty]) => {
+                    rawCosts[pId] = (rawCosts[pId] || 0) + (unitPrice * consumedQty);
                 });
+
+                // If there's an unassigned portion, split it equally among everyone
+                const unassignedQty = Math.max(0, qty - totalAssignedQty);
+                if (unassignedQty > 0.001) {
+                    const unassignedShare = (unitPrice * unassignedQty) / people.length;
+                    people.forEach(p => {
+                        rawCosts[p.id] = (rawCosts[p.id] || 0) + unassignedShare;
+                    });
+                }
                 totalItemCost += item.price;
             } else {
-                // If nobody assigned, split equally among everyone
+                // If nobody assigned at all, split full price equally among everyone
                 if (people.length > 0) {
                     const share = item.price / people.length;
                     people.forEach((p) => {

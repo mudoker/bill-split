@@ -12,7 +12,7 @@ export interface Item {
     name: string;
     price: number;
     quantity: number;
-    involvedPeopleIds: string[];
+    assignments: Record<string, number>; // personId -> quantity consumed
 }
 
 export interface GlobalCharge {
@@ -71,10 +71,14 @@ export const useBillStore = create<BillState>()(
             removePerson: (id) =>
                 set((state) => ({
                     people: state.people.filter((p) => p.id !== id),
-                    items: state.items.map((item) => ({
-                        ...item,
-                        involvedPeopleIds: item.involvedPeopleIds.filter((pId) => pId !== id),
-                    })),
+                    items: state.items.map((item) => {
+                        const newAssignments = { ...item.assignments };
+                        delete newAssignments[id];
+                        return {
+                            ...item,
+                            assignments: newAssignments,
+                        };
+                    }),
                     hostId: state.hostId === id ? null : state.hostId,
                 })),
 
@@ -82,7 +86,7 @@ export const useBillStore = create<BillState>()(
                 set((state) => ({
                     items: [
                         ...state.items,
-                        { id: crypto.randomUUID(), name, price, quantity, involvedPeopleIds: [] },
+                        { id: crypto.randomUUID(), name, price, quantity, assignments: {} },
                     ],
                 })),
 
