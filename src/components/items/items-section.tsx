@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { BillUploader } from "./bill-uploader";
 import { ItemRow } from "./item-row";
 import { CurrencyInput } from "@/components/shared/currency-input";
+import { formatCurrency } from "@/lib/format";
 
 export function ItemsSection() {
     const { items, addItem } = useBillStore();
@@ -18,7 +19,7 @@ export function ItemsSection() {
     const [showScanner, setShowScanner] = useState(false);
 
     const handleAdd = () => {
-        const quantity = parseInt(newItemQuantity) || 1;
+        const quantity = Math.max(1, parseInt(newItemQuantity) || 1);
         if (newItemName.trim() && newItemPrice > 0) {
             addItem(newItemName.trim(), newItemPrice, quantity);
             setNewItemName("");
@@ -27,6 +28,8 @@ export function ItemsSection() {
         }
     };
 
+    const totalItemsCost = items.reduce((sum, item) => sum + item.price, 0);
+
     return (
         <Card className="w-full h-full flex flex-col border-none shadow-none md:border md:shadow-sm">
             <CardHeader className="pb-3 flex-row items-center justify-between space-y-0 px-4 pt-4 md:px-6 md:pt-6">
@@ -34,6 +37,11 @@ export function ItemsSection() {
                     <CardTitle className="text-xl flex items-center gap-2">
                         <Receipt className="w-5 h-5 text-primary" />
                         Bill Items
+                        {items.length > 0 && (
+                            <span className="text-xs font-normal text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
+                                {items.length} · {formatCurrency(totalItemsCost)}
+                            </span>
+                        )}
                     </CardTitle>
                     <CardDescription>Add items manually or scan a receipt</CardDescription>
                 </div>
@@ -50,41 +58,51 @@ export function ItemsSection() {
                             </div>
                         )}
 
-                        <div className="flex gap-2 items-center p-2 rounded-lg bg-card border shadow-sm">
-                            <Input
-                                placeholder="Item name..."
-                                value={newItemName}
-                                onChange={(e) => setNewItemName(e.target.value)}
-                                className="flex-1 h-9"
-                                onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-                            />
-                            <Input
-                                type="number"
-                                placeholder="Qty"
-                                value={newItemQuantity}
-                                onChange={(e) => setNewItemQuantity(e.target.value)}
-                                className="w-14 shrink-0 text-center h-9"
-                                min={1}
-                                onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-                            />
-                            <div className="w-28 shrink-0">
-                                <CurrencyInput
-                                    value={newItemPrice}
-                                    onChange={setNewItemPrice}
-                                    className="h-9 text-right text-sm"
-                                    placeholder="Price"
+                        {/* Add Item Form */}
+                        <div className="rounded-xl bg-card border shadow-sm overflow-hidden">
+                            <div className="p-3 space-y-2">
+                                <Input
+                                    placeholder="Item name..."
+                                    value={newItemName}
+                                    onChange={(e) => setNewItemName(e.target.value)}
+                                    className="h-9 text-sm"
+                                    onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
                                 />
+                                <div className="flex gap-2 items-center">
+                                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                        <label className="text-[10px] text-muted-foreground shrink-0 w-6">Qty</label>
+                                        <Input
+                                            type="number"
+                                            placeholder="1"
+                                            value={newItemQuantity}
+                                            onChange={(e) => setNewItemQuantity(e.target.value)}
+                                            className="h-8 text-center text-sm"
+                                            min={1}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+                                        />
+                                    </div>
+                                    <div className="flex items-center gap-1.5 flex-[2] min-w-0">
+                                        <label className="text-[10px] text-muted-foreground shrink-0 w-6">Total</label>
+                                        <CurrencyInput
+                                            value={newItemPrice}
+                                            onChange={setNewItemPrice}
+                                            className="h-8 text-right text-sm"
+                                            placeholder="Price"
+                                        />
+                                    </div>
+                                    <Button onClick={handleAdd} size="icon" className="shrink-0 h-8 w-8" disabled={!newItemName.trim() || newItemPrice <= 0}>
+                                        <Plus className="w-4 h-4" />
+                                    </Button>
+                                </div>
                             </div>
-                            <Button onClick={handleAdd} size="icon" className="shrink-0 h-9 w-9">
-                                <Plus className="w-5 h-5" />
-                            </Button>
                         </div>
 
-                        <div className="space-y-3 pb-4">
+                        {/* Item List */}
+                        <div className="space-y-2.5 pb-4">
                             {items.length === 0 && (
-                                <div className="text-center text-muted-foreground py-8 text-sm border-2 border-dashed rounded-lg bg-muted/10">
+                                <div className="text-center text-muted-foreground py-10 text-sm border-2 border-dashed rounded-xl bg-muted/10">
                                     No items added yet.<br />
-                                    <span className="text-xs opacity-70">Add manually or click the scan icon.</span>
+                                    <span className="text-xs opacity-70">Add manually or click the scan icon above.</span>
                                 </div>
                             )}
                             {items.map((item) => (
