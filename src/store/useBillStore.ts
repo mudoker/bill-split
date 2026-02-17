@@ -72,7 +72,8 @@ export const useBillStore = create<BillState>()(
                 set((state) => ({
                     people: state.people.filter((p) => p.id !== id),
                     items: state.items.map((item) => {
-                        const newAssignments = { ...item.assignments };
+                        const assignments = item.assignments || {};
+                        const newAssignments = { ...assignments };
                         delete newAssignments[id];
                         return {
                             ...item,
