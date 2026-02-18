@@ -35,15 +35,13 @@ export function deserializeState(encoded: string): any {
  */
 export function generateShareUrl(state: any, readOnly: boolean = true): string {
     const url = new URL(window.location.origin);
-
-    // If we have a database ID, prefer it for a much cleaner URL
-    if (state.currentBillId && !readOnly) {
+    // Always prefer database ID for sharing (view-only)
+    if (state.currentBillId) {
         url.searchParams.set('id', state.currentBillId);
         return url.toString();
     }
-
     // Fallback to serialized state (legacy/offline support)
     const serialized = serializeState(state);
-    url.searchParams.set(readOnly ? 'v' : 'e', serialized);
+    url.searchParams.set('v', serialized);
     return url.toString();
 }
