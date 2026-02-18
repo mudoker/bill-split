@@ -13,6 +13,10 @@ db.transaction(() => {
   // Check if old table exists and drop it to "migrate" to normalized
   // WARNING: This deletes existing data. For dev/refactor phase as requested.
   // If we wanted to preserve, we'd need a complex migration script.
+  db.run(`DROP TABLE IF EXISTS item_assignments`);
+  db.run(`DROP TABLE IF EXISTS global_charges`);
+  db.run(`DROP TABLE IF EXISTS items`);
+  db.run(`DROP TABLE IF EXISTS people`);
   db.run(`DROP TABLE IF EXISTS bills`);
 
   db.run(`
@@ -32,6 +36,7 @@ db.transaction(() => {
       bill_id TEXT,
       name TEXT NOT NULL,
       sponsor_amount REAL DEFAULT 0,
+      paid_amount REAL DEFAULT 0,
       FOREIGN KEY(bill_id) REFERENCES bills(id) ON DELETE CASCADE
     )
   `);
@@ -81,7 +86,7 @@ app.get('/api/bills/:id', (c) => {
     return c.json({ error: 'Bill not found' }, 404);
   }
 
-  const people = db.query('SELECT id, name, sponsor_amount as sponsorAmount FROM people WHERE bill_id = ?').all(id) as any[];
+  const people = db.query('SELECT id, name, sponsor_amount as sponsorAmount, paid_amount as paidAmount FROM people WHERE bill_id = ?').all(id) as any[];
   const globalCharges = db.query('SELECT id, name, type, amount FROM global_charges WHERE bill_id = ?').all(id) as any[];
   const itemsRaw = db.query('SELECT id, name, price, quantity FROM items WHERE bill_id = ?').all(id) as any[];
 
@@ -134,8 +139,8 @@ app.post('/api/bills', async (c) => {
 
       // 3. Insert People
       for (const p of people) {
-        db.run('INSERT INTO people (id, bill_id, name, sponsor_amount) VALUES (?, ?, ?, ?)',
-          [p.id, billId, p.name, p.sponsorAmount || 0]);
+        db.run('INSERT INTO people (id, bill_id, name, sponsor_amount, paid_amount) VALUES (?, ?, ?, ?, ?)',
+          [p.id, billId, p.name, p.sponsorAmount || 0, p.paidAmount || 0]);
       }
 
       // 4. Insert Items & Assignments
