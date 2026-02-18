@@ -32,6 +32,8 @@ interface BillConfigurationProps {
     setLocation: (location: string) => void;
     updatePerson: (id: string, data: Partial<Person>) => void;
     onSave: () => Promise<any>;
+    qrCode: string | null;
+    setQrCode: (url: string) => void;
 }
 
 export function BillConfiguration({
@@ -49,6 +51,8 @@ export function BillConfiguration({
     setLocation,
     updatePerson,
     onSave,
+    qrCode,
+    setQrCode,
 }: BillConfigurationProps) {
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
@@ -160,6 +164,53 @@ export function BillConfiguration({
                                             className="pl-12 h-12 bg-muted/20 border-foreground/5 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/40 font-bold"
                                         />
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* QR Code Upload */}
+                            <div className="space-y-4">
+                                <Label className="text-[11px] font-black text-foreground/60 uppercase tracking-[0.2em] pl-1">Payment QR Code</Label>
+                                <div className="flex flex-col gap-4 p-5 bg-muted/10 border border-foreground/[0.03] rounded-2xl">
+                                    {qrCode ? (
+                                        <div className="relative group w-full aspect-square max-w-[200px] mx-auto bg-white rounded-xl overflow-hidden border border-foreground/10">
+                                            <img src={qrCode} alt="Payment QR" className="w-full h-full object-contain" />
+                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <Button
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    onClick={() => setQrCode("")}
+                                                    className="h-8 text-xs font-bold uppercase tracking-wider"
+                                                >
+                                                    Remove
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-foreground/10 rounded-xl hover:border-primary/20 hover:bg-primary/5 transition-all text-center gap-3 cursor-pointer relative">
+                                            <Input
+                                                type="file"
+                                                accept="image/*"
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => {
+                                                            setQrCode(reader.result as string);
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    }
+                                                }}
+                                            />
+                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                                <CloudUpload className="w-5 h-5" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-[11px] font-black uppercase tracking-wider">Upload QR Image</p>
+                                                <p className="text-[9px] text-muted-foreground font-bold">Recommended for Host Payment</p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

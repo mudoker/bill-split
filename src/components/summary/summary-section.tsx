@@ -4,7 +4,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, Download, TableIcon, BarChart3, PieChartIcon, CheckCircle2, AlertTriangle, Share2, Eye, Pencil, Copy, Receipt, Tag, TrendingUp, Wallet, LayoutGrid, ArrowRight } from "lucide-react";
+import { RefreshCw, Download, TableIcon, BarChart3, PieChartIcon, CheckCircle2, AlertTriangle, Share2, Eye, Pencil, Copy, Receipt, Tag, TrendingUp, Wallet, LayoutGrid, ArrowRight, QrCode } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -23,6 +30,7 @@ export function SummarySection() {
         resetBill,
         isReadOnly,
         currentBillId,
+        qrCode,
     } = useBillState();
 
     const [copiedView, setCopiedView] = useState(false);
@@ -79,6 +87,35 @@ export function SummarySection() {
                     <Receipt className="w-5 h-5" /> Summary
                 </CardTitle>
                 <div className="flex gap-1.5 print:hidden" data-html2canvas-ignore>
+                    {qrCode && (
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 gap-2 text-foreground font-bold hover:bg-primary/10 hover:text-primary transition-all border-foreground/10 px-3"
+                                >
+                                    <QrCode className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">Pay Host</span>
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-md rounded-2xl border-foreground/10 bg-background shadow-2xl">
+                                <DialogHeader>
+                                    <DialogTitle className="text-xl font-black uppercase tracking-widest flex items-center gap-2 text-primary">
+                                        <QrCode className="w-5 h-5" /> Host Payment
+                                    </DialogTitle>
+                                </DialogHeader>
+                                <div className="flex flex-col items-center justify-center p-6 gap-4">
+                                    <div className="w-full aspect-square max-w-[300px] bg-white rounded-xl overflow-hidden border border-foreground/10 p-2 shadow-sm">
+                                        <img src={qrCode} alt="Host Payment QR" className="w-full h-full object-contain" />
+                                    </div>
+                                    <p className="text-center text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                                        Scan to pay the host directly
+                                    </p>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    )}
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button

@@ -10,9 +10,6 @@ db.run('PRAGMA foreign_keys = ON');
 
 // Initialize database with normalized schema
 db.transaction(() => {
-  // Check if old table exists and drop it to "migrate" to normalized
-  // WARNING: This deletes existing data. For dev/refactor phase as requested.
-  // If we wanted to preserve, we'd need a complex migration script.
   db.run(`DROP TABLE IF EXISTS item_assignments`);
   db.run(`DROP TABLE IF EXISTS global_charges`);
   db.run(`DROP TABLE IF EXISTS items`);
@@ -25,6 +22,7 @@ db.transaction(() => {
       name TEXT,
       location TEXT,
       host_id TEXT,
+      qr_code TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
@@ -77,7 +75,6 @@ db.transaction(() => {
 
 app.use('*', cors());
 
-// Get a bill by ID (reconstruct normalized data)
 app.get('/api/bills/:id', (c) => {
   const id = c.req.param('id');
   const bill = db.query('SELECT * FROM bills WHERE id = ?').get(id) as any;
@@ -107,37 +104,33 @@ app.get('/api/bills/:id', (c) => {
       people,
       items,
       globalCharges,
-      hostId: bill.host_id
+      hostId: bill.host_id,
+      qrCode: bill.qr_code
     },
     created_at: bill.created_at,
     updated_at: bill.updated_at
   });
 });
 
-// Create or update a bill (save into normalized tables)
 app.post('/api/bills', async (c) => {
   const body = await c.req.json();
   const { id, data } = body;
   const billId = id || crypto.randomUUID();
-  const { name = null, location = null, people = [], items = [], globalCharges = [], hostId = null } = data;
+  const { name = null, location = null, people = [], items = [], globalCharges = [], hostId = null, qrCode = null } = data;
 
   try {
     db.transaction(() => {
-      // 1. Insert or update bill
       const existing = db.query('SELECT id FROM bills WHERE id = ?').get(billId);
       if (existing) {
-        db.run('UPDATE bills SET name = ?, location = ?, host_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [name, location, hostId, billId]);
+        db.run('UPDATE bills SET name = ?, location = ?, host_id = ?, qr_code = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [name, location, hostId, qrCode, billId]);
       } else {
-        db.run('INSERT INTO bills (id, name, location, host_id) VALUES (?, ?, ?, ?)', [billId, name, location, hostId]);
+        db.run('INSERT INTO bills (id, name, location, host_id, qr_code) VALUES (?, ?, ?, ?, ?)', [billId, name, location, hostId, qrCode]);
       }
 
-      // 2. Clear old associated data (simplified update strategy: sync by purging and re-inserting)
       db.run('DELETE FROM people WHERE bill_id = ?', [billId]);
       db.run('DELETE FROM items WHERE bill_id = ?', [billId]);
       db.run('DELETE FROM global_charges WHERE bill_id = ?', [billId]);
-      // Note: item_assignments are deleted via CASCADE from items/people
 
-      // 3. Insert People
       for (const p of people) {
         db.run('INSERT INTO people (id, bill_id, name, sponsor_amount, paid_amount) VALUES (?, ?, ?, ?, ?)',
           [p.id, billId, p.name, p.sponsorAmount || 0, p.paidAmount || 0]);

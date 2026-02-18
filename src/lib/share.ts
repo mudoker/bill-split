@@ -1,6 +1,3 @@
-/**
- * Serializes the bill state to a URL-safe string.
- */
 export function serializeState(state: any): string {
     const data = {
         p: state.people.map((p: any) => [p.id, p.name, p.sponsorAmount]),
@@ -10,7 +7,6 @@ export function serializeState(state: any): string {
     };
 
     const json = JSON.stringify(data);
-    // Use btoa + encodeURIComponent for a somewhat compact URL-safe representation
     return btoa(unescape(encodeURIComponent(json)));
 }
 

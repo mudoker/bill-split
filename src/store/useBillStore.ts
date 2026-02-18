@@ -45,10 +45,12 @@ interface BillState {
     billHistory: BillHistoryItem[];
     billName: string;
     location: string;
+    qrCode: string | null;
 
     // Actions
     setBillName: (name: string) => void;
     setLocation: (location: string) => void;
+    setQrCode: (url: string) => void;
     addPerson: (name: string) => void;
     updatePerson: (id: string, data: Partial<Person>) => void;
     removePerson: (id: string) => void;
@@ -88,9 +90,11 @@ export const useBillStore = create<BillState>()(
             billHistory: [],
             billName: '',
             location: '',
+            qrCode: null,
 
             setBillName: (name) => set({ billName: name }),
             setLocation: (location) => set({ location: location }),
+            setQrCode: (url) => set({ qrCode: url }),
 
             addPerson: (name) =>
                 set((state) => ({
@@ -176,11 +180,15 @@ export const useBillStore = create<BillState>()(
                 items: [],
                 globalCharges: [],
                 hostId: null,
+                isReadOnly: false,
+                isHydrated: false,
                 currentBillId: null,
                 lastSaved: null,
-                isReadOnly: false,
+                isSaving: false,
+                billHistory: [],
                 billName: '',
-                location: ''
+                location: '',
+                qrCode: null
             }),
 
             loadState: (data, readonly) => set((state) => ({
@@ -189,7 +197,7 @@ export const useBillStore = create<BillState>()(
                 isReadOnly: readonly
             })),
 
-            setHydrated: (val) => set({ isHydrated: val }),
+            setHydrated: (val: boolean) => set({ isHydrated: val }),
 
             saveToDb: async () => {
                 const state = get();
@@ -211,7 +219,8 @@ export const useBillStore = create<BillState>()(
                                 people: state.people,
                                 items: state.items,
                                 globalCharges: state.globalCharges,
-                                hostId: state.hostId
+                                hostId: state.hostId,
+                                qrCode: state.qrCode
                             }
                         })
                     });
@@ -243,6 +252,7 @@ export const useBillStore = create<BillState>()(
                         ...result.data,
                         billName: result.data.name || '',
                         location: result.data.location || '',
+                        qrCode: result.data.qrCode || null,
                         currentBillId: result.id,
                         lastSaved: result.updated_at,
                         isReadOnly: false
@@ -274,6 +284,7 @@ export const useBillStore = create<BillState>()(
                     billName: "Friday Night BBQ @ Gyu-Kaku",
                     location: "District 1, HCMC",
                     hostId: alexId,
+                    qrCode: null,
                     people: [
                         { id: alexId, name: "Alex (Host)", sponsorAmount: 0, paidAmount: 1800000 },
                         { id: bobId, name: "Bob", sponsorAmount: 0, paidAmount: 200000 },
@@ -325,6 +336,7 @@ export const useBillStore = create<BillState>()(
                     ]
                 });
             }
+
         }),
         {
             name: 'bill-storage',
@@ -336,6 +348,7 @@ export const useBillStore = create<BillState>()(
                 currentBillId: state.currentBillId,
                 billName: state.billName,
                 location: state.location,
+                qrCode: state.qrCode,
             }),
             onRehydrateStorage: () => (state) => {
                 if (state) state.setHydrated(true);

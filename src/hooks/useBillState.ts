@@ -1,12 +1,11 @@
 import { useBillStore } from "@/store/useBillStore";
 
-export const useBillState = () => {
     const {
-        people, items, globalCharges, hostId,
+        people, items, globalCharges, hostId, qrCode,
         addPerson, updatePerson, removePerson,
         addItem, updateItem, removeItem,
         addGlobalCharge, updateGlobalCharge, removeGlobalCharge,
-        setHostId, resetBill, isReadOnly,
+        setHostId, setQrCode, resetBill, isReadOnly,
         currentBillId, lastSaved, isSaving, billHistory,
         billName, location, setBillName, setLocation, loadSeedData,
         saveToDb, fetchBill, fetchHistory
@@ -223,10 +222,10 @@ export const useBillState = () => {
         addPerson, updatePerson, removePerson,
         addItem, updateItem, removeItem,
         addGlobalCharge, updateGlobalCharge, removeGlobalCharge,
-        setHostId, resetBill,
+        setHostId, setQrCode, resetBill,
         isReadOnly, currentBillId, lastSaved, isSaving, billHistory,
         billName, location, setBillName, setLocation, loadSeedData,
-        saveToDb, fetchBill, fetchHistory,
+        saveToDb, fetchBill, fetchHistory, qrCode,
         calculate
     };
 };
