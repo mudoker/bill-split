@@ -55,31 +55,44 @@ export function CostPieChart({ data }: { data: ChartDataItem[] }) {
     }
 
     return (
-        <div>
+        <div className="relative group">
             <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
+                    <defs>
+                        {data.map((_, i) => (
+                            <filter id={`glow-${i}`} key={i}>
+                                <feGaussianBlur stdDeviation="2" result="blur" />
+                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                            </filter>
+                        ))}
+                    </defs>
                     <Pie
                         data={data}
                         cx="50%"
                         cy="50%"
-                        innerRadius={50}
-                        outerRadius={85}
-                        paddingAngle={3}
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={4}
                         dataKey="value"
                         stroke="none"
                     >
                         {data.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
+                            <Cell
+                                key={`cell-${index}`}
+                                fill={entry.color}
+                                style={{ filter: `url(#glow-${index})` }}
+                                className="transition-all duration-500 hover:opacity-80 cursor-pointer"
+                            />
                         ))}
                     </Pie>
                     <Tooltip content={<CustomTooltip />} />
                 </PieChart>
             </ResponsiveContainer>
-            <div className="flex flex-wrap gap-2 mt-2 justify-center">
+            <div className="flex flex-wrap gap-3 mt-4 justify-center">
                 {data.map((entry, i) => (
-                    <div key={i} className="flex items-center gap-1.5 text-[11px]">
-                        <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
-                        <span className="text-muted-foreground">{entry.name}</span>
+                    <div key={i} className="flex items-center gap-2 group/item">
+                        <div className="w-2 h-2 rounded-full transition-transform group-hover/item:scale-125 shadow-[0_0_8px_rgba(0,0,0,0.5)]" style={{ backgroundColor: entry.color, boxShadow: `0 0 10px ${entry.color}44` }} />
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest group-hover/item:text-foreground transition-colors">{entry.name}</span>
                     </div>
                 ))}
             </div>
@@ -94,15 +107,30 @@ export function CompareBarChart({ data }: { data: BarDataItem[] }) {
 
     return (
         <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={data} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                <YAxis tick={{ fontSize: 10 }} className="text-muted-foreground" tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} />
-                <Tooltip content={<BarTooltip />} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="ordered" name="Ordered" fill={CHART_COLORS[0]} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="sponsored" name="Sponsored" fill={CHART_COLORS[1]} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="toPay" name="To Pay" fill={CHART_COLORS[2]} radius={[4, 4, 0, 0]} />
+            <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-foreground/5" />
+                <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 10, fontWeight: 700 }}
+                    axisLine={false}
+                    tickLine={false}
+                    className="text-muted-foreground/60 uppercase tracking-tighter"
+                />
+                <YAxis
+                    tick={{ fontSize: 9, fontWeight: 500 }}
+                    axisLine={false}
+                    tickLine={false}
+                    className="text-muted-foreground/40"
+                    tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
+                />
+                <Tooltip content={<BarTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                <Legend
+                    wrapperStyle={{ fontSize: 10, fontWeight: 900, paddingTop: '20px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
+                    iconType="circle"
+                />
+                <Bar dataKey="ordered" name="Ordered" fill={CHART_COLORS[0]} radius={[6, 6, 0, 0]} barSize={24} />
+                <Bar dataKey="sponsored" name="Sponsored" fill={CHART_COLORS[1]} radius={[6, 6, 0, 0]} barSize={24} />
+                <Bar dataKey="toPay" name="To Pay" fill={CHART_COLORS[2]} radius={[6, 6, 0, 0]} barSize={24} />
             </BarChart>
         </ResponsiveContainer>
     );
