@@ -38,7 +38,10 @@ function App() {
     location,
     setBillName,
     setLocation,
-    updatePerson
+    updatePerson,
+    qrCode,
+    setQrCode,
+    loadSeedData
   } = useBillStore();
 
   // Handle URL parameters (Legacy v/e and New id)
@@ -131,7 +134,14 @@ function App() {
                 <ModeToggle />
               </header>
             </div>
-            <LandingPage onNewBill={handleStartNewBill} onSelectBill={handleSelectBill} />
+            <LandingPage
+              onNewBill={handleStartNewBill}
+              onSelectBill={handleSelectBill}
+              onLoadDemo={() => {
+                loadSeedData();
+                setView('editor');
+              }}
+            />
           </>
         ) : (
           <>
@@ -208,6 +218,8 @@ function App() {
                       setLocation={setLocation}
                       updatePerson={updatePerson}
                       onSave={saveToDb}
+                      qrCode={qrCode}
+                      setQrCode={setQrCode}
                     />
                     <ModeToggle />
                   </div>

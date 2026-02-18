@@ -3,7 +3,7 @@ import { useBillStore } from "@/store/useBillStore";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Clock, ChevronRight, Calculator, Receipt, Users as UsersIcon, Play, History, MapPin } from "lucide-react";
+import { Plus, Clock, ChevronRight, Calculator, Receipt, Users as UsersIcon, Play, History, MapPin, Database } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import { formatCurrency } from '@/lib/format';
 import { motion } from 'framer-motion';
@@ -11,9 +11,10 @@ import { motion } from 'framer-motion';
 interface LandingPageProps {
     onNewBill: () => void;
     onSelectBill: (id: string | 'current') => void;
+    onLoadDemo: () => void;
 }
 
-export function LandingPage({ onNewBill, onSelectBill }: LandingPageProps) {
+export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPageProps) {
     const { billHistory, fetchHistory, isHydrated, people, items } = useBillStore();
 
     useEffect(() => {
@@ -56,24 +57,35 @@ export function LandingPage({ onNewBill, onSelectBill }: LandingPageProps) {
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ duration: 0.5, delay: 0.3 }}
-                    className="flex flex-col sm:flex-row gap-4 justify-center pt-4"
+                    className="flex flex-col items-center gap-4 pt-4"
                 >
-                    {hasActiveLocalData && (
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center w-full">
+                        {hasActiveLocalData && (
+                            <Button
+                                onClick={() => onSelectBill('current')}
+                                variant="outline"
+                                size="lg"
+                                className="h-14 px-8 text-lg font-bold gap-2 rounded-2xl border-2 transition-all hover:bg-foreground/5"
+                            >
+                                <Play className="w-6 h-6" /> Resume Last
+                            </Button>
+                        )}
                         <Button
-                            onClick={() => onSelectBill('current')}
-                            variant="outline"
+                            onClick={onNewBill}
                             size="lg"
-                            className="h-14 px-8 text-lg font-bold gap-2 rounded-2xl border-2 transition-all hover:bg-foreground/5"
+                            className="h-14 px-8 text-lg font-bold gap-2 rounded-2xl shadow-xl shadow-foreground/10 transition-all hover:scale-105 active:scale-95 bg-foreground text-background hover:bg-foreground/90"
                         >
-                            <Play className="w-6 h-6" /> Resume Last
+                            <Plus className="w-6 h-6" /> Start New
                         </Button>
-                    )}
+                    </div>
+
                     <Button
-                        onClick={onNewBill}
-                        size="lg"
-                        className="h-14 px-8 text-lg font-bold gap-2 rounded-2xl shadow-xl shadow-foreground/10 transition-all hover:scale-105 active:scale-95 bg-foreground text-background hover:bg-foreground/90"
+                        onClick={onLoadDemo}
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs font-bold text-muted-foreground hover:text-foreground gap-2 mt-2"
                     >
-                        <Plus className="w-6 h-6" /> Start New
+                        <Database className="w-3 h-3" /> Load Demo Data
                     </Button>
                 </motion.div>
             </div>

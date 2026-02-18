@@ -10,11 +10,11 @@ db.run('PRAGMA foreign_keys = ON');
 
 // Initialize database with normalized schema
 db.transaction(() => {
-  db.run(`DROP TABLE IF EXISTS item_assignments`);
-  db.run(`DROP TABLE IF EXISTS global_charges`);
-  db.run(`DROP TABLE IF EXISTS items`);
-  db.run(`DROP TABLE IF EXISTS people`);
-  db.run(`DROP TABLE IF EXISTS bills`);
+  // db.run(`DROP TABLE IF EXISTS item_assignments`);
+  // db.run(`DROP TABLE IF EXISTS global_charges`);
+  // db.run(`DROP TABLE IF EXISTS items`);
+  // db.run(`DROP TABLE IF EXISTS people`);
+  // db.run(`DROP TABLE IF EXISTS bills`);
 
   db.run(`
     CREATE TABLE IF NOT EXISTS bills (

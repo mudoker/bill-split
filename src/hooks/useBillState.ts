@@ -1,5 +1,6 @@
 import { useBillStore } from "@/store/useBillStore";
 
+export const useBillState = () => {
     const {
         people, items, globalCharges, hostId, qrCode,
         addPerson, updatePerson, removePerson,
@@ -218,14 +219,36 @@ import { useBillStore } from "@/store/useBillStore";
     };
 
     return {
-        people, items, globalCharges, hostId,
-        addPerson, updatePerson, removePerson,
-        addItem, updateItem, removeItem,
-        addGlobalCharge, updateGlobalCharge, removeGlobalCharge,
-        setHostId, setQrCode, resetBill,
-        isReadOnly, currentBillId, lastSaved, isSaving, billHistory,
-        billName, location, setBillName, setLocation, loadSeedData,
-        saveToDb, fetchBill, fetchHistory, qrCode,
+        people,
+        items,
+        globalCharges,
+        hostId,
+        addPerson,
+        updatePerson,
+        removePerson,
+        addItem,
+        updateItem,
+        removeItem,
+        addGlobalCharge,
+        updateGlobalCharge,
+        removeGlobalCharge,
+        setHostId,
+        setQrCode,
+        resetBill,
+        isReadOnly,
+        currentBillId,
+        lastSaved,
+        isSaving,
+        billHistory,
+        billName,
+        location,
+        setBillName,
+        setLocation,
+        loadSeedData,
+        saveToDb,
+        fetchBill,
+        fetchHistory,
+        qrCode,
         calculate
     };
 };
