@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
 import { MoreHorizontal, Trash2, Edit2, Users, Check, X } from "lucide-react";
 import { useBillStore, type Item } from "@/store/useBillStore";
 import { cn } from "@/lib/utils";
@@ -10,7 +11,7 @@ import { formatCurrency } from "@/lib/format";
 import { CurrencyInput } from "@/components/shared/currency-input";
 
 export function ItemRow({ item }: { item: Item }) {
-    const { updateItem, removeItem, people } = useBillStore();
+    const { updateItem, removeItem, people, isReadOnly } = useBillStore();
     const [isEditing, setIsEditing] = useState(false);
     const [name, setName] = useState(item.name);
     const [price, setPrice] = useState(item.price);
@@ -33,6 +34,7 @@ export function ItemRow({ item }: { item: Item }) {
     };
 
     const togglePerson = (personId: string) => {
+        if (isReadOnly) return;
         const assignments = item.assignments || {};
         const newAssignments = { ...assignments };
         if (newAssignments[personId] !== undefined) {
@@ -44,12 +46,14 @@ export function ItemRow({ item }: { item: Item }) {
     };
 
     const updatePersonQty = (personId: string, qty: number) => {
+        if (isReadOnly) return;
         const assignments = item.assignments || {};
         const newAssignments = { ...assignments, [personId]: Math.max(0.1, qty) };
         updateItem(item.id, { assignments: newAssignments });
     };
 
     const toggleAll = () => {
+        if (isReadOnly) return;
         const assignments = item.assignments || {};
         const allAssignedCount = people.filter(p => assignments[p.id] !== undefined).length;
         const everyoneAssigned = people.length > 0 && allAssignedCount === people.length;
@@ -78,118 +82,148 @@ export function ItemRow({ item }: { item: Item }) {
         if (totalClaimedQty <= 0) return 0;
 
         if (totalClaimedQty >= qty) {
-            // Over-assigned/Exact: Split full price proportionally
             return (cappedPQty / totalClaimedQty) * item.price;
         } else {
-            // Under-assigned: Pay for your specific consumption
             return (cappedPQty / qty) * item.price;
         }
     };
 
     return (
-        <div className="relative group bg-card border rounded-xl p-3.5 hover:shadow-md hover:border-primary/20 transition-all duration-200">
+        <div className="relative group bg-card border border-foreground/[0.05] rounded-xl p-4 hover:bg-muted/5 hover:border-primary/30 transition-all duration-200">
             {isEditing ? (
-                <div className="space-y-2.5 animate-in fade-in zoom-in-95 duration-200">
+                <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">Edit Item</span>
+                        <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Edit Item</span>
                         <div className="flex gap-1">
-                            <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={handleCancel}>
-                                <X className="w-3.5 h-3.5" />
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/5" onClick={handleCancel}>
+                                <X className="w-4 h-4" />
                             </Button>
-                            <Button size="icon" variant="ghost" className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-100" onClick={handleSave}>
-                                <Check className="w-3.5 h-3.5" />
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-primary hover:bg-primary/10" onClick={handleSave}>
+                                <Check className="w-4 h-4" />
                             </Button>
                         </div>
                     </div>
-                    <Input value={name} onChange={(e) => setName(e.target.value)} className="h-9 text-sm w-full" autoFocus placeholder="Item name" onKeyDown={(e) => e.key === 'Enter' && handleSave()} />
-                    <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                            <label className="text-[10px] text-muted-foreground shrink-0 w-7">Qty</label>
-                            <Input value={quantity} onChange={(e) => setQuantity(e.target.value)} className="h-8 text-center text-sm p-1" type="number" min={1} onKeyDown={(e) => e.key === 'Enter' && handleSave()} />
+                    <Input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="h-11 bg-background/50 border-foreground/5 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/40 font-bold px-4"
+                        autoFocus
+                        placeholder="Item name..."
+                        onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                            <Label className="text-[10px] font-black uppercase text-foreground/60 tracking-widest pl-1">Quantity</Label>
+                            <Input
+                                value={quantity}
+                                onChange={(e) => setQuantity(e.target.value)}
+                                className="h-10 bg-background/50 border-foreground/5 rounded-xl text-center font-bold"
+                                type="number"
+                                min={1}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                            />
                         </div>
-                        <div className="flex items-center gap-1.5 flex-[2] min-w-0">
-                            <label className="text-[10px] text-muted-foreground shrink-0 w-7">Total</label>
-                            <CurrencyInput value={price} onChange={setPrice} className="h-8 text-sm text-right" placeholder="Price" />
+                        <div className="space-y-1.5">
+                            <Label className="text-[10px] font-black uppercase text-foreground/60 tracking-widest pl-1">Total Price</Label>
+                            <CurrencyInput
+                                value={price}
+                                onChange={setPrice}
+                                className="h-10 bg-background/50 border-foreground/5 rounded-xl text-right font-bold"
+                                placeholder="0.00"
+                            />
                         </div>
                     </div>
                 </div>
             ) : (
                     <div className="flex justify-between items-start">
-                    <div className="flex-1 min-w-0 pr-2">
-                        <div className="font-medium flex items-center gap-2 flex-wrap">
-                                <span className="truncate text-sm" title={item.name}>{item.name}</span>
-                            <span className="shrink-0 flex items-center gap-1.5 font-mono">
-                                    {qty > 1 && (
-                                        <span className="text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded font-normal">×{qty}</span>
-                                )}
-                                    <span className="text-muted-foreground text-xs font-semibold bg-secondary px-1.5 py-0.5 rounded">
-                                    {formatCurrency(item.price)}
+                        <div className="flex-1 min-w-0 pr-4">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                                <span className="font-black text-sm tracking-tight text-foreground truncate max-w-[200px]" title={item.name}>
+                                    {item.name}
                                 </span>
-                            </span>
-                        </div>
-                            <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground flex-wrap">
+                                <div className="flex items-center gap-1.5">
+                                    {qty > 1 && (
+                                        <span className="text-[9px] font-black text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                                            ×{qty}
+                                        </span>
+                                )}
+                                    <span className="text-[10px] font-black text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 tabular-nums">
+                                    {formatCurrency(item.price)}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs flex-wrap">
                                 {qty > 1 && (
-                                    <span className="text-[10px] font-medium text-primary/70 bg-primary/5 px-1.5 py-0.5 rounded">
-                                        {formatCurrency(unitPrice)} / unit
+                                    <span className="text-[10px] font-bold text-foreground/70 uppercase tracking-tighter">
+                                        {formatCurrency(unitPrice)} PER UNIT
                                 </span>
                             )}
-                                <span className="text-[10px] text-muted-foreground/80">
-                                    {assignedPeopleIds.length > 0
-                                        ? `Shared by ${assignedPeopleIds.length} ${assignedPeopleIds.length === 1 ? 'person' : 'people'}`
-                                        : (people.length > 0 ? "Split equally (default)" : "No people yet")}
+                                <div className="h-3 w-[1px] bg-foreground/10 mx-1" />
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-80 flex items-center gap-1.5">
+                                    {assignedPeopleIds.length > 0 ? (
+                                        <>
+                                            <span className="bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20 font-black tabular-nums">{assignedPeopleIds.length}</span> members sharing
+                                        </>
+                                    ) : (
+                                        people.length > 0 ? "Default total split" : "Awaiting participants"
+                                    )}
                             </span>
                         </div>
                     </div>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0 -mr-1">
-                                <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-32 p-1" align="end">
-                                <div className="flex flex-col gap-0.5">
-                                    <Button variant="ghost" size="sm" className="justify-start h-8 text-xs w-full" onClick={() => { setName(item.name); setPrice(item.price); setQuantity(item.quantity?.toString() || "1"); setIsEditing(true); }}>
-                                    <Edit2 className="w-3 h-3 mr-2" /> Edit
-                                </Button>
-                                <Button variant="ghost" size="sm" className="justify-start h-8 text-xs w-full text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => removeItem(item.id)}>
-                                    <Trash2 className="w-3 h-3 mr-2" /> Delete
-                                </Button>
-                            </div>
-                        </PopoverContent>
-                    </Popover>
+                        {!isReadOnly && (
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-xl transition-all">
+                                        < MoreHorizontal className="w-5 h-5" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-40 p-1.5 bg-background/95 backdrop-blur-xl border-primary/20 shadow-2xl" align="end">
+                                    <div className="flex flex-col gap-1">
+                                        <Button variant="ghost" size="sm" className="justify-start h-10 text-[10px] font-black uppercase tracking-widest gap-2" onClick={() => { setName(item.name); setPrice(item.price); setQuantity(item.quantity?.toString() || "1"); setIsEditing(true); }}>
+                                            <Edit2 className="w-3.5 h-3.5" /> Edit Details
+                                        </Button>
+                                        <Button variant="ghost" size="sm" className="justify-start h-10 text-[10px] font-black uppercase tracking-widest gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => removeItem(item.id)}>
+                                            <Trash2 className="w-3.5 h-3.5" /> Delete Item
+                                        </Button>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                        )}
                 </div>
             )}
 
             {/* Splits row */}
-            <div className="flex flex-wrap gap-1.5 mt-2.5 items-center">
+            <div className="flex flex-wrap gap-2 mt-4 items-center">
                 <Popover>
                     <PopoverTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-6 text-[10px] gap-1 border-dashed px-2 bg-transparent hover:bg-secondary/50">
-                            <Users className="w-3 h-3" />
-                            {assignedPeopleIds.length > 0 ? "Edit Splits" : "Assign People"}
+                        <Button variant="outline" size="sm" className="h-8 text-[9px] font-black uppercase tracking-widest gap-1.5 border-foreground/10 bg-foreground/5 text-foreground hover:bg-foreground/10 rounded-full px-3 transition-all">
+                            <Users className="w-3.5 h-3.5" />
+                            {isReadOnly ? "View Splits" : (assignedPeopleIds.length > 0 ? "Modify Splits" : "Assign Shares")}
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-72 p-0" align="start">
-                        <div className="p-3 border-b bg-muted/30">
+                    <PopoverContent className="w-72 p-0 bg-background/95 backdrop-blur-xl border-primary/20 shadow-2xl" align="start">
+                        <div className="p-4 border-b border-foreground/5 bg-primary/5">
                             <div className="flex items-center justify-between">
-                                <div>
-                                    <div className="font-medium text-xs truncate max-w-[140px]" title={item.name}>{item.name}</div>
-                                    <div className="text-[10px] text-muted-foreground mt-0.5">
-                                        {formatCurrency(item.price)} · {qty} {qty === 1 ? 'unit' : 'units'}
+                                <div className="space-y-0.5">
+                                    <div className="font-black text-[11px] uppercase tracking-widest text-foreground truncate max-w-[140px]" title={item.name}>{item.name}</div>
+                                    <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter opacity-70">
+                                        {formatCurrency(item.price)} · {qty} units
                                     </div>
                                 </div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 text-[10px] px-2 text-primary hover:text-primary/80"
-                                    onClick={toggleAll}
-                                >
-                                    {people.length > 0 && assignedPeopleIds.length === people.length ? "Deselect All" : "Select All"}
-                                </Button>
+                                {!isReadOnly && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 text-[9px] font-black uppercase px-3 text-primary hover:bg-primary/10 rounded-full border border-primary/20"
+                                        onClick={toggleAll}
+                                    >
+                                        {people.length > 0 && assignedPeopleIds.length === people.length ? "Clear all" : "Split among all"}
+                                    </Button>
+                                )}
                             </div>
                         </div>
-                        <ScrollArea className="max-h-60">
-                            <div className="p-2 space-y-0.5">
+                        <ScrollArea className="max-h-72">
+                            <div className="p-2 space-y-1">
                                 {people.map((p) => {
                                     const pQty = assignments[p.id];
                                     const isSelected = pQty !== undefined;
@@ -197,95 +231,88 @@ export function ItemRow({ item }: { item: Item }) {
                                         <div
                                             key={p.id}
                                             className={cn(
-                                                "flex items-center gap-2 px-2 py-2 rounded-lg transition-all duration-150",
-                                                isSelected ? "bg-primary/5 shadow-sm" : "hover:bg-muted/50"
+                                                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200",
+                                                isSelected ? "bg-primary/10 border border-primary/10" : "hover:bg-foreground/5 border border-transparent"
                                             )}
                                         >
                                             <div
                                                 className={cn(
-                                                    "w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer shrink-0 transition-all",
+                                                    "w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all",
+                                                    !isReadOnly && "cursor-pointer",
                                                     isSelected
-                                                        ? "border-primary bg-primary text-primary-foreground scale-105"
-                                                        : "border-muted-foreground/40 bg-background hover:border-primary/50"
+                                                        ? "border-primary bg-primary text-black"
+                                                        : "border-foreground/20 bg-background/50"
                                                 )}
-                                                onClick={() => togglePerson(p.id)}
+                                                onClick={() => !isReadOnly && togglePerson(p.id)}
                                             >
-                                                {isSelected && <Check className="w-2.5 h-2.5" />}
+                                                {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                                             </div>
-                                            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => togglePerson(p.id)}>
-                                                <div className={cn("text-xs truncate", isSelected ? "font-semibold" : "text-muted-foreground")}>{p.name}</div>
+                                            <div className={cn("flex-1 min-w-0 pr-2", !isReadOnly && "cursor-pointer")} onClick={() => !isReadOnly && togglePerson(p.id)}>
+                                                <div className={cn("text-xs font-black tracking-tight", isSelected ? "text-foreground" : "text-muted-foreground opacity-60")}>{p.name}</div>
                                                 {isSelected && (
-                                                    <div className="text-[10px] text-muted-foreground font-medium">
+                                                    <div className="text-[10px] font-bold text-primary tabular-nums mt-0.5">
                                                         {formatCurrency(getPersonShare(pQty))}
                                                     </div>
                                                 )}
                                             </div>
                                             {isSelected && (
-                                                <div className="flex items-center gap-1 shrink-0">
-                                                    <Input
-                                                        type="number"
-                                                        value={pQty}
-                                                        onChange={(e) => updatePersonQty(p.id, parseFloat(e.target.value) || 0.1)}
-                                                        className="h-7 w-14 text-[11px] p-1 text-center font-medium"
-                                                        step={0.5}
-                                                        min={0.1}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    />
-                                                    <span className="text-[10px] text-muted-foreground/60">shares</span>
+                                                <div className="flex items-center gap-1.5 shrink-0 bg-background/50 px-2 py-1 rounded-lg border border-foreground/5">
+                                                    {isReadOnly ? (
+                                                        <span className="text-[11px] font-black text-foreground tabular-nums">×{pQty}</span>
+                                                    ) : (
+                                                        <Input
+                                                            type="number"
+                                                            value={pQty}
+                                                            onChange={(e) => updatePersonQty(p.id, parseFloat(e.target.value) || 0.1)}
+                                                                className="h-7 w-12 text-[11px] p-0 text-center font-black bg-transparent border-none focus-visible:ring-0 tabular-nums"
+                                                                step={0.5}
+                                                                min={0.1}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            />
+                                                    )}
+                                                    <span className="text-[8px] font-black uppercase tracking-tighter text-muted-foreground">parts</span>
                                                 </div>
                                             )}
                                         </div>
                                     )
                                 })}
                                 {people.length === 0 && (
-                                    <div className="text-xs text-center py-6 text-muted-foreground">
-                                        Add people first to assign splits
+                                    <div className="flex flex-col items-center justify-center py-10 gap-3 opacity-30">
+                                        <Users className="w-8 h-8" />
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em]">Awaiting participants</p>
                                     </div>
                                 )}
                             </div>
                         </ScrollArea>
-                        {assignedPeopleIds.length > 0 && (
-                            <div className="p-2 border-t bg-muted/20">
-                                <div className="flex items-center justify-between text-[10px] text-muted-foreground px-2">
-                                    <span>{assignedPeopleIds.length} {assignedPeopleIds.length === 1 ? 'person' : 'people'} sharing</span>
-                                    <span className="font-medium text-foreground">{formatCurrency(item.price)}</span>
-                                </div>
-                            </div>
-                        )}
                     </PopoverContent>
                 </Popover>
 
-                {/* Person tags */}
+                {/* Person tags - Neon style */}
                 {people.length > 0 && assignedPeopleIds.length > 0 && (
-                    <>
-                        {people.filter(p => assignments[p.id] !== undefined).slice(0, 10).map(p => {
+                    <div className="flex flex-wrap gap-1.5">
+                        {people.filter(p => assignments[p.id] !== undefined).slice(0, 8).map(p => {
                             const pQty = assignments[p.id];
                             return (
                                 <div
                                     key={p.id}
-                                    onClick={() => togglePerson(p.id)}
-                                    className="px-2 py-0.5 rounded-full text-[10px] border cursor-pointer select-none transition-all hover:shadow-sm bg-primary/8 border-primary/15 text-primary font-medium flex items-center gap-1"
-                                    title={`${p.name}: ${formatCurrency(getPersonShare(pQty))}`}
+                                    onClick={() => !isReadOnly && togglePerson(p.id)}
+                                    className={cn(
+                                        "px-2.5 py-1 rounded-lg text-[9px] border font-black uppercase tracking-tighter transition-all flex items-center gap-1.5",
+                                        !isReadOnly && "cursor-pointer hover:border-primary/40 hover:bg-primary/5",
+                                        "bg-foreground/[0.03] border-foreground/10 text-muted-foreground"
+                                    )}
                                 >
                                     <span className="truncate max-w-[60px]">{p.name}</span>
-                                    {pQty !== 1 && <span className="opacity-60 font-bold">×{pQty}</span>}
+                                    {pQty !== 1 && <span className="text-amber-500 opacity-90">×{pQty}</span>}
                                 </div>
                             );
                         })}
-                        {assignedPeopleIds.length > 10 && (
-                            <span
-                                className="text-[10px] text-muted-foreground self-center bg-secondary px-1.5 py-0.5 rounded-full cursor-help hover:bg-secondary/80 transition-colors"
-                                title={people
-                                    .filter(p => assignments[p.id] !== undefined)
-                                    .slice(10)
-                                    .map(p => `${p.name} (${formatCurrency(getPersonShare(assignments[p.id]))})`)
-                                    .join("\n")
-                                }
-                            >
-                                +{assignedPeopleIds.length - 10}
-                            </span>
+                        {assignedPeopleIds.length > 8 && (
+                            <div className="px-2 py-1 rounded-lg text-[9px] font-black bg-primary/10 text-primary border border-primary/20">
+                                +{assignedPeopleIds.length - 8}
+                            </div>
                         )}
-                    </>
+                    </div>
                 )}
             </div>
         </div>
