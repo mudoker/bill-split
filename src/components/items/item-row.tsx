@@ -222,68 +222,70 @@ export function ItemRow({ item }: { item: Item }) {
                                 )}
                             </div>
                         </div>
-                        <ScrollArea className="max-h-72">
-                            <div className="p-2 space-y-1">
-                                {people.map((p) => {
-                                    const pQty = assignments[p.id];
-                                    const isSelected = pQty !== undefined;
-                                    return (
-                                        <div
-                                            key={p.id}
-                                            className={cn(
-                                                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200",
-                                                isSelected ? "bg-primary/10 border border-primary/10" : "hover:bg-foreground/5 border border-transparent"
-                                            )}
-                                        >
+                        <div className="h-72">
+                            <ScrollArea className="h-full w-full">
+                                <div className="p-2 space-y-1">
+                                    {people.map((p) => {
+                                        const pQty = assignments[p.id];
+                                        const isSelected = pQty !== undefined;
+                                        return (
                                             <div
+                                                key={p.id}
                                                 className={cn(
-                                                    "w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all",
-                                                    !isReadOnly && "cursor-pointer",
-                                                    isSelected
-                                                        ? "border-primary bg-primary text-black"
-                                                        : "border-foreground/20 bg-background/50"
+                                                    "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200",
+                                                    isSelected ? "bg-primary/10 border border-primary/10" : "hover:bg-foreground/5 border border-transparent"
                                                 )}
-                                                onClick={() => !isReadOnly && togglePerson(p.id)}
                                             >
-                                                {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                                            </div>
-                                            <div className={cn("flex-1 min-w-0 pr-2", !isReadOnly && "cursor-pointer")} onClick={() => !isReadOnly && togglePerson(p.id)}>
-                                                <div className={cn("text-xs font-black tracking-tight", isSelected ? "text-foreground" : "text-muted-foreground opacity-60")}>{p.name}</div>
+                                                <div
+                                                    className={cn(
+                                                        "w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all",
+                                                        !isReadOnly && "cursor-pointer",
+                                                        isSelected
+                                                            ? "border-primary bg-primary text-black"
+                                                            : "border-foreground/20 bg-background/50"
+                                                    )}
+                                                    onClick={() => !isReadOnly && togglePerson(p.id)}
+                                                >
+                                                    {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                                                </div>
+                                                <div className={cn("flex-1 min-w-0 pr-2", !isReadOnly && "cursor-pointer")} onClick={() => !isReadOnly && togglePerson(p.id)}>
+                                                    <div className={cn("text-xs font-black tracking-tight", isSelected ? "text-foreground" : "text-muted-foreground opacity-60")}>{p.name}</div>
+                                                    {isSelected && (
+                                                        <div className="text-[10px] font-bold text-primary tabular-nums mt-0.5">
+                                                            {formatCurrency(getPersonShare(pQty))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                                 {isSelected && (
-                                                    <div className="text-[10px] font-bold text-primary tabular-nums mt-0.5">
-                                                        {formatCurrency(getPersonShare(pQty))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            {isSelected && (
-                                                <div className="flex items-center gap-1.5 shrink-0 bg-background/50 px-2 py-1 rounded-lg border border-foreground/5">
-                                                    {isReadOnly ? (
-                                                        <span className="text-[11px] font-black text-foreground tabular-nums">×{pQty}</span>
-                                                    ) : (
-                                                        <Input
-                                                            type="number"
-                                                            value={pQty}
-                                                            onChange={(e) => updatePersonQty(p.id, parseFloat(e.target.value) || 0.1)}
+                                                    <div className="flex items-center gap-1.5 shrink-0 bg-background/50 px-2 py-1 rounded-lg border border-foreground/5">
+                                                        {isReadOnly ? (
+                                                            <span className="text-[11px] font-black text-foreground tabular-nums">×{pQty}</span>
+                                                        ) : (
+                                                            <Input
+                                                                type="number"
+                                                                value={pQty}
+                                                                onChange={(e) => updatePersonQty(p.id, parseFloat(e.target.value) || 0.1)}
                                                                 className="h-7 w-12 text-[11px] p-0 text-center font-black bg-transparent border-none focus-visible:ring-0 tabular-nums"
                                                                 step={0.5}
                                                                 min={0.1}
                                                                 onClick={(e) => e.stopPropagation()}
                                                             />
-                                                    )}
-                                                    <span className="text-[8px] font-black uppercase tracking-tighter text-muted-foreground">parts</span>
-                                                </div>
-                                            )}
+                                                        )}
+                                                        <span className="text-[8px] font-black uppercase tracking-tighter text-muted-foreground">parts</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    })}
+                                    {people.length === 0 && (
+                                        <div className="flex flex-col items-center justify-center py-10 gap-3 opacity-30">
+                                            <Users className="w-8 h-8" />
+                                            <p className="text-[10px] font-black uppercase tracking-[0.2em]">Awaiting participants</p>
                                         </div>
-                                    )
-                                })}
-                                {people.length === 0 && (
-                                    <div className="flex flex-col items-center justify-center py-10 gap-3 opacity-30">
-                                        <Users className="w-8 h-8" />
-                                        <p className="text-[10px] font-black uppercase tracking-[0.2em]">Awaiting participants</p>
-                                    </div>
-                                )}
-                            </div>
-                        </ScrollArea>
+                                    )}
+                                </div>
+                            </ScrollArea>
+                        </div>
                     </PopoverContent>
                 </Popover>
 

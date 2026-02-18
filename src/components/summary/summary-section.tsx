@@ -34,7 +34,6 @@ export function SummarySection() {
     } = useBillState();
 
     const [copiedView, setCopiedView] = useState(false);
-    const [copiedEdit, setCopiedEdit] = useState(false);
 
     const { totalCosts, finalPayables, totalBill, totalExtras, totalSurplus, totalItemCost, settlementFlows } = calculate();
     const { pieData, barData, itemCostData } = buildChartData(people, items, totalCosts, finalPayables);
@@ -66,16 +65,11 @@ export function SummarySection() {
         }
     };
 
-    const handleCopyShare = (readOnly: boolean) => {
-        const url = generateShareUrl({ people, items, globalCharges, hostId, currentBillId }, readOnly);
+    const handleCopyShare = () => {
+        const url = generateShareUrl({ people, items, globalCharges, hostId, currentBillId }, true);
         navigator.clipboard.writeText(url);
-        if (readOnly) {
-            setCopiedView(true);
-            setTimeout(() => setCopiedView(false), 2000);
-        } else {
-            setCopiedEdit(true);
-            setTimeout(() => setCopiedEdit(false), 2000);
-        }
+        setCopiedView(true);
+        setTimeout(() => setCopiedView(false), 2000);
     };
 
     return (
@@ -132,23 +126,11 @@ export function SummarySection() {
                                     variant="ghost"
                                     size="sm"
                                     className={cn("justify-start h-9 text-xs gap-2 font-bold", copiedView && "bg-primary/10 text-primary")}
-                                    onClick={() => handleCopyShare(true)}
+                                    onClick={handleCopyShare}
                                 >
                                     <Eye className="w-3.5 h-3.5" />
                                     <div className="flex-1 text-left">
                                         <div className="uppercase tracking-tighter">{copiedView ? "Copied!" : "View-only Link"}</div>
-                                    </div>
-                                    <Copy className="w-3 h-3 opacity-40" />
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className={cn("justify-start h-9 text-xs gap-2 font-bold", copiedEdit && "bg-primary/10 text-primary")}
-                                    onClick={() => handleCopyShare(false)}
-                                >
-                                    <Pencil className="w-3.5 h-3.5" />
-                                    <div className="flex-1 text-left">
-                                        <div className="uppercase tracking-tighter">{copiedEdit ? "Copied!" : "Editor Link"}</div>
                                     </div>
                                     <Copy className="w-3 h-3 opacity-40" />
                                 </Button>
@@ -158,11 +140,11 @@ export function SummarySection() {
                     <Button variant="outline" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary border-foreground/10" onClick={handleDownload} title="Download Summary">
                         <Download className="w-4 h-4" />
                     </Button>
-                    {!isReadOnly && (
+                    {/* {!isReadOnly && (
                         <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10 border-destructive/20" onClick={resetBill} title="Reset Bill">
                             <RefreshCw className="w-4 h-4" />
                         </Button>
-                    )}
+                    )} */}
                 </div>
             </CardHeader>
             <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
