@@ -13,60 +13,70 @@ export const useBillState = () => {
         // ============================================================
         // STEP 1: Calculate BASE item costs per person (before extras)
         // ============================================================
-        // rawCosts = what each person owes for the items they consumed ONLY
-        // This value is preserved and never mutated after this step.
         const rawCosts: Record<string, number> = {};
+        // Total sum of all items in the bill (before extras)
         let totalItemCost = 0;
+        // Total unassigned pool to be split among 'active' people later
+        let totalUnassignedPrice = 0;
+        const activePersonIds = new Set<string>();
 
         items.forEach((item) => {
             const assignments = item.assignments || {};
-            const assignmentEntries = Object.entries(assignments);
-            const totalAssignedQty = assignmentEntries.reduce((sum, [_, qty]) => sum + qty, 0);
-            const qty = item.quantity || 1;
-            const unitPrice = qty > 0 ? item.price / qty : 0;
+            // Only consider people with positive assigned quantities
+            const assignmentEntries = Object.entries(assignments).filter(([_, pQty]) => pQty > 0);
+            const itemQty = item.quantity || 1;
+            const itemPrice = item.price;
+            totalItemCost += itemPrice;
 
             if (assignmentEntries.length > 0) {
-                // Always use proportional splitting:
-                // Each person's share = (their qty / total claimed qty) * item price
-                // This works correctly whether totalAssignedQty >, =, or < qty.
-                // - If totalAssignedQty == qty: each person pays unitPrice * theirQty (exact)
-                // - If totalAssignedQty > qty: cost is split by ratio (shared dish)
-                // - If totalAssignedQty < qty: assigned people pay their share,
-                //   and the unclaimed portion is split equally among ALL people.
-                if (totalAssignedQty >= qty) {
-                    // Proportional: divide the FULL item price among claimants by ratio
-                    assignmentEntries.forEach(([pId, consumedQty]) => {
-                        const share = (consumedQty / totalAssignedQty) * item.price;
+                // Mark these people as active participants in the bill
+                assignmentEntries.forEach(([pId]) => activePersonIds.add(pId));
+
+                // Each person's individual claim is capped at the total item volume.
+                // Overlapping claims are allowed.
+                const totalClaimedQty = assignmentEntries.reduce((sum, [_, pQty]) => {
+                    return sum + Math.min(pQty, itemQty);
+                }, 0);
+
+                if (totalClaimedQty >= itemQty) {
+                    // Exact or Over-assigned: Split the full price proportionally among claimants.
+                    // This handles overlapping people sharing the same item.
+                    assignmentEntries.forEach(([pId, pQty]) => {
+                        const cappedPQty = Math.min(pQty, itemQty);
+                        const share = (cappedPQty / totalClaimedQty) * itemPrice;
                         rawCosts[pId] = (rawCosts[pId] || 0) + share;
                     });
                 } else {
-                    // Under-assigned: charge claimed parts at unit price
-                    const claimedCost = unitPrice * totalAssignedQty;
-                    assignmentEntries.forEach(([pId, consumedQty]) => {
-                        rawCosts[pId] = (rawCosts[pId] || 0) + (unitPrice * consumedQty);
+                    // Under-assigned: People pay exactly for what they claimed.
+                    // The rest goes to the unassigned pool.
+                    let totalAccountedFor = 0;
+                    assignmentEntries.forEach(([pId, pQty]) => {
+                        const cappedPQty = Math.min(pQty, itemQty);
+                        const share = (cappedPQty / itemQty) * itemPrice;
+                        rawCosts[pId] = (rawCosts[pId] || 0) + share;
+                        totalAccountedFor += share;
                     });
-
-                    // Distribute the unclaimed portion equally among ALL people
-                    const unclaimedCost = item.price - claimedCost;
-                    if (unclaimedCost > 0.001 && people.length > 0) {
-                        const sharePerPerson = unclaimedCost / people.length;
-                        people.forEach(p => {
-                            rawCosts[p.id] = (rawCosts[p.id] || 0) + sharePerPerson;
-                        });
-                    }
+                    totalUnassignedPrice += Math.max(0, itemPrice - totalAccountedFor);
                 }
-                totalItemCost += item.price;
             } else {
-                // No assignments at all → split full price equally among everyone
-                if (people.length > 0) {
-                    const share = item.price / people.length;
-                    people.forEach((p) => {
-                        rawCosts[p.id] = (rawCosts[p.id] || 0) + share;
-                    });
-                    totalItemCost += item.price;
-                }
+                // Item has no assignments at all - full price goes to unassigned pool.
+                totalUnassignedPrice += itemPrice;
             }
         });
+
+        // Determine who is "active" (accounted for).
+        // Default to everyone if no one has any assignments yet.
+        const effectiveSplitterIds = activePersonIds.size > 0
+            ? Array.from(activePersonIds)
+            : people.map(p => p.id);
+
+        // Distribute the unassigned costs (items and partial remainders) among active people only.
+        if (totalUnassignedPrice > 0.01 && effectiveSplitterIds.length > 0) {
+            const sharedShare = totalUnassignedPrice / effectiveSplitterIds.length;
+            effectiveSplitterIds.forEach(id => {
+                rawCosts[id] = (rawCosts[id] || 0) + sharedShare;
+            });
+        }
 
         // ============================================================
         // STEP 2: Calculate global extras (tax, service charge, etc.)
@@ -84,10 +94,6 @@ export const useBillState = () => {
         // STEP 3: Compute each person's TOTAL cost (base + extras)
         // ============================================================
         // Extras are distributed proportionally to each person's base cost.
-        // Formula: totalCost[p] = rawCost[p] + extras * (rawCost[p] / sumOfAllRawCosts)
-        //
-        // We use sumOfAllRawCosts (actual sum) rather than totalItemCost to
-        // guarantee that the distributed extras add up perfectly.
         const sumOfAllRawCosts = Object.values(rawCosts).reduce((a, b) => a + b, 0);
 
         const totalCosts: Record<string, number> = {};
@@ -96,9 +102,14 @@ export const useBillState = () => {
             if (sumOfAllRawCosts > 0) {
                 const ratio = baseCost / sumOfAllRawCosts;
                 totalCosts[p.id] = baseCost + (totalExtras * ratio);
-            } else if (people.length > 0) {
-                // Edge case: no items exist, but there are fixed charges
-                totalCosts[p.id] = totalExtras / people.length;
+            } else if (effectiveSplitterIds.length > 0) {
+                // Edge case: extras exist but no items assigned yet.
+                // Split only among effective splitters (active people).
+                if (effectiveSplitterIds.includes(p.id)) {
+                    totalCosts[p.id] = totalExtras / effectiveSplitterIds.length;
+                } else {
+                    totalCosts[p.id] = 0;
+                }
             } else {
                 totalCosts[p.id] = 0;
             }

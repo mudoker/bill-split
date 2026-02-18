@@ -69,13 +69,21 @@ export function ItemRow({ item }: { item: Item }) {
     const unitPrice = qty > 0 ? item.price / qty : 0;
     const assignments = item.assignments || {};
     const assignedPeopleIds = Object.keys(assignments);
-    const totalAssignedQty = Object.values(assignments).reduce((a, b) => a + b, 0);
+    const totalClaimedQty = Object.values(assignments).reduce((sum, pQty) => {
+        return sum + Math.min(pQty, qty);
+    }, 0);
 
     const getPersonShare = (pQty: number) => {
-        if (totalAssignedQty >= qty) {
-            return (pQty / totalAssignedQty) * item.price;
+        const cappedPQty = Math.min(pQty, qty);
+        if (totalClaimedQty <= 0) return 0;
+
+        if (totalClaimedQty >= qty) {
+            // Over-assigned/Exact: Split full price proportionally
+            return (cappedPQty / totalClaimedQty) * item.price;
+        } else {
+            // Under-assigned: Pay for your specific consumption
+            return (cappedPQty / qty) * item.price;
         }
-        return unitPrice * pQty;
     };
 
     return (
@@ -250,7 +258,7 @@ export function ItemRow({ item }: { item: Item }) {
                 {/* Person tags */}
                 {people.length > 0 && assignedPeopleIds.length > 0 && (
                     <>
-                        {people.filter(p => assignments[p.id] !== undefined).slice(0, 4).map(p => {
+                        {people.filter(p => assignments[p.id] !== undefined).slice(0, 10).map(p => {
                             const pQty = assignments[p.id];
                             return (
                                 <div
@@ -264,9 +272,17 @@ export function ItemRow({ item }: { item: Item }) {
                                 </div>
                             );
                         })}
-                        {assignedPeopleIds.length > 4 && (
-                            <span className="text-[10px] text-muted-foreground self-center bg-secondary px-1.5 py-0.5 rounded-full">
-                                +{assignedPeopleIds.length - 4}
+                        {assignedPeopleIds.length > 10 && (
+                            <span
+                                className="text-[10px] text-muted-foreground self-center bg-secondary px-1.5 py-0.5 rounded-full cursor-help hover:bg-secondary/80 transition-colors"
+                                title={people
+                                    .filter(p => assignments[p.id] !== undefined)
+                                    .slice(10)
+                                    .map(p => `${p.name} (${formatCurrency(getPersonShare(assignments[p.id]))})`)
+                                    .join("\n")
+                                }
+                            >
+                                +{assignedPeopleIds.length - 10}
                             </span>
                         )}
                     </>
