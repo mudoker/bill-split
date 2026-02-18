@@ -159,7 +159,17 @@ export const useBillStore = create<BillState>()(
                     globalCharges: state.globalCharges.filter(charge => charge.id !== id)
                 })),
 
-            setHostId: (id) => set({ hostId: id }),
+            setHostId: (id) => {
+                set((state) => ({
+                    hostId: id,
+                    // User Request: On switch to new host, clear their upfront paid amount.
+                    // This ensures they fall back to the "Pay Remaining" logic.
+                    people: state.people.map(p =>
+                        p.id === id ? { ...p, paidAmount: 0 } : p
+                    )
+                }));
+                get().saveToDb();
+            },
 
             resetBill: () => set({
                 people: [],
@@ -212,6 +222,7 @@ export const useBillStore = create<BillState>()(
                             currentBillId: result.id,
                             lastSaved: new Date().toISOString(),
                         });
+                        get().fetchHistory();
                         return result.id;
                     }
                 } catch (error) {

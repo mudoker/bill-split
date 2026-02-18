@@ -121,60 +121,99 @@ export const useBillState = () => {
         }
 
         // STEP 4: Net Settlement Calculation (Multi-creditor support)
-        // If paidAmount is specified, we use it. Otherwise we assume hostId paid everything.
-        const totalPaidInBill = people.reduce((sum, p) => sum + (p.paidAmount || 0), 0);
-        const assumesHost = totalPaidInBill < 0.01; // If no one paid anything, assume host paid total bill
+        const totalBill = totalItemCost + totalExtras;
+        let discrepancy = 0;
 
-        const settlementBalances: Record<string, number> = {};
+        // Determine effective paid amounts
+        const effectivePaidAmounts: Record<string, number> = {};
+        let totalPaidInBill = 0;
+
+        // Calculate total paid by everyone EXCEPT host
+        let othersPaid = 0;
         people.forEach(p => {
-            const payRecord = finalPayables[p.id] || 0;
-            // A person's 'net debt' is what they SHOULD pay (after sponsorship/surplus)
-            // minus what they ACTUALLY paid.
-            let actuallyPaid = p.paidAmount || 0;
-            if (assumesHost && p.id === hostId) actuallyPaid = totalItemCost + totalExtras;
-
-            settlementBalances[p.id] = actuallyPaid - payRecord;
-            if (payRecord === 0 && (p.sponsorAmount || 0) > 0) {
-                // Sponsors who over-sponsored (cost < sponsor) have payRecord = 0.
-                // Their 'paid' is essentially cost + sponsor (but they didn't really 'pay' it at table, they sponsored it).
-                // Actually if they sponsored more than their cost, they contributed to others.
-                // The surplus is already redistributed.
+            if (p.id !== hostId) {
+                othersPaid += (p.paidAmount || 0);
             }
         });
 
-        const flows: Array<{ from: string, to: string, amount: number }> = [];
-        const debtors = people.map(p => ({ id: p.id, balance: settlementBalances[p.id] })).filter(x => x.balance < -0.01);
-        const creditors = people.map(p => ({ id: p.id, balance: settlementBalances[p.id] })).filter(x => x.balance > 0.01);
+        // Determine Host's effective paid amount
+        people.forEach(p => {
+            if (p.id === hostId) {
+                // SIMPLIFIED LOGIC (User Request):
+                // We assume the Host pays the remaining bill amount, regardless of what input they may have entered.
+                // This prevents discrepancies and assumes the Host covers the table.
+                // Host Payment = Total Bill - (Sum of what everyone else paid)
+                effectivePaidAmounts[p.id] = Math.max(0, totalBill - othersPaid);
+            } else {
+                effectivePaidAmounts[p.id] = p.paidAmount || 0;
+            }
+            totalPaidInBill += effectivePaidAmounts[p.id];
+        });
 
-        // Simple greedy matching for settlement
-        const d_list = [...debtors];
-        const c_list = [...creditors];
+        // Check for discrepancy
+        // Target: SUM of FINAL PAYABLES (e.g. 12M).
+        // Actual Paid: Total Bill (e.g. 14M, because Host covers all).
+        // Difference: 2M (The Sponsored Amount).
+        // This 'Surplus' is not real cash surplus, it's the unrecoverable sponsorship cost the Host paid.
+        // To balance the settlement (Credits == Debts), we must deduct this from the Host's "Recoverable" payment.
 
-        let d_idx = 0;
-        let c_idx = 0;
+        const totalNetPayable = Object.values(finalPayables).reduce((acc, val) => acc + val, 0);
+        discrepancy = totalPaidInBill - totalNetPayable;
 
-        while (d_idx < d_list.length && c_idx < c_list.length) {
-            const d = d_list[d_idx];
-            const c = c_list[c_idx];
-            const amount = Math.min(Math.abs(d.balance), c.balance);
-
-            flows.push({ from: d.id, to: c.id, amount });
-
-            d.balance += amount;
-            c.balance -= amount;
-
-            if (Math.abs(d.balance) < 0.01) d_idx++;
-            if (c.balance < 0.01) c_idx++;
+        // Auto-correct Sponsorship Surplus
+        if (discrepancy > 0.01 && hostId) {
+            // If we have a surplus, and it matches the sponsorship amount approx?
+            // Actually, simplest rule: If Host paid extra, and that extra matches the "Sponsorship gap",
+            // we reduce Host's effective paid so they don't expect to be paid back for the sponsored items.
+            effectivePaidAmounts[hostId] -= discrepancy;
+            discrepancy = 0; // Clear the error flag
         }
+
+
+
+        const settlementBalances: Record<string, number> = {};
+        people.forEach(p => {
+            // Net Payable is what they occupy in cost (after surplus discount).
+            // A person's 'Balance' = What they Paid - What they Owe.
+            // +ve Balance = They Paid MORE than they Owe => Creditor (Receive money)
+            // -ve Balance = They Paid LESS than they Owe => Debtor (Pay money)
+            const whatTheyOwe = finalPayables[p.id] || 0;
+            const whatTheyPaid = effectivePaidAmounts[p.id] || 0;
+
+            settlementBalances[p.id] = whatTheyPaid - whatTheyOwe;
+        });
+
+        const flows: Array<{ from: string, to: string, amount: number }> = [];
+        // Filter out balances that are effectively 0
+        // HUB AND SPOKE MODEL (User Request):
+        // Everyone settles with the Host directly.
+        // - If you owe money (Balance < 0), you pay the Host.
+        // - If you are owed money (Balance > 0), the Host pays you.
+        // This simplifies the flow and avoids confusing peer-to-peer transfers (e.g. Jerry paying Alex).
+
+        people.forEach(p => {
+            if (p.id === hostId) return; // Skip Host (they are the hub)
+
+            const balance = settlementBalances[p.id] || 0;
+
+            if (balance < -0.01) {
+                // Debtor: Pays Host
+                flows.push({ from: p.id, to: hostId!, amount: Math.abs(balance) });
+            } else if (balance > 0.01) {
+                // Creditor: Receives from Host
+                flows.push({ from: hostId!, to: p.id, amount: balance });
+            }
+        });
 
         return {
             rawCosts,
             totalCosts,
             finalPayables,
             totalItemCost,
-            totalBill: totalItemCost + totalExtras,
+            totalBill,
             totalExtras,
             totalSurplus,
+            discrepancy,
             settlementFlows: flows
         };
     };
