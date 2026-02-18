@@ -12,6 +12,7 @@ import { deserializeState } from "@/lib/share";
 import { Eye } from "lucide-react";
 import { LandingPage } from "@/components/layout/landing-page";
 import { BillConfiguration } from "@/components/summary/bill-configuration";
+import { DiscrepancyBanner } from "@/components/shared/discrepancy-banner";
 
 function App() {
   const [view, setView] = useState<'landing' | 'editor' | 'summary'>('landing');
@@ -36,7 +37,8 @@ function App() {
     billName,
     location,
     setBillName,
-    setLocation
+    setLocation,
+    updatePerson
   } = useBillStore();
 
   // Handle URL parameters (Legacy v/e and New id)
@@ -63,7 +65,7 @@ function App() {
 
   // Auto-save logic
   useEffect(() => {
-    if (!isHydrated || isReadOnly || (view !== 'editor' && view !== 'summary')) return;
+    if (!isHydrated || isReadOnly) return;
 
     // Only auto-save if there's actual data
     if (people.length === 0 && items.length === 0) return;
@@ -204,12 +206,15 @@ function App() {
                       removeGlobalCharge={removeGlobalCharge}
                       setBillName={setBillName}
                       setLocation={setLocation}
+                      updatePerson={updatePerson}
                       onSave={saveToDb}
                     />
                     <ModeToggle />
                   </div>
                 </header>
               </div>
+
+              <DiscrepancyBanner />
 
               {/* Main Content - Flex Grow */}
               <main className="flex-1 w-full mx-auto container max-w-7xl md:p-8 md:pt-0 overflow-hidden relative flex flex-col">

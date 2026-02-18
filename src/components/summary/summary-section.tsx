@@ -31,6 +31,16 @@ export function SummarySection() {
     const { totalCosts, finalPayables, totalBill, totalExtras, totalSurplus, totalItemCost, settlementFlows } = calculate();
     const { pieData, barData, itemCostData } = buildChartData(people, items, totalCosts, finalPayables);
 
+
+
+
+
+
+
+
+
+
+
     // Verification: sum of all final payables + total surplus should equal total bill
     const sumFinalPayables = Object.values(finalPayables).reduce((a, b) => a + b, 0);
     const totalSponsored = people.reduce((sum, p) => sum + (p.sponsorAmount || 0), 0);
@@ -62,6 +72,8 @@ export function SummarySection() {
 
     return (
         <Card id="summary-card" className="w-full h-full flex flex-col border-none shadow-none md:border md:shadow-sm bg-background">
+
+
             <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4 md:px-6 md:pt-6 shrink-0">
                 <CardTitle className="text-xl font-black uppercase tracking-widest flex items-center gap-2 text-primary">
                     <Receipt className="w-5 h-5" /> Summary
@@ -222,8 +234,7 @@ export function SummarySection() {
                                     )}
                                 </div>
 
-                                {/* SETTLEMENT PLAN - MULTI CREDITOR SUPPORT */}
-                                {settlementFlows.length > 0 && (
+                                {people.length > 0 && (
                                     <div className="relative p-6 rounded-3xl bg-foreground/[0.02] border border-primary/10 overflow-hidden shadow-xl shadow-black/10 transition-all hover:bg-foreground/[0.03]">
                                         <div className="relative z-10">
                                             <div className="flex items-center justify-between mb-8">
@@ -237,53 +248,76 @@ export function SummarySection() {
                                             </div>
 
                                             <div className="space-y-4">
-                                                {settlementFlows.map((flow, idx) => {
-                                                    const debtor = people.find(p => p.id === flow.from);
-                                                    const creditor = people.find(p => p.id === flow.to);
-                                                    if (!debtor || !creditor) return null;
+                                                {settlementFlows.length > 0 ? (
+                                                    settlementFlows.map((flow, idx) => {
+                                                        const debtor = people.find(p => p.id === flow.from);
+                                                        const creditor = people.find(p => p.id === flow.to);
+                                                        if (!debtor || !creditor) return null;
 
-                                                    return (
-                                                        <div key={idx} className="flex items-center gap-4 bg-background/40 p-3 rounded-2xl border border-foreground/5 transition-transform hover:scale-[1.01]">
-                                                            <div className="flex flex-col items-center gap-1 min-w-[60px]">
-                                                                <div className="w-8 h-8 rounded-full bg-foreground/5 flex items-center justify-center font-black text-xs border border-foreground/10 text-foreground">
-                                                                    {debtor.name[0]}
+                                                        return (
+                                                            <div key={idx} className="flex items-center gap-4 bg-background/40 p-3 rounded-2xl border border-foreground/5 transition-transform hover:scale-[1.01]">
+                                                                <div className="flex flex-col items-center gap-1 min-w-[60px]">
+                                                                    <div className="w-8 h-8 rounded-full bg-foreground/5 flex items-center justify-center font-black text-xs border border-foreground/10 text-foreground">
+                                                                        {debtor.name[0]}
+                                                                    </div>
+                                                                    <span className="text-[9px] font-black uppercase tracking-tighter truncate max-w-[60px]">{debtor.name}</span>
                                                                 </div>
-                                                                <span className="text-[9px] font-black uppercase tracking-tighter truncate max-w-[60px]">{debtor.name}</span>
-                                                            </div>
 
-                                                            <div className="flex-1 flex flex-col items-center gap-1">
-                                                                <div className="text-sm font-black text-primary tabular-nums italic">{formatCurrency(flow.amount)}</div>
-                                                                <div className="w-full h-1 bg-primary/5 rounded-full overflow-hidden relative">
-                                                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/40 to-transparent animate-shimmer" />
-                                                                    <ArrowRight className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-primary opacity-50" />
+                                                                <div className="flex-1 flex flex-col items-center gap-1">
+                                                                    <div className="text-sm font-black text-primary tabular-nums italic">{formatCurrency(flow.amount)}</div>
+                                                                    <div className="w-full h-1 bg-primary/5 rounded-full overflow-hidden relative">
+                                                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/40 to-transparent animate-shimmer" />
+                                                                        <ArrowRight className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-primary opacity-50" />
+                                                                    </div>
+                                                                    <div className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1">
+                                                                        Transfer <ArrowRight className="w-2 h-2" />
+                                                                    </div>
                                                                 </div>
-                                                                <div className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1">
-                                                                    Transfer <ArrowRight className="w-2 h-2" />
-                                                                </div>
-                                                            </div>
 
-                                                            <div className="flex flex-col items-center gap-1 min-w-[60px]">
-                                                                <div className="w-8 h-8 rounded-full bg-primary text-black flex items-center justify-center font-black text-xs shadow-lg shadow-primary/20">
-                                                                    {creditor.name[0]}
+                                                                <div className="flex flex-col items-center gap-1 min-w-[60px]">
+                                                                    <div className="w-8 h-8 rounded-full bg-primary text-black flex items-center justify-center font-black text-xs shadow-lg shadow-primary/20">
+                                                                        {creditor.name[0]}
+                                                                    </div>
+                                                                    <span className="text-[9px] font-black uppercase tracking-tighter truncate max-w-[60px]">{creditor.name}</span>
                                                                 </div>
-                                                                <span className="text-[9px] font-black uppercase tracking-tighter truncate max-w-[60px]">{creditor.name}</span>
                                                             </div>
-                                                        </div>
-                                                    );
-                                                })}
+                                                        );
+                                                    })
+                                                ) : (
+                                                    <div className="text-center py-4 text-muted-foreground text-xs italic">
+                                                        No transfers needed. Everyone is settled!
+                                                    </div>
+                                                )}
                                             </div>
-                                        </div>
-                                    </div>
-                                )}
 
-                                {settlementFlows.length === 0 && people.length > 0 && (
-                                    <div className="flex flex-col items-center justify-center py-12 gap-4 rounded-3xl border border-emerald-500/10 bg-emerald-500/[0.02]">
-                                        <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                                            <CheckCircle2 className="w-6 h-6 text-primary" />
-                                        </div>
-                                        <div className="text-center space-y-1">
-                                            <p className="font-black text-sm uppercase tracking-widest text-primary">Balance Restored</p>
-                                            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Every cost is fully offset by contributions or sponsors.</p>
+                                            {/* Show Settled / Uninvolved People */}
+                                            {/* We filter out people who are part of any flow (as from or to) */}
+                                            {(() => {
+                                                const involvedIds = new Set<string>();
+                                                settlementFlows.forEach(f => {
+                                                    involvedIds.add(f.from);
+                                                    involvedIds.add(f.to);
+                                                });
+                                                const settledPeople = people.filter(p => !involvedIds.has(p.id));
+
+                                                if (settledPeople.length === 0) return null;
+
+                                                return (
+                                                    <div className="mt-6 pt-6 border-t border-foreground/5">
+                                                        <h5 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 opacity-60">Already Settled</h5>
+                                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                                            {settledPeople.map(p => (
+                                                                <div key={p.id} className="flex items-center gap-2 bg-foreground/[0.02] p-2 rounded-xl border border-transparent hover:border-emerald-500/20 transition-colors">
+                                                                    <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                                                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                                                    </div>
+                                                                    <span className="text-[10px] font-bold text-muted-foreground/80 truncate">{p.name}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 )}
