@@ -30,6 +30,7 @@ interface BillConfigurationProps {
     removeGlobalCharge: (id: string) => void;
     setBillName: (name: string) => void;
     setLocation: (location: string) => void;
+    updatePerson: (id: string, data: Partial<Person>) => void;
     onSave: () => Promise<any>;
 }
 
@@ -46,6 +47,7 @@ export function BillConfiguration({
     removeGlobalCharge,
     setBillName,
     setLocation,
+    updatePerson,
     onSave,
 }: BillConfigurationProps) {
     const [saving, setSaving] = useState(false);
@@ -174,6 +176,37 @@ export function BillConfiguration({
                                         ))}
                                     </SelectContent>
                                 </Select>
+                            </div>
+
+                            {/* Upfront Payments */}
+                            <div className="space-y-4">
+                                <Label className="text-[11px] font-black text-foreground/60 uppercase tracking-[0.2em] pl-1">Upfront Payments</Label>
+                                <div className="grid gap-3">
+                                    {people.map((p) => (
+                                        <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/10 border border-foreground/[0.03]">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-black text-xs text-primary border border-primary/20">
+                                                    {p.name[0]}
+                                                </div>
+                                                <span className="text-xs font-bold">{p.name}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                {p.id === hostId ? (
+                                                    <div className="h-9 px-3 flex items-center justify-center bg-primary/10 rounded-lg border border-primary/20">
+                                                        <span className="text-[10px] font-black text-primary uppercase">Pays Remaining</span>
+                                                    </div>
+                                                ) : (
+                                                    <CurrencyInput
+                                                        value={p.paidAmount || 0}
+                                                        onChange={(val) => updatePerson(p.id, { paidAmount: val })}
+                                                        className="w-32 h-9 text-right text-xs bg-background border-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-primary/40 rounded-lg font-bold tabular-nums"
+                                                        placeholder="0"
+                                                    />
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
 
                             {/* Extra Charges */}

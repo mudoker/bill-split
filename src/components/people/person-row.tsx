@@ -17,7 +17,7 @@ interface PersonRowProps {
 }
 
 export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps) {
-    const { isReadOnly } = useBillStore();
+    const { isReadOnly, hostId } = useBillStore();
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(person.name);
     const [editSponsor, setEditSponsor] = useState(person.sponsorAmount);
@@ -121,19 +121,28 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
             <div className="flex flex-col min-w-0 flex-1">
                 <span className="font-black text-sm tracking-tight text-foreground">{person.name}</span>
                 <div className="flex flex-wrap items-center gap-2 mt-1">
-                    {person.paidAmount > 0 && (
+                    {/* Host Badge - Pays Remaining */}
+                    {person.id === hostId && (
+                        <div className="flex items-center gap-1 px-2 py-0.5 bg-primary/10 rounded-full border border-primary/20">
+                            <span className="text-[10px] font-black text-primary tabular-nums uppercase">Pays Remaining</span>
+                        </div>
+                    )}
+
+                    {/* Guest Paid Badge (Only if NOT host) */}
+                    {person.id !== hostId && person.paidAmount > 0 && (
                         <div className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
                             <Banknote className="w-3 h-3 text-emerald-500" />
                             <span className="text-[10px] font-black text-emerald-500 tabular-nums uppercase">{formatCurrency(person.paidAmount)} paid</span>
                         </div>
                     )}
+
                     {person.sponsorAmount > 0 && (
                         <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 rounded-full border border-amber-500/20">
                             <Heart className="w-3 h-3 text-amber-500" />
                             <span className="text-[10px] font-black text-amber-500 tabular-nums uppercase">{formatCurrency(person.sponsorAmount)} spon.</span>
                         </div>
                     )}
-                    {!(person.paidAmount > 0) && !(person.sponsorAmount > 0) && !isReadOnly && (
+                    {!(person.paidAmount > 0) && !(person.sponsorAmount > 0) && !isReadOnly && person.id !== hostId && (
                         <button
                             className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-foreground/[0.05] border border-foreground/[0.1] text-[9px] font-black uppercase tracking-wider text-muted-foreground/70 hover:text-primary hover:border-primary/40 transition-all"
                             onClick={handleStartEdit}
