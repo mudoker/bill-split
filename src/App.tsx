@@ -40,8 +40,7 @@ function App() {
     setLocation,
     updatePerson,
     qrCode,
-    setQrCode,
-    loadSeedData
+    setQrCode
   } = useBillStore();
 
   // Handle URL parameters (Legacy v/e and New id)

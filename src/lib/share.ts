@@ -42,6 +42,6 @@ export function generateShareUrl(state: any, readOnly: boolean = true): string {
     }
     // Fallback to serialized state (legacy/offline support)
     const serialized = serializeState(state);
-    url.searchParams.set('v', serialized);
+    url.searchParams.set(readOnly ? 'v' : 'e', serialized);
     return url.toString();
 }
