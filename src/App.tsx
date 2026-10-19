@@ -156,7 +156,7 @@ function App() {
                     <AppLogo className="w-6 h-6 text-background" />
                   </div>
                   <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                    WeSplit
+                    Bill Split
                   </h1>
                 </div>
                 <ModeToggle />
