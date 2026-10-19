@@ -7,11 +7,12 @@ import { Plus, Clock, ChevronRight, Calculator, Receipt, Users as UsersIcon, Pla
 import { formatDistanceToNow } from 'date-fns';
 import { formatCurrency } from '@/lib/format';
 import { motion } from 'framer-motion';
+import { IS_DEV } from '@/lib/env';
 
 interface LandingPageProps {
     onNewBill: () => void;
     onSelectBill: (id: string | 'current') => void;
-    onLoadDemo: () => void;
+    onLoadDemo?: () => void;
 }
 
 export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPageProps) {
@@ -79,14 +80,16 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                         </Button>
                     </div>
 
-                    <Button
-                        onClick={onLoadDemo}
-                        variant="ghost"
-                        size="sm"
-                        className="text-xs font-bold text-muted-foreground hover:text-foreground gap-2 mt-2"
-                    >
-                        <Database className="w-3 h-3" /> Load Demo Data
-                    </Button>
+                    {IS_DEV && onLoadDemo && (
+                        <Button
+                            onClick={onLoadDemo}
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs font-bold text-muted-foreground hover:text-foreground gap-2 mt-2"
+                        >
+                            <Database className="w-3 h-3" /> Load Demo Data
+                        </Button>
+                    )}
                 </motion.div>
             </div>
 

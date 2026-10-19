@@ -13,6 +13,7 @@ import { Eye } from "lucide-react";
 import { LandingPage } from "@/components/layout/landing-page";
 import { BillConfiguration } from "@/components/summary/bill-configuration";
 import { DiscrepancyBanner } from "@/components/shared/discrepancy-banner";
+import { IS_DEV } from "@/lib/env";
 
 function App() {
   const [view, setView] = useState<'landing' | 'editor' | 'summary'>('landing');
@@ -137,7 +138,7 @@ function App() {
             <LandingPage
               onNewBill={handleStartNewBill}
               onSelectBill={handleSelectBill}
-              onLoadDemo={async () => {
+              onLoadDemo={IS_DEV ? async () => {
                 // Create a new demo bill via the API, then load it by id
                 const res = await fetch('/api/bills', {
                   method: 'POST',
@@ -167,7 +168,7 @@ function App() {
                   await fetchBill(result.id);
                   setView('editor');
                 }
-              }}
+              } : undefined}
             />
           </>
         ) : (

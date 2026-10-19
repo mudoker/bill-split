@@ -24,3 +24,8 @@ dist-ssr
 *.sln
 *.sw?
 bills.sqlite
+
+# Environment variables
+.env
+.env.*
+!.env.example
