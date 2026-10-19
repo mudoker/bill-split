@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { ItemsSection } from "@/components/items/items-section";
 import { PeopleSection } from "@/components/people/people-section";

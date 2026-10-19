@@ -9,7 +9,7 @@ const people = peopleNames.map(name => ({
     paidAmount: name === "Quoc (Host)" ? 5000000 : (name === "Alex" ? 1500000 : (name === "Duong" ? 1000000 : 0))
 }));
 
-const getPersonId = (name) => people.find(p => p.name === name).id;
+const getPersonId = (name: string) => people.find(p => p.name === name)?.id || '';
 
 const items = [
     {
@@ -103,6 +103,9 @@ try {
     console.log("ID:", result.id);
     console.log("Access via: http://localhost:5173/?id=" + result.id);
     console.log("Summary: 10 People, 7 High-value items, Complex Splits, Multiple pre-payments.");
-} catch (e) {
-    console.error("Network error:", e.message);
+} catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("Network error:", msg);
 }
+
+export {};

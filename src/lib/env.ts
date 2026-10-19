@@ -6,8 +6,12 @@ const metaEnv = typeof import.meta !== 'undefined' ? (import.meta as unknown as 
 const globalEnv = (globalThis as unknown as { process?: { env?: Record<string, string | undefined> } }).process?.env;
 
 const rawEnv = (
+  process.env.NEXT_PUBLIC_APP_ENV ||
+  process.env.VITE_APP_ENV ||
+  process.env.APP_ENV ||
   metaEnv?.VITE_APP_ENV ||
   metaEnv?.VITE_ENV ||
+  globalEnv?.NEXT_PUBLIC_APP_ENV ||
   globalEnv?.VITE_APP_ENV ||
   globalEnv?.APP_ENV ||
   ''

@@ -1,4 +1,4 @@
-import { Database } from 'bun:sqlite';
+import { DatabaseSync } from 'node:sqlite';
 import type { DatabaseAdapter, BillDetail, BillPayload, BillSummary } from './types';
 
 interface BillRow {
@@ -52,15 +52,15 @@ interface BillSummaryRow {
 
 export class SqliteAdapter implements DatabaseAdapter {
   readonly type = 'sqlite' as const;
-  private db: Database;
+  private db: DatabaseSync;
 
   constructor(filePath = 'bills.sqlite') {
-    this.db = new Database(filePath, { create: true });
-    this.db.run('PRAGMA foreign_keys = ON;');
+    this.db = new DatabaseSync(filePath);
+    this.db.exec('PRAGMA foreign_keys = ON;');
   }
 
   async init(): Promise<void> {
-    this.db.run(`
+    this.db.exec(`
       CREATE TABLE IF NOT EXISTS bills (
         id TEXT PRIMARY KEY,
         name TEXT,
@@ -69,10 +69,8 @@ export class SqliteAdapter implements DatabaseAdapter {
         qr_code TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+      );
 
-    this.db.run(`
       CREATE TABLE IF NOT EXISTS people (
         id TEXT PRIMARY KEY,
         bill_id TEXT,
@@ -80,10 +78,8 @@ export class SqliteAdapter implements DatabaseAdapter {
         sponsor_amount REAL DEFAULT 0,
         paid_amount REAL DEFAULT 0,
         FOREIGN KEY(bill_id) REFERENCES bills(id) ON DELETE CASCADE
-      )
-    `);
+      );
 
-    this.db.run(`
       CREATE TABLE IF NOT EXISTS items (
         id TEXT PRIMARY KEY,
         bill_id TEXT,
@@ -91,10 +87,8 @@ export class SqliteAdapter implements DatabaseAdapter {
         price REAL NOT NULL,
         quantity REAL DEFAULT 1,
         FOREIGN KEY(bill_id) REFERENCES bills(id) ON DELETE CASCADE
-      )
-    `);
+      );
 
-    this.db.run(`
       CREATE TABLE IF NOT EXISTS item_assignments (
         item_id TEXT,
         person_id TEXT,
@@ -102,10 +96,8 @@ export class SqliteAdapter implements DatabaseAdapter {
         PRIMARY KEY (item_id, person_id),
         FOREIGN KEY(item_id) REFERENCES items(id) ON DELETE CASCADE,
         FOREIGN KEY(person_id) REFERENCES people(id) ON DELETE CASCADE
-      )
-    `);
+      );
 
-    this.db.run(`
       CREATE TABLE IF NOT EXISTS global_charges (
         id TEXT PRIMARY KEY,
         bill_id TEXT,
@@ -113,18 +105,18 @@ export class SqliteAdapter implements DatabaseAdapter {
         type TEXT NOT NULL,
         amount REAL NOT NULL,
         FOREIGN KEY(bill_id) REFERENCES bills(id) ON DELETE CASCADE
-      )
+      );
     `);
   }
 
   async getBill(id: string): Promise<BillDetail | null> {
-    const bill = this.db.query('SELECT * FROM bills WHERE id = ?').get(id) as BillRow | null;
+    const bill = this.db.prepare('SELECT * FROM bills WHERE id = ?').get(id) as unknown as BillRow | undefined;
     if (!bill) return null;
 
     const people = (
-      this.db.query(
+      this.db.prepare(
         'SELECT id, name, sponsor_amount as sponsorAmount, paid_amount as paidAmount FROM people WHERE bill_id = ?'
-      ).all(id) as PersonRow[]
+      ).all(id) as unknown as PersonRow[]
     ).map(p => ({
       id: String(p.id),
       name: String(p.name),
@@ -133,9 +125,9 @@ export class SqliteAdapter implements DatabaseAdapter {
     }));
 
     const globalCharges = (
-      this.db.query(
+      this.db.prepare(
         'SELECT id, name, type, amount FROM global_charges WHERE bill_id = ?'
-      ).all(id) as ChargeRow[]
+      ).all(id) as unknown as ChargeRow[]
     ).map(gc => ({
       id: String(gc.id),
       name: String(gc.name),
@@ -143,11 +135,11 @@ export class SqliteAdapter implements DatabaseAdapter {
       amount: Number(gc.amount || 0),
     }));
 
-    const itemsRaw = this.db.query('SELECT id, name, price, quantity FROM items WHERE bill_id = ?').all(id) as ItemRow[];
+    const itemsRaw = this.db.prepare('SELECT id, name, price, quantity FROM items WHERE bill_id = ?').all(id) as unknown as ItemRow[];
     const items = itemsRaw.map(item => {
-      const assignmentsRows = this.db.query(
+      const assignmentsRows = this.db.prepare(
         'SELECT person_id, quantity FROM item_assignments WHERE item_id = ?'
-      ).all(item.id) as AssignmentRow[];
+      ).all(item.id) as unknown as AssignmentRow[];
       const assignments: Record<string, number> = {};
       assignmentsRows.forEach(row => {
         assignments[row.person_id] = Number(row.quantity);
@@ -180,59 +172,63 @@ export class SqliteAdapter implements DatabaseAdapter {
   async saveBill(billId: string, data: BillPayload): Promise<void> {
     const { name = null, location = null, people = [], items = [], globalCharges = [], hostId = null, qrCode = null } = data;
 
-    this.db.transaction(() => {
-      const existing = this.db.query('SELECT id FROM bills WHERE id = ?').get(billId);
+    this.db.exec('BEGIN TRANSACTION;');
+    try {
+      const existing = this.db.prepare('SELECT id FROM bills WHERE id = ?').get(billId);
       if (existing) {
-        this.db.run(
-          'UPDATE bills SET name = ?, location = ?, host_id = ?, qr_code = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-          [name, location, hostId, qrCode, billId]
-        );
+        this.db.prepare(
+          'UPDATE bills SET name = ?, location = ?, host_id = ?, qr_code = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+        ).run(name, location, hostId, qrCode, billId);
       } else {
-        this.db.run(
-          'INSERT INTO bills (id, name, location, host_id, qr_code) VALUES (?, ?, ?, ?, ?)',
-          [billId, name, location, hostId, qrCode]
-        );
+        this.db.prepare(
+          'INSERT INTO bills (id, name, location, host_id, qr_code) VALUES (?, ?, ?, ?, ?)'
+        ).run(billId, name, location, hostId, qrCode);
       }
 
-      this.db.run('DELETE FROM item_assignments WHERE item_id IN (SELECT id FROM items WHERE bill_id = ?)', [billId]);
-      this.db.run('DELETE FROM people WHERE bill_id = ?', [billId]);
-      this.db.run('DELETE FROM items WHERE bill_id = ?', [billId]);
-      this.db.run('DELETE FROM global_charges WHERE bill_id = ?', [billId]);
+      this.db.prepare('DELETE FROM item_assignments WHERE item_id IN (SELECT id FROM items WHERE bill_id = ?)').run(billId);
+      this.db.prepare('DELETE FROM people WHERE bill_id = ?').run(billId);
+      this.db.prepare('DELETE FROM items WHERE bill_id = ?').run(billId);
+      this.db.prepare('DELETE FROM global_charges WHERE bill_id = ?').run(billId);
 
+      const insertPerson = this.db.prepare(
+        'INSERT INTO people (id, bill_id, name, sponsor_amount, paid_amount) VALUES (?, ?, ?, ?, ?)'
+      );
       for (const p of people) {
-        this.db.run(
-          'INSERT INTO people (id, bill_id, name, sponsor_amount, paid_amount) VALUES (?, ?, ?, ?, ?)',
-          [p.id, billId, p.name, Number(p.sponsorAmount || 0), Number(p.paidAmount || 0)]
-        );
+        insertPerson.run(p.id, billId, p.name, Number(p.sponsorAmount || 0), Number(p.paidAmount || 0));
       }
 
+      const insertItem = this.db.prepare(
+        'INSERT INTO items (id, bill_id, name, price, quantity) VALUES (?, ?, ?, ?, ?)'
+      );
+      const insertAssignment = this.db.prepare(
+        'INSERT INTO item_assignments (item_id, person_id, quantity) VALUES (?, ?, ?)'
+      );
       for (const item of items) {
-        this.db.run(
-          'INSERT INTO items (id, bill_id, name, price, quantity) VALUES (?, ?, ?, ?, ?)',
-          [item.id, billId, item.name, Number(item.price || 0), Number(item.quantity || 1)]
-        );
+        insertItem.run(item.id, billId, item.name, Number(item.price || 0), Number(item.quantity || 1));
 
         if (item.assignments) {
           for (const [pId, qty] of Object.entries(item.assignments)) {
-            this.db.run(
-              'INSERT INTO item_assignments (item_id, person_id, quantity) VALUES (?, ?, ?)',
-              [item.id, pId, Number(qty || 0)]
-            );
+            insertAssignment.run(item.id, pId, Number(qty || 0));
           }
         }
       }
 
+      const insertCharge = this.db.prepare(
+        'INSERT INTO global_charges (id, bill_id, name, type, amount) VALUES (?, ?, ?, ?, ?)'
+      );
       for (const gc of globalCharges) {
-        this.db.run(
-          'INSERT INTO global_charges (id, bill_id, name, type, amount) VALUES (?, ?, ?, ?, ?)',
-          [gc.id, billId, gc.name, gc.type, Number(gc.amount || 0)]
-        );
+        insertCharge.run(gc.id, billId, gc.name, gc.type, Number(gc.amount || 0));
       }
-    })();
+
+      this.db.exec('COMMIT;');
+    } catch (err) {
+      this.db.exec('ROLLBACK;');
+      throw err;
+    }
   }
 
   async listBills(): Promise<BillSummary[]> {
-    const query = this.db.query(`
+    const query = this.db.prepare(`
       SELECT
         b.id,
         b.created_at,
@@ -248,7 +244,7 @@ export class SqliteAdapter implements DatabaseAdapter {
       ORDER BY b.updated_at DESC
     `);
 
-    const bills = query.all() as BillSummaryRow[];
+    const bills = query.all() as unknown as BillSummaryRow[];
 
     return bills.map(b => {
       let total = Number(b.subtotal || 0);
