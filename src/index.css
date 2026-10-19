@@ -60,15 +60,15 @@
   }
 
 
-  /* Remove default number input arrows */
-  input[type=number]::-webkit-inner-spin-button,
-  input[type=number]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+  /* Remove default number input spin arrows across all browsers */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
   }
 
-  input[type=number] {
-    -moz-appearance: textfield;
-    appearance: none;
+  input[type="number"] {
+    -moz-appearance: textfield !important;
+    appearance: textfield !important;
   }
 }

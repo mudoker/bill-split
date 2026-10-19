@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
-import { MoreHorizontal, Trash2, Edit2, Users, Check, X } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit2, Users, Check, X, Plus, Minus } from "lucide-react";
 import { useBillStore, type Item } from "@/store/useBillStore";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/format";
@@ -18,10 +18,18 @@ export function ItemRow({ item }: { item: Item }) {
     const [quantity, setQuantity] = useState(item.quantity?.toString() || "1");
 
     const handleSave = () => {
+        const newQty = Math.max(1, parseInt(quantity) || 1);
+        const assignments = item.assignments || {};
+        const clampedAssignments: Record<string, number> = {};
+        for (const [pId, pVal] of Object.entries(assignments)) {
+            clampedAssignments[pId] = Math.max(1, Math.min(newQty, Math.round(Number(pVal) || 1)));
+        }
+
         updateItem(item.id, {
             name: name.trim() || item.name,
             price,
-            quantity: Math.max(1, parseInt(quantity) || 1),
+            quantity: newQty,
+            assignments: clampedAssignments,
         });
         setIsEditing(false);
     };
@@ -45,15 +53,18 @@ export function ItemRow({ item }: { item: Item }) {
         updateItem(item.id, { assignments: newAssignments });
     };
 
-    const updatePersonQty = (personId: string, qty: number) => {
+    const updatePersonQty = (personId: string, qtyVal: number) => {
         if (isReadOnly) return;
+        const maxQty = Math.max(1, Math.round(item.quantity || 1));
+        const sanitizedQty = Math.max(1, Math.min(maxQty, Math.round(qtyVal)));
         const assignments = item.assignments || {};
-        const newAssignments = { ...assignments, [personId]: Math.max(0.1, qty) };
+        const newAssignments = { ...assignments, [personId]: sanitizedQty };
         updateItem(item.id, { assignments: newAssignments });
     };
 
     const toggleAll = () => {
         if (isReadOnly) return;
+        const maxQty = Math.max(1, Math.round(item.quantity || 1));
         const assignments = item.assignments || {};
         const allAssignedCount = people.filter(p => assignments[p.id] !== undefined).length;
         const everyoneAssigned = people.length > 0 && allAssignedCount === people.length;
@@ -63,7 +74,7 @@ export function ItemRow({ item }: { item: Item }) {
         } else {
             const newAssignments: Record<string, number> = {};
             people.forEach(p => {
-                newAssignments[p.id] = assignments[p.id] || 1;
+                newAssignments[p.id] = Math.max(1, Math.min(maxQty, Math.round(Number(assignments[p.id]) || 1)));
             });
             updateItem(item.id, { assignments: newAssignments });
         }
@@ -256,22 +267,59 @@ export function ItemRow({ item }: { item: Item }) {
                                                         </div>
                                                     )}
                                                 </div>
-                                                {isSelected && (
-                                                    <div className="flex items-center gap-1.5 shrink-0 bg-background/50 px-2 py-1 rounded-lg border border-foreground/5">
+                                                {isSelected && qty > 1 && (
+                                                    <div
+                                                        className="flex items-center gap-1 shrink-0 bg-background/80 px-2 py-1 rounded-xl border border-foreground/10 hover:border-foreground/20 transition-all shadow-sm"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
                                                         {isReadOnly ? (
-                                                            <span className="text-[11px] font-black text-foreground tabular-nums">×{pQty}</span>
+                                                            <span className="text-[11px] font-black text-foreground tabular-nums px-1">
+                                                                ×{Math.round(pQty)}
+                                                            </span>
                                                         ) : (
-                                                            <Input
-                                                                type="number"
-                                                                value={pQty}
-                                                                onChange={(e) => updatePersonQty(p.id, parseFloat(e.target.value) || 0.1)}
-                                                                className="h-7 w-12 text-[11px] p-0 text-center font-black bg-transparent border-none focus-visible:ring-0 tabular-nums"
-                                                                step={0.5}
-                                                                min={0.1}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                            />
+                                                            <div className="flex items-center gap-0.5">
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={Math.round(pQty) <= 1}
+                                                                    className="h-5 w-5 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        updatePersonQty(p.id, Math.round(pQty || 1) - 1);
+                                                                    }}
+                                                                    title="Decrease quantity"
+                                                                >
+                                                                    <Minus className="w-2.5 h-2.5" />
+                                                                </button>
+                                                                <Input
+                                                                    type="number"
+                                                                    value={Math.round(pQty)}
+                                                                    onChange={(e) => {
+                                                                        const parsed = parseInt(e.target.value, 10);
+                                                                        updatePersonQty(p.id, isNaN(parsed) ? 1 : parsed);
+                                                                    }}
+                                                                    className="h-6 w-8 text-[11px] p-0 text-center font-black bg-transparent border-none focus-visible:ring-0 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                    step={1}
+                                                                    min={1}
+                                                                    max={qty}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={Math.round(pQty) >= qty}
+                                                                    className="h-5 w-5 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        updatePersonQty(p.id, Math.round(pQty || 1) + 1);
+                                                                    }}
+                                                                    title="Increase quantity"
+                                                                >
+                                                                    <Plus className="w-2.5 h-2.5" />
+                                                                </button>
+                                                            </div>
                                                         )}
-                                                        <span className="text-[8px] font-black uppercase tracking-tighter text-muted-foreground">parts</span>
+                                                        <span className="text-[9px] font-black uppercase tracking-tighter text-muted-foreground/70 pr-0.5 select-none">
+                                                            / {qty}
+                                                        </span>
                                                     </div>
                                                 )}
                                             </div>
@@ -305,7 +353,7 @@ export function ItemRow({ item }: { item: Item }) {
                                     )}
                                 >
                                     <span className="truncate max-w-[60px]">{p.name}</span>
-                                    {pQty !== 1 && <span className="text-amber-500 opacity-90">×{pQty}</span>}
+                                    {qty > 1 && Math.round(pQty) > 1 && <span className="text-amber-500 opacity-90">×{Math.round(pQty)}</span>}
                                 </div>
                             );
                         })}
