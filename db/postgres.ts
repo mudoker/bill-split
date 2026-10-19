@@ -220,7 +220,7 @@ export class PostgresAdapter implements DatabaseAdapter {
       // Insert global charges
       for (const gc of globalCharges) {
         await client.query(
-          'INSERT INTO global_charges (id, bill_id, name, type, amount) VALUES ($1, $2, $3, $4)',
+          'INSERT INTO global_charges (id, bill_id, name, type, amount) VALUES ($1, $2, $3, $4, $5)',
           [gc.id, billId, gc.name, gc.type, Number(gc.amount || 0)]
         );
       }
