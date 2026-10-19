@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, TableIcon, BarChart3, PieChartIcon, CheckCircle2, AlertTriangle, Share2, Eye, Copy, Receipt, Tag, TrendingUp, Wallet, LayoutGrid, ArrowRight, QrCode } from "lucide-react";
+import { Download, TableIcon, BarChart3, PieChartIcon, CheckCircle2, AlertTriangle, Share2, Eye, Copy, Receipt, Tag, TrendingUp, Wallet, LayoutGrid, ArrowRight, QrCode, MapPin } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -29,6 +29,8 @@ export function SummarySection() {
         calculate,
         currentBillId,
         qrCode,
+        billName,
+        location,
     } = useBillState();
 
     const [copiedView, setCopiedView] = useState(false);
@@ -57,7 +59,8 @@ export function SummarySection() {
         if (element) {
             const canvas = await html2canvas(element, { scale: 2 });
             const link = document.createElement('a');
-            link.download = 'bill-summary.png';
+            const sanitizedName = billName ? billName.trim().toLowerCase().replace(/[^a-z0-9_-]+/gi, '-') : 'bill';
+            link.download = `${sanitizedName}-summary.png`;
             link.href = canvas.toDataURL();
             link.click();
         }
@@ -75,9 +78,17 @@ export function SummarySection() {
 
 
             <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4 md:px-6 md:pt-6 shrink-0">
-                <CardTitle className="text-xl font-black uppercase tracking-widest flex items-center gap-2 text-primary">
-                    <Receipt className="w-5 h-5" /> Summary
-                </CardTitle>
+                <div className="space-y-0.5">
+                    <CardTitle className="text-xl font-black uppercase tracking-widest flex items-center gap-2 text-primary">
+                        <Receipt className="w-5 h-5" /> {billName || "Summary"}
+                    </CardTitle>
+                    {location && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 font-medium pl-7">
+                            <MapPin className="w-3.5 h-3.5 text-primary/70 shrink-0" />
+                            <span>{location}</span>
+                        </p>
+                    )}
+                </div>
                 <div className="flex gap-1.5 print:hidden" data-html2canvas-ignore>
                     {qrCode && (
                         <Dialog>

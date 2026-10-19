@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useBillStore } from "@/store/useBillStore";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,15 +9,17 @@ import { formatCurrency } from '@/lib/format';
 import { motion } from 'framer-motion';
 import { IS_DEV } from '@/lib/env';
 import { AppLogo } from '@/components/shared/app-logo';
+import { CreateBillModal, type CreateBillFormData } from '@/components/shared/create-bill-modal';
 
 interface LandingPageProps {
-    onNewBill: () => void;
+    onNewBill: (data: CreateBillFormData) => void;
     onSelectBill: (id: string | 'current') => void;
     onLoadDemo?: () => void;
 }
 
 export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPageProps) {
-    const { billHistory, fetchHistory, isHydrated, people, items } = useBillStore();
+    const { billHistory, fetchHistory, isHydrated, people, items, dbStatus } = useBillStore();
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     useEffect(() => {
         if (isHydrated) {
@@ -73,13 +75,19 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                             </Button>
                         )}
                         <Button
-                            onClick={onNewBill}
+                            onClick={() => setIsCreateModalOpen(true)}
                             size="lg"
                             className="h-14 px-8 text-lg font-bold gap-2 rounded-2xl shadow-xl shadow-foreground/10 transition-all hover:scale-105 active:scale-95 bg-foreground text-background hover:bg-foreground/90"
                         >
                             <Plus className="w-6 h-6" /> Start New
                         </Button>
                     </div>
+
+                    <CreateBillModal
+                        open={isCreateModalOpen}
+                        onOpenChange={setIsCreateModalOpen}
+                        onSubmit={onNewBill}
+                    />
 
                     {IS_DEV && onLoadDemo && (
                         <Button
@@ -101,7 +109,47 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                         <Clock className="w-4 h-4 text-muted-foreground" />
                         <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Recent Transactions</h2>
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground uppercase">Local DB</span>
+                    {(() => {
+                        if (!dbStatus.isOnline) {
+                            return (
+                                <span
+                                    className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 uppercase tracking-wider"
+                                    title="Backend server is offline. Run 'bun run dev' or 'bun run server'"
+                                >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Server Offline
+                                </span>
+                            );
+                        }
+                        if (dbStatus.type === 'neon') {
+                            return (
+                                <span
+                                    className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider"
+                                    title="Connected to Neon PostgreSQL Database"
+                                >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Neon DB
+                                </span>
+                            );
+                        }
+                        if (dbStatus.type === 'postgres') {
+                            return (
+                                <span
+                                    className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider"
+                                    title="Connected to PostgreSQL Database"
+                                >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" /> PostgreSQL
+                                </span>
+                            );
+                        }
+                        return (
+                            <span
+                                className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground uppercase tracking-wider"
+                                title={dbStatus.isFallback ? `Fallback active: ${dbStatus.fallbackReason}` : "Using local SQLite database. Set DATABASE_URL in .env to connect to Neon."}
+                            >
+                                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
+                                {dbStatus.isFallback ? 'Fallback (SQLite)' : 'Local SQLite'}
+                            </span>
+                        );
+                    })()}
                 </div>
 
                 <ScrollArea className="flex-1 pr-4">

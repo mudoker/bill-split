@@ -32,6 +32,14 @@ export interface BillHistoryItem {
     totalAmount?: number;
 }
 
+export interface DbStatus {
+    configured: boolean;
+    type: 'neon' | 'postgres' | 'sqlite';
+    isFallback: boolean;
+    fallbackReason: string | null;
+    isOnline: boolean;
+}
+
 interface BillState {
     people: Person[];
     items: Item[];
@@ -43,6 +51,7 @@ interface BillState {
     lastSaved: string | null;
     isSaving: boolean;
     billHistory: BillHistoryItem[];
+    dbStatus: DbStatus;
     billName: string;
     location: string;
     qrCode: string | null;
@@ -72,6 +81,7 @@ interface BillState {
     saveToDb: () => Promise<string | null>;
     fetchBill: (id: string) => Promise<void>;
     fetchHistory: () => Promise<void>;
+    fetchDbStatus: () => Promise<void>;
     loadSeedData: () => void;
 }
 
@@ -88,6 +98,13 @@ export const useBillStore = create<BillState>()(
             lastSaved: null,
             isSaving: false,
             billHistory: [],
+            dbStatus: {
+                configured: false,
+                type: 'sqlite',
+                isFallback: false,
+                fallbackReason: null,
+                isOnline: true,
+            },
             billName: '',
             location: '',
             qrCode: null,
@@ -175,21 +192,21 @@ export const useBillStore = create<BillState>()(
                 get().saveToDb();
             },
 
-            resetBill: () => set({
+            resetBill: () => set((state) => ({
                 people: [],
                 items: [],
                 globalCharges: [],
                 hostId: null,
                 isReadOnly: false,
-                isHydrated: false,
+                isHydrated: true,
                 currentBillId: null,
                 lastSaved: null,
                 isSaving: false,
-                billHistory: [],
+                billHistory: state.billHistory,
                 billName: '',
                 location: '',
                 qrCode: null
-            }),
+            })),
 
             loadState: (data, readonly) => set((state) => ({
                 ...state,
@@ -263,6 +280,7 @@ export const useBillStore = create<BillState>()(
             },
 
             fetchHistory: async () => {
+                get().fetchDbStatus();
                 try {
                     const response = await fetch('/api/bills');
                     if (!response.ok) throw new Error("Failed to fetch history");
@@ -270,6 +288,27 @@ export const useBillStore = create<BillState>()(
                     set({ billHistory: data });
                 } catch (error) {
                     console.error("Failed to fetch history:", error);
+                }
+            },
+
+            fetchDbStatus: async () => {
+                try {
+                    const response = await fetch('/api/health');
+                    if (!response.ok) throw new Error("Health check failed");
+                    const data = await response.json();
+                    set({
+                        dbStatus: {
+                            ...data.database,
+                            isOnline: true,
+                        }
+                    });
+                } catch {
+                    set((state) => ({
+                        dbStatus: {
+                            ...state.dbStatus,
+                            isOnline: false,
+                        }
+                    }));
                 }
             },
 

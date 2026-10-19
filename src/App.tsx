@@ -4,7 +4,7 @@ import { PeopleSection } from "@/components/people/people-section";
 import { SummarySection } from "@/components/summary/summary-section";
 import { ModeToggle } from "@/components/layout/mode-toggle";
 import { ThemeProvider } from "@/components/layout/theme-provider";
-import { Users, Receipt, CreditCard, ArrowLeft } from "lucide-react";
+import { Users, Receipt, CreditCard, ArrowLeft, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useBillStore } from "@/store/useBillStore";
@@ -15,10 +15,20 @@ import { BillConfiguration } from "@/components/summary/bill-configuration";
 import { DiscrepancyBanner } from "@/components/shared/discrepancy-banner";
 import { IS_DEV } from "@/lib/env";
 import { AppLogo } from "@/components/shared/app-logo";
+import { CreateBillModal, type CreateBillFormData } from "@/components/shared/create-bill-modal";
 
 function App() {
-  const [view, setView] = useState<'landing' | 'editor' | 'summary'>('landing');
+  const [view, setView] = useState<'landing' | 'editor' | 'summary'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('id') || params.get('v') || params.get('e')) {
+        return 'editor';
+      }
+    }
+    return 'landing';
+  });
   const [mobileTab, setMobileTab] = useState<'people' | 'items' | 'summary'>('items');
+  const [isReadOnlyModalOpen, setIsReadOnlyModalOpen] = useState(false);
   const {
     isReadOnly,
     isHydrated,
@@ -55,7 +65,6 @@ function App() {
     const editData = params.get('e');
 
     if (id || viewData || editData) {
-      setView('editor');
       if (id) {
         fetchBill(id);
       } else if (viewData || editData) {
@@ -81,15 +90,32 @@ function App() {
     return () => clearTimeout(timer);
   }, [people, items, globalCharges, hostId, isHydrated, isReadOnly, saveToDb, view]);
 
-  const handleBackToLanding = () => {
+  const handleBackToLanding = async () => {
+    if (!isReadOnly && (people.length > 0 || items.length > 0)) {
+      await saveToDb();
+    }
     // Clear URL params without reload
     window.history.pushState({}, '', window.location.origin);
-    fetchHistory();
+    await fetchHistory();
     setView('landing');
   };
 
-  const handleStartNewBill = () => {
+  const handleStartNewBill = (data?: CreateBillFormData) => {
     resetBill();
+    const cleanName = data?.name?.trim() || 'New Bill';
+    setBillName(cleanName);
+    if (data?.location?.trim()) {
+      setLocation(data.location.trim());
+    }
+    if (data?.hostName?.trim()) {
+      const hostId = crypto.randomUUID();
+      useBillStore.setState({
+        people: [
+          { id: hostId, name: data.hostName.trim(), sponsorAmount: 0, paidAmount: 0 },
+        ],
+        hostId: hostId,
+      });
+    }
     useBillStore.getState().setHydrated(true);
     setView('editor');
   };
@@ -182,15 +208,18 @@ function App() {
                   variant="outline"
                   size="sm"
                   className="h-7 text-[10px] ml-4 hover:bg-foreground/5"
-                  onClick={() => {
-                    handleStartNewBill();
-                    setView('editor');
-                  }}
+                  onClick={() => setIsReadOnlyModalOpen(true)}
                 >
                   New Bill
                 </Button>
               </div>
             )}
+
+            <CreateBillModal
+              open={isReadOnlyModalOpen}
+              onOpenChange={setIsReadOnlyModalOpen}
+              onSubmit={handleStartNewBill}
+            />
 
               {/* Header - Fixed */}
               <div className="flex-none p-4 md:p-8 md:pb-0 container mx-auto max-w-7xl w-full">
@@ -200,18 +229,24 @@ function App() {
                       <ArrowLeft className="w-5 h-5" />
                     </Button>
                     <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-primary rounded-2xl shadow-xl shadow-primary/20">
+                      <div className="p-2.5 bg-primary rounded-2xl shadow-xl shadow-primary/20 shrink-0">
                         <AppLogo className="w-6 h-6 text-black" />
                       </div>
-                      <div>
-                        <h1 className="text-2xl font-black tracking-tighter text-foreground uppercase italic px-1">
-                          WeSplit
-                        </h1>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[9px] text-primary border border-primary/20 uppercase font-black tracking-[0.2em] bg-primary/5 px-2 py-0.5 rounded-full">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h1 className="text-xl md:text-2xl font-black tracking-tight text-foreground truncate max-w-[200px] sm:max-w-xs md:max-w-md">
+                            {billName || "Untitled Bill"}
+                          </h1>
+                          <span className="text-[9px] text-primary border border-primary/20 uppercase font-black tracking-[0.2em] bg-primary/5 px-2 py-0.5 rounded-full shrink-0">
                             {currentBillId ? `SESSION ${currentBillId.slice(0, 8)}` : "LIVE SESSION"}
                           </span>
                         </div>
+                        {location && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 font-medium truncate mt-0.5">
+                            <MapPin className="w-3.5 h-3.5 text-primary/70 shrink-0" />
+                            <span className="truncate">{location}</span>
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -1,4 +1,6 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config();
+dotenv.config({ path: '.env.local', override: true });
 import { SqliteAdapter } from '../db/sqlite';
 import { PostgresAdapter } from '../db/postgres';
 
