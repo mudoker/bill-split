@@ -6,7 +6,7 @@ import { PeopleSection } from "@/components/people/people-section";
 import { SummarySection } from "@/components/summary/summary-section";
 import { ModeToggle } from "@/components/layout/mode-toggle";
 import { ThemeProvider } from "@/components/layout/theme-provider";
-import { Users, Receipt, CreditCard, ArrowLeft, MapPin } from "lucide-react";
+import { Users, Receipt, CreditCard, ArrowLeft, MapPin, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useBillStore } from "@/store/useBillStore";
@@ -167,7 +167,24 @@ function App() {
                     Bill Split
                   </h1>
                 </div>
-                <ModeToggle />
+                <div className="flex items-center gap-2">
+                  <a
+                    href="https://github.com/mudoker/bill-split"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="View GitHub repository"
+                  >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 h-9 rounded-xl border-foreground/10 hover:bg-foreground/5 font-bold transition-all text-xs"
+                    >
+                      <Github className="w-4 h-4" />
+                      <span className="hidden sm:inline">GitHub</span>
+                    </Button>
+                  </a>
+                  <ModeToggle />
+                </div>
               </header>
             </div>
             <LandingPage
@@ -325,6 +342,20 @@ function App() {
                       qrCode={qrCode}
                       setQrCode={setQrCode}
                     />
+                    <a
+                      href="https://github.com/mudoker/bill-split"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="View GitHub repository"
+                    >
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 rounded-xl border-foreground/10 hover:bg-foreground/5"
+                      >
+                        <Github className="w-4 h-4" />
+                      </Button>
+                    </a>
                     <ModeToggle />
                   </div>
                 </header>
