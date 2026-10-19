@@ -136,8 +136,8 @@ export function ResizableSplit({
           className={cn(
             "w-[2px] h-full transition-colors rounded-full",
             isDragging
-              ? "bg-primary"
-              : "bg-foreground/10 group-hover:bg-primary/60"
+              ? "bg-foreground"
+              : "bg-foreground/10 group-hover:bg-foreground/40"
           )}
         />
         {/* Pill handle icon */}
@@ -145,8 +145,8 @@ export function ResizableSplit({
           className={cn(
             "absolute top-1/2 -translate-y-1/2 w-4 h-9 rounded-full border flex items-center justify-center bg-background shadow-md transition-all pointer-events-none",
             isDragging
-              ? "border-primary text-primary scale-110 shadow-primary/20"
-              : "border-foreground/15 text-muted-foreground group-hover:border-primary group-hover:text-primary"
+              ? "border-foreground text-foreground scale-110 shadow-black/20"
+              : "border-foreground/15 text-muted-foreground group-hover:border-foreground/40 group-hover:text-foreground"
           )}
         >
           <GripVertical className="w-3 h-3 stroke-[2.5]" />

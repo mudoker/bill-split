@@ -22,10 +22,10 @@ export function PeopleSection() {
 
     return (
         <Card className="w-full h-full flex flex-col border border-foreground/[0.05] bg-card/20 overflow-hidden shadow-none">
-            <CardHeader className="pb-4 pt-4 px-4 md:px-6 md:pt-6 shrink-0">
-                <div className="flex items-center justify-between">
+            <CardHeader className="pb-3 pt-3 px-3.5 sm:px-4 md:px-5 md:pt-5 shrink-0">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                     <CardTitle className="text-xl font-black uppercase tracking-widest flex items-center gap-2 text-foreground">
-                        <UserPlus className="w-5 h-5 text-primary" />
+                        <UserPlus className="w-5 h-5 text-foreground/80" />
                         Participants
                     </CardTitle>
                     {IS_DEV && people.length === 0 && !isReadOnly && (
@@ -33,7 +33,7 @@ export function PeopleSection() {
                             variant="ghost"
                             size="sm"
                             onClick={loadSeedData}
-                            className="h-8 gap-2 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-all border border-primary/20 rounded-full px-4"
+                            className="h-8 gap-2 text-[10px] font-black uppercase tracking-widest text-foreground/80 hover:bg-foreground/10 transition-all border border-foreground/20 rounded-full px-3"
                         >
                             <Sparkles className="w-3.5 h-3.5" /> Demo Sample
                         </Button>
@@ -41,9 +41,9 @@ export function PeopleSection() {
                 </div>
                 <CardDescription className="text-[10px] uppercase font-bold tracking-tight text-muted-foreground/90">Manage friends and their payment contributions</CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
-                <ScrollArea className="flex-1 px-4 md:px-6">
-                    <div className="space-y-6 py-4 pr-3">
+            <CardContent className="flex-1 p-0 overflow-hidden flex flex-col container-query-pane">
+                <ScrollArea className="flex-1 px-3 sm:px-4 md:px-5">
+                    <div className="space-y-5 py-3 pr-2">
                         {!isReadOnly && (
                             <div className="relative group">
                                 <div className="relative flex gap-2">
@@ -52,16 +52,16 @@ export function PeopleSection() {
                                         value={newName}
                                         onChange={(e) => setNewName(e.target.value)}
                                         onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-                                        className="h-11 bg-background border-foreground/[0.05] rounded-xl focus-visible:ring-1 focus-visible:ring-primary/30 font-bold px-4"
+                                        className="h-10 sm:h-11 bg-background border-foreground/[0.05] rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-bold px-3.5 text-xs sm:text-sm"
                                     />
-                                    <Button onClick={handleAdd} size="icon" className="h-11 w-11 shrink-0 bg-foreground text-background hover:bg-foreground/90 rounded-xl transition-all active:scale-95 shadow-sm">
+                                    <Button onClick={handleAdd} size="icon" className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 bg-foreground text-background hover:bg-foreground/90 rounded-xl transition-all active:scale-95 shadow-sm">
                                         <PlusCircle className="w-5 h-5" />
                                     </Button>
                                 </div>
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3">
+                        <div className="people-grid">
                             {people.map((person, index) => (
                                 <PersonRow
                                     key={person.id}

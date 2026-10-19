@@ -157,7 +157,7 @@ function App() {
 
         {view === 'landing' ? (
           <>
-            <div className="flex-none p-4 md:p-8 md:pb-0 container mx-auto max-w-7xl w-full">
+            <div className="flex-none px-4 md:px-8 lg:px-10 pt-4 md:pt-6 md:pb-0 w-full max-w-[94%] 2xl:max-w-[2000px] mx-auto">
               <header className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-foreground rounded-xl shadow-lg shadow-black/10">
@@ -247,28 +247,28 @@ function App() {
             />
 
               {/* Header - Fixed */}
-              <div className="flex-none p-4 md:p-8 md:pb-0 container mx-auto max-w-7xl w-full">
-                <header className="flex justify-between items-center mb-4 md:mb-8">
+              <div className="flex-none px-4 md:px-8 lg:px-10 pt-4 md:pt-6 md:pb-0 w-full max-w-[94%] 2xl:max-w-[2000px] mx-auto">
+                <header className="flex justify-between items-center mb-4 md:mb-6">
                   <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" onClick={handleBackToLanding} className="rounded-xl">
                       <ArrowLeft className="w-5 h-5" />
                     </Button>
                     <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-primary rounded-2xl shadow-xl shadow-primary/20 shrink-0">
-                        <AppLogo className="w-6 h-6 text-primary-foreground" />
+                      <div className="p-2.5 bg-foreground rounded-2xl shadow-lg shadow-black/10 shrink-0">
+                        <AppLogo className="w-6 h-6 text-background" />
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h1 className="text-xl md:text-2xl font-black tracking-tight text-foreground truncate max-w-[150px] sm:max-w-xs md:max-w-md">
                             {billName || "Untitled Bill"}
                           </h1>
-                          <span className="text-[9px] text-primary border border-primary/20 uppercase font-black tracking-[0.2em] bg-primary/5 px-2 py-0.5 rounded-full shrink-0">
+                          <span className="text-[9px] text-muted-foreground border border-foreground/10 uppercase font-black tracking-[0.2em] bg-foreground/5 px-2 py-0.5 rounded-full shrink-0">
                             {currentBillId ? `SESSION ${currentBillId.slice(0, 8)}` : "LIVE SESSION"}
                           </span>
                         </div>
                         {location && (
                           <p className="text-xs text-muted-foreground flex items-center gap-1 font-medium truncate mt-0.5">
-                            <MapPin className="w-3.5 h-3.5 text-primary/70 shrink-0" />
+                            <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                             <span className="truncate">{location}</span>
                           </p>
                         )}
@@ -364,19 +364,19 @@ function App() {
               <DiscrepancyBanner />
 
               {/* Main Content - Flex Grow */}
-              <main className="flex-1 w-full mx-auto container max-w-7xl md:p-8 md:pt-0 overflow-hidden relative flex flex-col">
+              <main className="flex-1 w-full mx-auto max-w-[94%] 2xl:max-w-[2000px] px-4 md:px-8 lg:px-10 md:pt-0 overflow-hidden relative flex flex-col">
                 {/* Desktop Grid Layout */}
                 <div className="hidden md:block h-full overflow-hidden">
                   {view === 'editor' ? (
                     <ResizableSplit
                       left={<PeopleSection />}
                       right={<ItemsSection />}
-                      defaultLeftPercent={38}
-                      minLeftPercent={25}
-                      maxLeftPercent={55}
+                      defaultLeftPercent={35}
+                      minLeftPercent={22}
+                      maxLeftPercent={50}
                     />
                   ) : (
-                    <div className="h-full overflow-hidden max-w-4xl mx-auto w-full">
+                    <div className="h-full overflow-hidden max-w-5xl xl:max-w-6xl mx-auto w-full">
                       <SummarySection />
                     </div>
                   )}

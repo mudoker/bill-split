@@ -10,7 +10,7 @@ export function DiscrepancyBanner() {
     if (Math.abs(discrepancy) < 100) return null;
 
     return (
-        <div className="flex-none px-4 md:px-8 max-w-7xl mx-auto w-full mb-4">
+        <div className="flex-none px-4 md:px-8 lg:px-10 max-w-[94%] 2xl:max-w-[2000px] mx-auto w-full mb-4">
              <div className={cn(
                 "p-3 rounded-2xl flex items-center gap-3 border shadow-sm animate-in fade-in slide-in-from-top-2",
                 discrepancy < 0 ? "bg-red-500/10 border-red-500/20 text-red-600" : "bg-amber-500/10 border-amber-500/20 text-amber-600"
