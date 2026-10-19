@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Settings, Percent, Banknote, Tag, MapPin, Check, CloudUpload } from "lucide-react";
-import type { Person, GlobalCharge, Item } from "@/store/useBillStore";
+import { useBillStore, type Person, type GlobalCharge, type Item } from "@/store/useBillStore";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CurrencyInput } from "@/components/shared/currency-input";
@@ -56,6 +56,8 @@ export function BillConfiguration({
 }: BillConfigurationProps) {
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
+    const currency = useBillStore((state) => state.currency);
+    const setCurrency = useBillStore((state) => state.setCurrency);
 
     const totalItemCost = items.reduce((sum, item) => sum + (item.price || 0), 0);
 
@@ -167,6 +169,49 @@ export function BillConfiguration({
                                 </div>
                             </div>
 
+                            {/* Currency Setting */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between px-1">
+                                    <Label className="text-[11px] font-black text-foreground/60 uppercase tracking-[0.2em]">Currency</Label>
+                                    <span className="text-[10px] text-muted-foreground font-semibold">1 USD ≈ 25,400 VND</span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 bg-muted/20 p-1.5 rounded-2xl border border-foreground/5">
+                                    <button
+                                        type="button"
+                                        onClick={() => setCurrency('VND')}
+                                        className={cn(
+                                            "flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black transition-all",
+                                            currency === 'VND'
+                                                ? "bg-foreground text-background shadow-sm"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+                                        )}
+                                    >
+                                        <span className="text-sm font-black">₫</span>
+                                        <div className="flex flex-col items-start leading-none">
+                                            <span className="font-black text-xs">VND</span>
+                                            <span className="text-[8px] opacity-70">Vietnam Dong</span>
+                                        </div>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setCurrency('USD')}
+                                        className={cn(
+                                            "flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black transition-all",
+                                            currency === 'USD'
+                                                ? "bg-foreground text-background shadow-sm"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+                                        )}
+                                    >
+                                        <span className="text-sm font-black">$</span>
+                                        <div className="flex flex-col items-start leading-none">
+                                            <span className="font-black text-xs">USD</span>
+                                            <span className="text-[8px] opacity-70">US Dollar</span>
+                                        </div>
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground/80 px-1 font-medium">Switching currency automatically converts all prices and amounts.</p>
+                            </div>
+
                             {/* QR Code Upload */}
                             <div className="space-y-4">
                                 <Label className="text-[11px] font-black text-foreground/60 uppercase tracking-[0.2em] pl-1">Payment QR Code</Label>
@@ -251,7 +296,7 @@ export function BillConfiguration({
                                                         value={p.paidAmount || 0}
                                                         onChange={(val) => updatePerson(p.id, { paidAmount: val })}
                                                         className="w-32 h-9 text-right text-xs bg-background border-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-primary/40 rounded-lg font-bold tabular-nums"
-                                                        placeholder="0"
+                                                        showCurrencySymbol={true}
                                                     />
                                                 )}
                                             </div>

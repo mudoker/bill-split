@@ -40,6 +40,9 @@ export interface DbStatus {
     isOnline: boolean;
 }
 
+export type CurrencyCode = 'VND' | 'USD';
+export const VND_PER_USD = 25400;
+
 interface BillState {
     people: Person[];
     items: Item[];
@@ -55,8 +58,10 @@ interface BillState {
     billName: string;
     location: string;
     qrCode: string | null;
+    currency: CurrencyCode;
 
     // Actions
+    setCurrency: (currency: CurrencyCode) => void;
     setBillName: (name: string) => void;
     setLocation: (location: string) => void;
     setQrCode: (url: string) => void;
@@ -108,6 +113,44 @@ export const useBillStore = create<BillState>()(
             billName: '',
             location: '',
             qrCode: null,
+            currency: 'VND',
+
+            setCurrency: (newCurrency) => {
+                const currentCurrency = get().currency;
+                if (currentCurrency === newCurrency) return;
+
+                const rate = VND_PER_USD;
+                const isToUSD = newCurrency === 'USD';
+
+                const convertValue = (val: number): number => {
+                    if (!val || val === 0) return 0;
+                    if (isToUSD) {
+                        return Number((val / rate).toFixed(2));
+                    } else {
+                        return Math.round(val * rate);
+                    }
+                };
+
+                set((state) => ({
+                    currency: newCurrency,
+                    items: state.items.map((item) => ({
+                        ...item,
+                        price: convertValue(item.price),
+                    })),
+                    people: state.people.map((p) => ({
+                        ...p,
+                        paidAmount: convertValue(p.paidAmount || 0),
+                        sponsorAmount: convertValue(p.sponsorAmount || 0),
+                    })),
+                    globalCharges: state.globalCharges.map((ch) =>
+                        ch.type === 'fixed'
+                            ? { ...ch, amount: convertValue(ch.amount) }
+                            : ch
+                    ),
+                }));
+
+                get().saveToDb();
+            },
 
             setBillName: (name) => set({ billName: name }),
             setLocation: (location) => set({ location: location }),
@@ -217,6 +260,7 @@ export const useBillStore = create<BillState>()(
             setHydrated: (val: boolean) => set({ isHydrated: val }),
 
             saveToDb: async () => {
+                if (typeof window === 'undefined') return null;
                 const state = get();
                 if (state.isReadOnly) return null;
 
@@ -237,7 +281,8 @@ export const useBillStore = create<BillState>()(
                                 items: state.items,
                                 globalCharges: state.globalCharges,
                                 hostId: state.hostId,
-                                qrCode: state.qrCode
+                                qrCode: state.qrCode,
+                                currency: state.currency
                             }
                         })
                     });
@@ -270,6 +315,7 @@ export const useBillStore = create<BillState>()(
                         billName: result.data.name || '',
                         location: result.data.location || '',
                         qrCode: result.data.qrCode || null,
+                        currency: result.data.currency || 'VND',
                         currentBillId: result.id,
                         lastSaved: result.updated_at,
                         isReadOnly: false
@@ -319,15 +365,18 @@ export const useBillStore = create<BillState>()(
                 const davidId = crypto.randomUUID();
                 const eveId = crypto.randomUUID();
 
+                const isUSD = get().currency === 'USD';
+                const conv = (v: number) => isUSD ? Number((v / VND_PER_USD).toFixed(2)) : v;
+
                 set({
                     billName: "Friday Night BBQ @ Gyu-Kaku",
                     location: "District 1, HCMC",
                     hostId: alexId,
                     qrCode: null,
                     people: [
-                        { id: alexId, name: "Alex (Host)", sponsorAmount: 0, paidAmount: 1800000 },
-                        { id: bobId, name: "Bob", sponsorAmount: 0, paidAmount: 200000 },
-                        { id: charlieId, name: "Charlie", sponsorAmount: 500000, paidAmount: 0 },
+                        { id: alexId, name: "Alex (Host)", sponsorAmount: 0, paidAmount: conv(1800000) },
+                        { id: bobId, name: "Bob", sponsorAmount: 0, paidAmount: conv(200000) },
+                        { id: charlieId, name: "Charlie", sponsorAmount: conv(500000), paidAmount: 0 },
                         { id: davidId, name: "David", sponsorAmount: 0, paidAmount: 0 },
                         { id: eveId, name: "Eve", sponsorAmount: 0, paidAmount: 0 },
                     ],
@@ -335,35 +384,35 @@ export const useBillStore = create<BillState>()(
                         {
                             id: crypto.randomUUID(),
                             name: "Wagyu Party Set",
-                            price: 1200000,
+                            price: conv(1200000),
                             quantity: 1,
                             assignments: { [alexId]: 1, [bobId]: 1, [charlieId]: 1, [davidId]: 1, [eveId]: 1 }
                         },
                         {
                             id: crypto.randomUUID(),
                             name: "Tiger Beer Tower",
-                            price: 450000,
+                            price: conv(450000),
                             quantity: 1,
                             assignments: { [alexId]: 1, [bobId]: 1, [davidId]: 1 }
                         },
                         {
                             id: crypto.randomUUID(),
                             name: "Grilled Corn",
-                            price: 120000,
+                            price: conv(120000),
                             quantity: 3,
                             assignments: { [eveId]: 2, [davidId]: 1 }
                         },
                         {
                             id: crypto.randomUUID(),
                             name: "Special Kimchi",
-                            price: 80000,
+                            price: conv(80000),
                             quantity: 2,
                             assignments: { [charlieId]: 1, [eveId]: 1 }
                         },
                         {
                             id: crypto.randomUUID(),
                             name: "Mineral Water",
-                            price: 60000,
+                            price: conv(60000),
                             quantity: 3,
                             assignments: { [bobId]: 1, [alexId]: 1, [charlieId]: 1 }
                         }
@@ -371,7 +420,7 @@ export const useBillStore = create<BillState>()(
                     globalCharges: [
                         { id: crypto.randomUUID(), name: "VAT", amount: 10, type: 'percent' },
                         { id: crypto.randomUUID(), name: "Service Charge", amount: 5, type: 'percent' },
-                        { id: crypto.randomUUID(), name: "Evening Discount", amount: 100000, type: 'fixed' }
+                        { id: crypto.randomUUID(), name: "Evening Discount", amount: conv(100000), type: 'fixed' }
                     ]
                 });
             }
@@ -388,6 +437,7 @@ export const useBillStore = create<BillState>()(
                 billName: state.billName,
                 location: state.location,
                 qrCode: state.qrCode,
+                currency: state.currency,
             }),
             onRehydrateStorage: () => (state) => {
                 if (state) state.setHydrated(true);

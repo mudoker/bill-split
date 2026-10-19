@@ -9,7 +9,8 @@ export const useBillState = () => {
         setHostId, setQrCode, resetBill, isReadOnly,
         currentBillId, lastSaved, isSaving, billHistory,
         billName, location, setBillName, setLocation, loadSeedData,
-        saveToDb, fetchBill, fetchHistory
+        saveToDb, fetchBill, fetchHistory,
+        currency, setCurrency
     } = useBillStore();
 
     const calculate = () => {
@@ -249,6 +250,8 @@ export const useBillState = () => {
         fetchBill,
         fetchHistory,
         qrCode,
+        currency,
+        setCurrency,
         calculate
     };
 };

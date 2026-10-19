@@ -55,7 +55,9 @@ function App() {
     setLocation,
     updatePerson,
     qrCode,
-    setQrCode
+    setQrCode,
+    currency,
+    setCurrency
   } = useBillStore();
 
   // Handle URL parameters (Legacy v/e and New id)
@@ -105,6 +107,9 @@ function App() {
 
   const handleStartNewBill = (data?: CreateBillFormData) => {
     resetBill();
+    if (data?.currency) {
+      setCurrency(data.currency);
+    }
     const cleanName = data?.name?.trim() || 'New Bill';
     setBillName(cleanName);
     if (data?.location?.trim()) {
@@ -237,7 +242,7 @@ function App() {
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h1 className="text-xl md:text-2xl font-black tracking-tight text-foreground truncate max-w-[200px] sm:max-w-xs md:max-w-md">
+                          <h1 className="text-xl md:text-2xl font-black tracking-tight text-foreground truncate max-w-[150px] sm:max-w-xs md:max-w-md">
                             {billName || "Untitled Bill"}
                           </h1>
                           <span className="text-[9px] text-primary border border-primary/20 uppercase font-black tracking-[0.2em] bg-primary/5 px-2 py-0.5 rounded-full shrink-0">
@@ -254,6 +259,38 @@ function App() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {/* Currency Switcher */}
+                    <div className="flex items-center bg-foreground/[0.04] p-0.5 rounded-xl border border-foreground/10 text-xs font-bold">
+                      <button
+                        type="button"
+                        onClick={() => setCurrency('VND')}
+                        className={cn(
+                          "px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-black transition-all flex items-center gap-0.5 sm:gap-1",
+                          currency === 'VND'
+                            ? "bg-foreground text-background shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                        title="Switch to Vietnamese Dong (₫)"
+                      >
+                        <span>₫</span>
+                        <span className="hidden xs:inline">VND</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCurrency('USD')}
+                        className={cn(
+                          "px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-black transition-all flex items-center gap-0.5 sm:gap-1",
+                          currency === 'USD'
+                            ? "bg-foreground text-background shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                        title="Switch to US Dollar ($) - auto-converts amounts"
+                      >
+                        <span>$</span>
+                        <span className="hidden xs:inline">USD</span>
+                      </button>
+                    </div>
+
                     <Button
                       variant={view === 'editor' ? 'secondary' : 'outline'}
                       size="sm"
