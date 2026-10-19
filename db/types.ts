@@ -75,6 +75,7 @@ export interface DatabaseAdapter {
   init(): Promise<void>;
   getBill(id: string): Promise<BillDetail | null>;
   saveBill(billId: string, data: BillPayload): Promise<void>;
+  deleteBill?(billId: string): Promise<boolean>;
   listBills(): Promise<BillSummary[]>;
   close?(): Promise<void>;
 }

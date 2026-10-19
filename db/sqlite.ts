@@ -227,6 +227,11 @@ export class SqliteAdapter implements DatabaseAdapter {
     }
   }
 
+  async deleteBill(billId: string): Promise<boolean> {
+    const res = this.db.prepare('DELETE FROM bills WHERE id = ?').run(billId);
+    return Number(res.changes || 0) > 0;
+  }
+
   async listBills(): Promise<BillSummary[]> {
     const query = this.db.prepare(`
       SELECT

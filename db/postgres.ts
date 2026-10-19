@@ -234,6 +234,17 @@ export class PostgresAdapter implements DatabaseAdapter {
     }
   }
 
+  async deleteBill(billId: string): Promise<boolean> {
+    if (!this.pool) throw new Error('Database pool not initialized');
+    const client = await this.pool.connect();
+    try {
+      const res = await client.query('DELETE FROM bills WHERE id = $1', [billId]);
+      return (res.rowCount ?? 0) > 0;
+    } finally {
+      client.release();
+    }
+  }
+
   async listBills(): Promise<BillSummary[]> {
     if (!this.pool) throw new Error('Database pool not initialized');
     const client = await this.pool.connect();

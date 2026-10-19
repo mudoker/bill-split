@@ -85,8 +85,10 @@ const payload = {
     }
 };
 
+const PORT = process.env.PORT || '3000';
+
 try {
-    const response = await fetch('http://127.0.0.1:3001/api/bills', {
+    const response = await fetch(`http://127.0.0.1:${PORT}/api/bills`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -101,7 +103,7 @@ try {
     const result = await response.json();
     console.log("\n--- Sample Bill Created ---");
     console.log("ID:", result.id);
-    console.log("Access via: http://localhost:5173/?id=" + result.id);
+    console.log(`Access via: http://localhost:${PORT}/?id=` + result.id);
     console.log("Summary: 10 People, 7 High-value items, Complex Splits, Multiple pre-payments.");
 } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
