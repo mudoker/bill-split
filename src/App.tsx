@@ -4,7 +4,7 @@ import { PeopleSection } from "@/components/people/people-section";
 import { SummarySection } from "@/components/summary/summary-section";
 import { ModeToggle } from "@/components/layout/mode-toggle";
 import { ThemeProvider } from "@/components/layout/theme-provider";
-import { Calculator, Users, Receipt, CreditCard, ArrowLeft } from "lucide-react";
+import { Users, Receipt, CreditCard, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useBillStore } from "@/store/useBillStore";
@@ -14,6 +14,7 @@ import { LandingPage } from "@/components/layout/landing-page";
 import { BillConfiguration } from "@/components/summary/bill-configuration";
 import { DiscrepancyBanner } from "@/components/shared/discrepancy-banner";
 import { IS_DEV } from "@/lib/env";
+import { AppLogo } from "@/components/shared/app-logo";
 
 function App() {
   const [view, setView] = useState<'landing' | 'editor' | 'summary'>('landing');
@@ -109,7 +110,7 @@ function App() {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-background">
         <div className="animate-pulse flex flex-col items-center gap-4">
-          <Calculator className="w-12 h-12 text-primary/40" />
+          <AppLogo className="w-12 h-12 text-primary/40" />
           <div className="h-2 w-32 bg-muted rounded"></div>
         </div>
       </div>
@@ -126,7 +127,7 @@ function App() {
               <header className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-foreground rounded-xl shadow-lg shadow-black/10">
-                    <Calculator className="w-6 h-6 text-background" />
+                    <AppLogo className="w-6 h-6 text-background" />
                   </div>
                   <h1 className="text-2xl font-bold tracking-tight text-foreground">
                     WeSplit
@@ -200,7 +201,7 @@ function App() {
                     </Button>
                     <div className="flex items-center gap-3">
                       <div className="p-2.5 bg-primary rounded-2xl shadow-xl shadow-primary/20">
-                        <Calculator className="w-6 h-6 text-black" />
+                        <AppLogo className="w-6 h-6 text-black" />
                       </div>
                       <div>
                         <h1 className="text-2xl font-black tracking-tighter text-foreground uppercase italic px-1">

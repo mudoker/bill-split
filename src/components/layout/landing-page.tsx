@@ -3,11 +3,12 @@ import { useBillStore } from "@/store/useBillStore";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Clock, ChevronRight, Calculator, Receipt, Users as UsersIcon, Play, History, MapPin, Database } from "lucide-react";
+import { Plus, Clock, ChevronRight, Receipt, Users as UsersIcon, Play, History, MapPin, Database } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import { formatCurrency } from '@/lib/format';
 import { motion } from 'framer-motion';
 import { IS_DEV } from '@/lib/env';
+import { AppLogo } from '@/components/shared/app-logo';
 
 interface LandingPageProps {
     onNewBill: () => void;
@@ -36,7 +37,7 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                     transition={{ duration: 0.5 }}
                     className="inline-flex p-3 bg-foreground/5 rounded-2xl mb-2"
                 >
-                    <Calculator className="w-10 h-10 text-foreground/80" />
+                    <AppLogo className="w-10 h-10 text-foreground/80" />
                 </motion.div>
                 <motion.h1
                     initial={{ y: 20, opacity: 0 }}
