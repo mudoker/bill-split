@@ -18,6 +18,7 @@ import { DiscrepancyBanner } from "@/components/shared/discrepancy-banner";
 import { IS_DEV } from "@/lib/env";
 import { AppLogo } from "@/components/shared/app-logo";
 import { CreateBillModal, type CreateBillFormData } from "@/components/shared/create-bill-modal";
+import { ResizableSplit } from "@/components/layout/resizable-split";
 
 function App() {
   const [view, setView] = useState<'landing' | 'editor' | 'summary'>(() => {
@@ -232,7 +233,7 @@ function App() {
                     </Button>
                     <div className="flex items-center gap-3">
                       <div className="p-2.5 bg-primary rounded-2xl shadow-xl shadow-primary/20 shrink-0">
-                        <AppLogo className="w-6 h-6 text-black" />
+                        <AppLogo className="w-6 h-6 text-primary-foreground" />
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -299,17 +300,13 @@ function App() {
                 {/* Desktop Grid Layout */}
                 <div className="hidden md:block h-full overflow-hidden">
                   {view === 'editor' ? (
-                    <div className="grid md:grid-cols-2 gap-8 h-full">
-                      {/* Left Column: People */}
-                      <div className="h-full overflow-hidden flex flex-col">
-                        <PeopleSection />
-                      </div>
-
-                      {/* Right Column: Items */}
-                      <div className="h-full overflow-hidden flex flex-col">
-                        <ItemsSection />
-                      </div>
-                    </div>
+                    <ResizableSplit
+                      left={<PeopleSection />}
+                      right={<ItemsSection />}
+                      defaultLeftPercent={38}
+                      minLeftPercent={25}
+                      maxLeftPercent={55}
+                    />
                   ) : (
                     <div className="h-full overflow-hidden max-w-4xl mx-auto w-full">
                       <SummarySection />
