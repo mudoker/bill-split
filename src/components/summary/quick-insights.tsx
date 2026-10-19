@@ -20,12 +20,12 @@ export function QuickInsights() {
                         <Receipt className="w-8 h-8 text-primary" />
                     </div>
                     <div className="space-y-1">
-                        <p className="text-[9px] font-black text-cyan-400 uppercase tracking-widest">Live Volume</p>
+                        <p className="text-[9px] font-black text-cyan-700 dark:text-cyan-400 uppercase tracking-widest">Live Volume</p>
                         <div className="flex items-baseline gap-1.5">
                             <span className="text-xl font-black text-foreground tabular-nums">{formatCurrency(totalBill)}</span>
-                            {totalExtras > 0 && <span className="text-[9px] font-bold text-amber-500">+{formatCurrency(totalExtras)}</span>}
+                            {totalExtras > 0 && <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400">+{formatCurrency(totalExtras)}</span>}
                         </div>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight opacity-70">{itemVolume} items documented</p>
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">{itemVolume} items documented</p>
                     </div>
                 </CardContent>
             </Card>
@@ -36,12 +36,12 @@ export function QuickInsights() {
                         <TrendingUp className="w-8 h-8 text-primary" />
                     </div>
                     <div className="space-y-1">
-                        <p className="text-[9px] font-black text-muted-foreground/80 uppercase tracking-widest">Avg. Commitment</p>
+                        <p className="text-[9px] font-black text-muted-foreground/90 uppercase tracking-widest">Avg. Commitment</p>
                         <div className="flex items-baseline gap-1.5">
                             <span className="text-xl font-black text-foreground tabular-nums">{formatCurrency(avgCommitment)}</span>
                             <ArrowUpRight className="w-2.5 h-2.5 text-primary" />
                         </div>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight opacity-70">{people.length} active members</p>
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">{people.length} active members</p>
                     </div>
                 </CardContent>
             </Card>
@@ -57,8 +57,8 @@ export function QuickInsights() {
                     </div>
                 </div>
                 <div className="text-right">
-                    <p className="text-sm font-black text-amber-400 uppercase tracking-tighter tabular-nums">{people.length > 0 ? (totalItemCost / people.length).toFixed(0) : 0}</p>
-                    <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-tighter opacity-70">Score</p>
+                    <p className="text-sm font-black text-amber-600 dark:text-amber-400 uppercase tracking-tighter tabular-nums">{people.length > 0 ? (totalItemCost / people.length).toFixed(0) : 0}</p>
+                    <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-tighter">Score</p>
                 </div>
             </div>
         </div>

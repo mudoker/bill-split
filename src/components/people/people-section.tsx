@@ -39,7 +39,7 @@ export function PeopleSection() {
                         </Button>
                     )}
                 </div>
-                <CardDescription className="text-[10px] uppercase font-bold tracking-tight opacity-70">Manage friends and their payment contributions</CardDescription>
+                <CardDescription className="text-[10px] uppercase font-bold tracking-tight text-muted-foreground/90">Manage friends and their payment contributions</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
                 <ScrollArea className="flex-1 px-4 md:px-6">

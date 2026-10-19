@@ -140,7 +140,7 @@ export function ItemRow({ item }: { item: Item }) {
                                 value={price}
                                 onChange={setPrice}
                                 className="h-10 bg-background/50 border-foreground/5 rounded-xl text-right font-bold"
-                                placeholder="0.00"
+                                showCurrencySymbol={true}
                             />
                         </div>
                     </div>
@@ -154,11 +154,11 @@ export function ItemRow({ item }: { item: Item }) {
                                 </span>
                                 <div className="flex items-center gap-1.5">
                                     {qty > 1 && (
-                                        <span className="text-[9px] font-black text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                                        <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
                                             ×{qty}
                                         </span>
                                 )}
-                                    <span className="text-[10px] font-black text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 tabular-nums">
+                                    <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 tabular-nums">
                                     {formatCurrency(item.price)}
                                     </span>
                                 </div>
@@ -170,10 +170,10 @@ export function ItemRow({ item }: { item: Item }) {
                                 </span>
                             )}
                                 <div className="h-3 w-[1px] bg-foreground/10 mx-1" />
-                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-80 flex items-center gap-1.5">
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-90 flex items-center gap-1.5">
                                     {assignedPeopleIds.length > 0 ? (
                                         <>
-                                            <span className="bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20 font-black tabular-nums">{assignedPeopleIds.length}</span> members sharing
+                                            <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20 font-black tabular-nums">{assignedPeopleIds.length}</span> members sharing
                                         </>
                                     ) : (
                                         people.length > 0 ? "Default total split" : "Awaiting participants"
@@ -252,7 +252,7 @@ export function ItemRow({ item }: { item: Item }) {
                                                         "w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all",
                                                         !isReadOnly && "cursor-pointer",
                                                         isSelected
-                                                            ? "border-primary bg-primary text-black"
+                                                            ? "border-primary bg-primary text-primary-foreground"
                                                             : "border-foreground/20 bg-background/50"
                                                     )}
                                                     onClick={() => !isReadOnly && togglePerson(p.id)}
@@ -260,7 +260,7 @@ export function ItemRow({ item }: { item: Item }) {
                                                     {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                                                 </div>
                                                 <div className={cn("flex-1 min-w-0 pr-2", !isReadOnly && "cursor-pointer")} onClick={() => !isReadOnly && togglePerson(p.id)}>
-                                                    <div className={cn("text-xs font-black tracking-tight", isSelected ? "text-foreground" : "text-muted-foreground opacity-60")}>{p.name}</div>
+                                                    <div className={cn("text-xs font-black tracking-tight", isSelected ? "text-foreground" : "text-muted-foreground")}>{p.name}</div>
                                                     {isSelected && (
                                                         <div className="text-[10px] font-bold text-primary tabular-nums mt-0.5">
                                                             {formatCurrency(getPersonShare(pQty))}

@@ -162,17 +162,17 @@ export function SummarySection() {
                         {/* Summary Stats */}
                         <div className="grid grid-cols-3 gap-3">
                             <div className="bg-card/30 rounded-2xl p-4 border border-foreground/5 transition-all hover:border-primary/20 group">
-                                <div className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1.5 opacity-60 group-hover:text-primary transition-colors">Items</div>
+                                <div className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1.5 group-hover:text-primary transition-colors">Items</div>
                                 <div className="text-sm font-bold text-foreground tabular-nums">{formatCurrency(totalItemCost)}</div>
                             </div>
-                            <div className="bg-amber-500/5 rounded-2xl p-4 border border-amber-500/20 transition-all hover:bg-amber-500/10">
-                                <div className="text-[10px] text-amber-500 uppercase font-black tracking-widest mb-1.5">Extras</div>
-                                <div className="text-sm font-bold text-amber-500 tabular-nums">+{formatCurrency(totalExtras)}</div>
+                            <div className="bg-amber-500/10 rounded-2xl p-4 border border-amber-500/20 transition-all hover:bg-amber-500/20">
+                                <div className="text-[10px] text-amber-600 dark:text-amber-400 uppercase font-black tracking-widest mb-1.5">Extras</div>
+                                <div className="text-sm font-bold text-amber-600 dark:text-amber-400 tabular-nums">+{formatCurrency(totalExtras)}</div>
                             </div>
-                            <div className="relative overflow-hidden bg-primary/10 rounded-2xl p-4 border border-primary/20 transition-all hover:bg-primary/20 group text-primary-foreground dark:text-primary">
+                            <div className="relative overflow-hidden bg-primary/10 rounded-2xl p-4 border border-primary/20 transition-all hover:bg-primary/20 group text-primary">
                                 <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110" />
-                                <div className="text-[10px] uppercase font-black tracking-[0.2em] mb-1.5 opacity-80">Total Bill</div>
-                                <div className="text-xl font-black tabular-nums tracking-tighter drop-shadow-sm">{formatCurrency(totalBill)}</div>
+                                <div className="text-[10px] uppercase font-black tracking-[0.2em] mb-1.5 opacity-90 text-primary">Total Bill</div>
+                                <div className="text-xl font-black tabular-nums tracking-tighter drop-shadow-sm text-primary">{formatCurrency(totalBill)}</div>
                             </div>
                         </div>
 
@@ -231,8 +231,8 @@ export function SummarySection() {
                                                             </TableCell>
                                                             <TableCell className="text-right px-4 py-3 whitespace-nowrap text-xs tabular-nums">
                                                                 {p.sponsorAmount > 0
-                                                                    ? <span className="text-emerald-500 font-bold">-{formatCurrency(p.sponsorAmount)}</span>
-                                                                    : <span className="text-muted-foreground/20">—</span>
+                                                                    ? <span className="text-emerald-700 dark:text-emerald-400 font-bold">-{formatCurrency(p.sponsorAmount)}</span>
+                                                                    : <span className="text-muted-foreground/30">—</span>
                                                                 }
                                                             </TableCell>
                                                             <TableCell className="text-right font-black px-4 py-3 whitespace-nowrap text-xs tabular-nums">
@@ -361,7 +361,7 @@ export function SummarySection() {
                                             </div>
                                             <div>
                                                 <h4 className="text-sm font-black uppercase tracking-[0.1em]">Share Breakdown</h4>
-                                                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-tighter opacity-60">Consumption per person</p>
+                                                <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">Consumption per person</p>
                                             </div>
                                         </div>
                                         <CostPieChart data={pieData} />
@@ -375,7 +375,7 @@ export function SummarySection() {
                                                 </div>
                                                 <div>
                                                     <h4 className="text-sm font-black uppercase tracking-[0.1em]">Categoric Volume</h4>
-                                                    <p className="text-[10px] text-muted-foreground font-black uppercase tracking-tighter opacity-60">Distribution by menu item</p>
+                                                    <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">Distribution by menu item</p>
                                                 </div>
                                             </div>
                                             <CostPieChart data={itemCostData} />
@@ -409,7 +409,7 @@ export function SummarySection() {
                                         </div>
                                         <div>
                                             <h4 className="text-sm font-black uppercase tracking-[0.1em]">Value Comparison</h4>
-                                            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-tighter opacity-60">Ordered vs Sponsored vs Pay</p>
+                                            <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">Ordered vs Sponsored vs Pay</p>
                                         </div>
                                     </div>
                                     <CompareBarChart data={barData} />

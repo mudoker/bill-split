@@ -79,25 +79,25 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
 
                 <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                        <Label className="text-[10px] font-black uppercase text-foreground/40 tracking-widest pl-1 flex items-center gap-1.5">
-                            <Banknote className="w-3 h-3 text-emerald-500" /> Paid
+                        <Label className="text-[10px] font-black uppercase text-foreground/60 tracking-widest pl-1 flex items-center gap-1.5">
+                            <Banknote className="w-3 h-3 text-emerald-700 dark:text-emerald-400" /> Paid
                         </Label>
                         <CurrencyInput
                             value={editPaid}
                             onChange={(val) => setEditPaid(val)}
-                            className="h-11 bg-background/50 border-foreground/5 rounded-xl text-xs font-mono"
-                            placeholder="Amount paid"
+                            className="h-11 bg-background/50 border-foreground/5 rounded-xl text-xs font-mono font-bold"
+                            showCurrencySymbol={true}
                         />
                     </div>
                     <div className="space-y-1.5">
-                        <Label className="text-[10px] font-black uppercase text-foreground/40 tracking-widest pl-1 flex items-center gap-1.5">
-                            <Heart className="w-3 h-3 text-amber-500" /> Sponsor
+                        <Label className="text-[10px] font-black uppercase text-foreground/60 tracking-widest pl-1 flex items-center gap-1.5">
+                            <Heart className="w-3 h-3 text-amber-600 dark:text-amber-400" /> Sponsor
                         </Label>
                         <CurrencyInput
                             value={editSponsor}
                             onChange={(val) => setEditSponsor(val)}
-                            className="h-11 bg-background/50 border-foreground/5 rounded-xl text-xs font-mono"
-                            placeholder="Sponsor amt"
+                            className="h-11 bg-background/50 border-foreground/5 rounded-xl text-xs font-mono font-bold"
+                            showCurrencySymbol={true}
                         />
                     </div>
                 </div>
@@ -131,20 +131,20 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
                     {/* Guest Paid Badge (Only if NOT host) */}
                     {person.id !== hostId && person.paidAmount > 0 && (
                         <div className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
-                            <Banknote className="w-3 h-3 text-emerald-500" />
-                            <span className="text-[10px] font-black text-emerald-500 tabular-nums uppercase">{formatCurrency(person.paidAmount)} paid</span>
+                            <Banknote className="w-3 h-3 text-emerald-700 dark:text-emerald-400" />
+                            <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 tabular-nums uppercase">{formatCurrency(person.paidAmount)} paid</span>
                         </div>
                     )}
 
                     {person.sponsorAmount > 0 && (
                         <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 rounded-full border border-amber-500/20">
-                            <Heart className="w-3 h-3 text-amber-500" />
-                            <span className="text-[10px] font-black text-amber-500 tabular-nums uppercase">{formatCurrency(person.sponsorAmount)} spon.</span>
+                            <Heart className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                            <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 tabular-nums uppercase">{formatCurrency(person.sponsorAmount)} spon.</span>
                         </div>
                     )}
                     {!(person.paidAmount > 0) && !(person.sponsorAmount > 0) && !isReadOnly && person.id !== hostId && (
                         <button
-                            className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-foreground/[0.05] border border-foreground/[0.1] text-[9px] font-black uppercase tracking-wider text-muted-foreground/70 hover:text-primary hover:border-primary/40 transition-all"
+                            className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-foreground/[0.05] border border-foreground/[0.1] text-[9px] font-black uppercase tracking-wider text-muted-foreground hover:text-primary hover:border-primary/40 transition-all"
                             onClick={handleStartEdit}
                         >
                             <PlusCircle className="w-2.5 h-2.5" /> Sponsor

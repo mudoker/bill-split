@@ -43,7 +43,7 @@ export function ItemsSection() {
                             </span>
                         )}
                     </CardTitle>
-                    <CardDescription className="text-[10px] uppercase font-bold tracking-tight opacity-70">Add items manually or scan a receipt</CardDescription>
+                    <CardDescription className="text-[10px] uppercase font-bold tracking-tight text-muted-foreground/90">Add items manually or scan a receipt</CardDescription>
                 </div>
                 {!isReadOnly && (
                     <Button variant="ghost" size="icon" onClick={() => setShowScanner(!showScanner)} className={cn("h-10 w-10 text-muted-foreground hover:text-primary transition-all rounded-xl", showScanner && "text-primary bg-primary/10")}>
@@ -74,29 +74,29 @@ export function ItemsSection() {
                                     />
                                     <div className="flex gap-3 items-center">
                                         <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-                                            <label className="text-[10px] font-black uppercase text-foreground/60 tracking-widest pl-1">Quantity</label>
+                                            <label className="text-[10px] font-black uppercase text-foreground/70 tracking-widest pl-1">Quantity</label>
                                             <Input
                                                 type="number"
                                                 placeholder="1"
                                                 value={newItemQuantity}
                                                 onChange={(e) => setNewItemQuantity(e.target.value)}
-                                                className="h-10 bg-background/50 border-foreground/5 rounded-xl text-center font-bold"
+                                                className="h-10 bg-background/50 border-foreground/5 rounded-xl text-center font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                 min={1}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
                                             />
                                         </div>
                                         <div className="flex flex-col gap-1.5 flex-[2] min-w-0">
-                                            <label className="text-[10px] font-black uppercase text-foreground/60 tracking-widest pl-1">Total Price</label>
+                                            <label className="text-[10px] font-black uppercase text-foreground/70 tracking-widest pl-1">Total Price</label>
                                             <CurrencyInput
                                                 value={newItemPrice}
                                                 onChange={setNewItemPrice}
-                                                className="h-10 bg-background/50 border-foreground/5 rounded-xl text-right"
-                                                placeholder="0.00"
+                                                className="h-10 bg-background/50 border-foreground/5 rounded-xl text-right font-bold"
+                                                showCurrencySymbol={true}
                                             />
                                         </div>
                                         <div className="flex flex-col gap-1.5 shrink-0">
                                             <label className="text-[10px] opacity-0">Add</label>
-                                            <Button onClick={handleAdd} size="icon" className="h-10 w-10 bg-primary text-black hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20 active:scale-95 transition-all" disabled={!newItemName.trim() || newItemPrice <= 0}>
+                                            <Button onClick={handleAdd} size="icon" className="h-10 w-10 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20 active:scale-95 transition-all" disabled={!newItemName.trim() || newItemPrice <= 0}>
                                                 <Plus className="w-5 h-5" />
                                             </Button>
                                         </div>
