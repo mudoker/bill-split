@@ -79,12 +79,12 @@ export function SummarySection() {
 
             <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4 md:px-6 md:pt-6 shrink-0">
                 <div className="space-y-0.5">
-                    <CardTitle className="text-xl font-black uppercase tracking-widest flex items-center gap-2 text-primary">
+                    <CardTitle className="text-xl font-black uppercase tracking-widest flex items-center gap-2 text-foreground">
                         <Receipt className="w-5 h-5" /> {billName || "Summary"}
                     </CardTitle>
                     {location && (
                         <p className="text-xs text-muted-foreground flex items-center gap-1 font-medium pl-7">
-                            <MapPin className="w-3.5 h-3.5 text-primary/70 shrink-0" />
+                            <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                             <span>{location}</span>
                         </p>
                     )}

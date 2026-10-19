@@ -56,7 +56,7 @@ export function CreateBillModal({ open, onOpenChange, onSubmit }: CreateBillModa
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px] rounded-3xl border-foreground/10 bg-background shadow-2xl p-6">
         <DialogHeader className="space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-1">
+          <div className="w-12 h-12 rounded-2xl bg-foreground/5 border border-foreground/10 flex items-center justify-center text-foreground mb-1">
             <ReceiptText className="w-6 h-6" />
           </div>
           <DialogTitle className="text-xl font-black uppercase tracking-tight">
@@ -70,7 +70,7 @@ export function CreateBillModal({ open, onOpenChange, onSubmit }: CreateBillModa
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           <div className="space-y-1.5">
             <Label htmlFor="bill-name" className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
-              <Tag className="w-3.5 h-3.5 text-primary" /> Bill Name <span className="text-destructive">*</span>
+              <Tag className="w-3.5 h-3.5 text-muted-foreground" /> Bill Name <span className="text-destructive">*</span>
             </Label>
             <Input
               id="bill-name"
@@ -81,7 +81,7 @@ export function CreateBillModal({ open, onOpenChange, onSubmit }: CreateBillModa
                 if (error) setError('');
               }}
               autoFocus
-              className="h-11 bg-muted/20 border-foreground/10 focus-visible:ring-primary/40 rounded-xl font-bold"
+              className="h-11 bg-muted/20 border-foreground/10 focus-visible:ring-foreground/20 rounded-xl font-bold"
             />
             {error && (
               <p className="text-[11px] font-bold text-destructive pl-1">{error}</p>
@@ -97,7 +97,7 @@ export function CreateBillModal({ open, onOpenChange, onSubmit }: CreateBillModa
               placeholder="e.g. Gyu-Kaku, District 1"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="h-11 bg-muted/20 border-foreground/10 focus-visible:ring-primary/40 rounded-xl font-bold"
+              className="h-11 bg-muted/20 border-foreground/10 focus-visible:ring-foreground/20 rounded-xl font-bold"
             />
           </div>
 
@@ -110,7 +110,7 @@ export function CreateBillModal({ open, onOpenChange, onSubmit }: CreateBillModa
               placeholder="e.g. Alex"
               value={hostName}
               onChange={(e) => setHostName(e.target.value)}
-              className="h-11 bg-muted/20 border-foreground/10 focus-visible:ring-primary/40 rounded-xl font-bold"
+              className="h-11 bg-muted/20 border-foreground/10 focus-visible:ring-foreground/20 rounded-xl font-bold"
             />
             <p className="text-[10px] text-muted-foreground/60 pl-1">
               Creates the first participant and sets them as the payer.

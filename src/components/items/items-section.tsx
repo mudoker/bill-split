@@ -96,7 +96,7 @@ export function ItemsSection() {
                                         </div>
                                         <div className="flex flex-col gap-1.5 shrink-0">
                                             <label className="text-[10px] opacity-0">Add</label>
-                                            <Button onClick={handleAdd} size="icon" className="h-10 w-10 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20 active:scale-95 transition-all" disabled={!newItemName.trim() || newItemPrice <= 0}>
+                                            <Button onClick={handleAdd} size="icon" className="h-10 w-10 bg-foreground text-background hover:bg-foreground/90 rounded-xl shadow-md active:scale-95 transition-all disabled:opacity-40" disabled={!newItemName.trim() || newItemPrice <= 0}>
                                                 <Plus className="w-5 h-5" />
                                             </Button>
                                         </div>
