@@ -130,12 +130,12 @@ export function BillUploader({ onScanComplete }: BillUploaderProps) {
 
                 {detectedItems.length > 0 && (
                     <div className="w-full space-y-3 animate-in fade-in slide-in-from-bottom-4">
-                        <div className="flex items-center justify-between pb-2 border-b border-border/50">
+                        <div className="flex items-center justify-between pb-2 border-b border-border/50 flex-wrap gap-2">
                             <h4 className="font-medium text-sm flex items-center gap-2">
                                 <FileText className="w-4 h-4" />
                                 Confirm Bill
                             </h4>
-                            <div className="flex gap-2">
+                            <div className="flex gap-1.5 sm:gap-2">
                                 <Button size="sm" variant="outline" onClick={handleAddNewRow} className="h-7 text-xs gap-1 border-dashed hover:border-solid hover:bg-secondary">
                                     <Plus className="w-3 h-3" /> Add Item
                                 </Button>
@@ -192,8 +192,60 @@ export function BillUploader({ onScanComplete }: BillUploaderProps) {
                             </Button>
                         </div>
 
-                        <ScrollArea className="h-64 rounded-lg border bg-background/50">
-                            <div className="min-w-[600px]">
+                        {/* Mobile Card List (sm:hidden) */}
+                        <div className="sm:hidden space-y-2 max-h-64 overflow-y-auto pr-1">
+                            {detectedItems.map((item) => (
+                                <div key={item.id} className="p-2.5 rounded-xl border border-foreground/10 bg-background/50 space-y-2">
+                                    <Input
+                                        className="h-8 text-xs px-2 w-full font-bold"
+                                        value={item.name}
+                                        onChange={(e) => handleItemChange(item.id, 'name', e.target.value)}
+                                        placeholder="Item name"
+                                    />
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-16 shrink-0">
+                                            <Input
+                                                type="number"
+                                                className="h-8 text-center p-1 text-xs font-bold"
+                                                value={item.quantity}
+                                                onChange={(e) => handleItemChange(item.id, 'quantity', parseInt(e.target.value) || 1)}
+                                                min={1}
+                                                placeholder="Qty"
+                                            />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <Input
+                                                type="number"
+                                                className="h-8 text-right p-1 text-xs font-mono font-bold"
+                                                value={priceMode === 'total' ? item.price : (item.quantity > 0 ? Math.round(item.price / item.quantity) : item.price)}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    if (priceMode === 'per-item') {
+                                                        handleItemChange(item.id, 'price', val * item.quantity);
+                                                    } else {
+                                                        handleItemChange(item.id, 'price', val);
+                                                    }
+                                                }}
+                                                step={1000}
+                                                placeholder="Price"
+                                            />
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all shrink-0"
+                                            onClick={() => handleDeleteItem(item.id)}
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop Table (hidden sm:block) */}
+                        <ScrollArea className="hidden sm:block h-64 rounded-lg border bg-background/50">
+                            <div className="min-w-[500px]">
                                 <div className="flex text-[10px] uppercase tracking-wider font-semibold text-muted-foreground p-2 bg-muted/30 sticky top-0 z-10 backdrop-blur-sm border-b items-center gap-1">
                                     <div className="flex-1 px-1">Item Name</div>
                                     <div className="w-14 text-center">Qty</div>

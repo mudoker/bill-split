@@ -100,16 +100,16 @@ export function ItemRow({ item }: { item: Item }) {
     };
 
     return (
-        <div className="relative group bg-card border border-foreground/[0.05] rounded-xl p-4 hover:bg-muted/5 hover:border-primary/30 transition-all duration-200">
+        <div className="relative group bg-card border border-foreground/[0.05] rounded-xl p-3 sm:p-4 hover:bg-muted/5 hover:border-primary/30 transition-all duration-200">
             {isEditing ? (
-                <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                <div className="space-y-3 sm:space-y-4 animate-in fade-in zoom-in-95 duration-200">
                     <div className="flex items-center justify-between">
                         <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Edit Item</span>
                         <div className="flex gap-1">
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/5" onClick={handleCancel}>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/5 rounded-lg" onClick={handleCancel}>
                                 <X className="w-4 h-4" />
                             </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-primary hover:bg-primary/10" onClick={handleSave}>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 sm:h-8 sm:w-8 text-primary hover:bg-primary/10 rounded-lg" onClick={handleSave}>
                                 <Check className="w-4 h-4" />
                             </Button>
                         </div>
@@ -117,13 +117,13 @@ export function ItemRow({ item }: { item: Item }) {
                     <Input
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="h-11 bg-background/50 border-foreground/5 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/40 font-bold px-4"
+                        className="h-10 sm:h-11 bg-background/50 border-foreground/5 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/40 font-bold px-3.5 sm:px-4 text-base sm:text-sm"
                         autoFocus
                         placeholder="Item name..."
                         onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                     />
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
+                    <div className="flex gap-2.5 sm:gap-3 items-end">
+                        <div className="space-y-1 w-20 shrink-0">
                             <Label className="text-[10px] font-black uppercase text-foreground/60 tracking-widest pl-1">Quantity</Label>
                             <Input
                                 value={quantity}
@@ -134,7 +134,7 @@ export function ItemRow({ item }: { item: Item }) {
                                 onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                             />
                         </div>
-                        <div className="space-y-1.5">
+                        <div className="space-y-1 flex-1 min-w-0">
                             <Label className="text-[10px] font-black uppercase text-foreground/60 tracking-widest pl-1">Total Price</Label>
                             <CurrencyInput
                                 value={price}
@@ -146,15 +146,15 @@ export function ItemRow({ item }: { item: Item }) {
                     </div>
                 </div>
             ) : (
-                    <div className="flex justify-between items-start">
-                        <div className="flex-1 min-w-0 pr-4">
-                            <div className="flex items-center gap-2 flex-wrap mb-1">
-                                <span className="font-black text-sm tracking-tight text-foreground truncate max-w-[200px]" title={item.name}>
+                    <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1 min-w-0 pr-1 sm:pr-4">
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-1">
+                                <span className="font-black text-sm tracking-tight text-foreground truncate max-w-[140px] xs:max-w-[180px] sm:max-w-[240px]" title={item.name}>
                                     {item.name}
                                 </span>
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1 flex-wrap">
                                     {qty > 1 && (
-                                        <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                                        <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full border border-amber-500/20">
                                             ×{qty}
                                         </span>
                                 )}
@@ -169,7 +169,7 @@ export function ItemRow({ item }: { item: Item }) {
                                         {formatCurrency(unitPrice)} PER UNIT
                                 </span>
                             )}
-                                <div className="h-3 w-[1px] bg-foreground/10 mx-1" />
+                                <div className="h-3 w-[1px] bg-foreground/10 mx-1 hidden xs:block" />
                                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-90 flex items-center gap-1.5">
                                     {assignedPeopleIds.length > 0 ? (
                                         <>
@@ -184,16 +184,16 @@ export function ItemRow({ item }: { item: Item }) {
                         {!isReadOnly && (
                             <Popover>
                                 <PopoverTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-xl transition-all">
-                                        < MoreHorizontal className="w-5 h-5" />
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-xl transition-all shrink-0">
+                                        < MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-40 p-1.5 bg-background/95 backdrop-blur-xl border-primary/20 shadow-2xl" align="end">
                                     <div className="flex flex-col gap-1">
-                                        <Button variant="ghost" size="sm" className="justify-start h-10 text-[10px] font-black uppercase tracking-widest gap-2" onClick={() => { setName(item.name); setPrice(item.price); setQuantity(item.quantity?.toString() || "1"); setIsEditing(true); }}>
+                                        <Button variant="ghost" size="sm" className="justify-start h-9 text-[10px] font-black uppercase tracking-widest gap-2" onClick={() => { setName(item.name); setPrice(item.price); setQuantity(item.quantity?.toString() || "1"); setIsEditing(true); }}>
                                             <Edit2 className="w-3.5 h-3.5" /> Edit Details
                                         </Button>
-                                        <Button variant="ghost" size="sm" className="justify-start h-10 text-[10px] font-black uppercase tracking-widest gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => removeItem(item.id)}>
+                                        <Button variant="ghost" size="sm" className="justify-start h-9 text-[10px] font-black uppercase tracking-widest gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => removeItem(item.id)}>
                                             <Trash2 className="w-3.5 h-3.5" /> Delete Item
                                         </Button>
                                     </div>
@@ -204,19 +204,19 @@ export function ItemRow({ item }: { item: Item }) {
             )}
 
             {/* Splits row */}
-            <div className="flex flex-wrap gap-2 mt-4 items-center">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-3 sm:mt-4 items-center">
                 <Popover>
                     <PopoverTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-8 text-[9px] font-black uppercase tracking-widest gap-1.5 border-foreground/10 bg-foreground/5 text-foreground hover:bg-foreground/10 rounded-full px-3 transition-all">
+                        <Button variant="outline" size="sm" className="h-7 sm:h-8 text-[9px] font-black uppercase tracking-widest gap-1.5 border-foreground/10 bg-foreground/5 text-foreground hover:bg-foreground/10 rounded-full px-2.5 sm:px-3 transition-all shrink-0">
                             <Users className="w-3.5 h-3.5" />
                             {isReadOnly ? "View Splits" : (assignedPeopleIds.length > 0 ? "Modify Splits" : "Assign Shares")}
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-72 p-0 bg-background/95 backdrop-blur-xl border-primary/20 shadow-2xl" align="start">
-                        <div className="p-4 border-b border-foreground/5 bg-primary/5">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <div className="font-black text-[11px] uppercase tracking-widest text-foreground truncate max-w-[140px]" title={item.name}>{item.name}</div>
+                    <PopoverContent className="w-[min(340px,calc(100vw-2rem))] p-0 bg-background/95 backdrop-blur-xl border-primary/20 shadow-2xl" align="start">
+                        <div className="p-3 sm:p-4 border-b border-foreground/5 bg-primary/5">
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="space-y-0.5 min-w-0 flex-1">
+                                    <div className="font-black text-[11px] uppercase tracking-widest text-foreground truncate" title={item.name}>{item.name}</div>
                                     <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter opacity-70">
                                         {formatCurrency(item.price)} · {qty} units
                                     </div>
@@ -225,15 +225,15 @@ export function ItemRow({ item }: { item: Item }) {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-8 text-[9px] font-black uppercase px-3 text-primary hover:bg-primary/10 rounded-full border border-primary/20"
+                                        className="h-7 sm:h-8 text-[9px] font-black uppercase px-2.5 sm:px-3 text-primary hover:bg-primary/10 rounded-full border border-primary/20 shrink-0"
                                         onClick={toggleAll}
                                     >
-                                        {people.length > 0 && assignedPeopleIds.length === people.length ? "Clear all" : "Split among all"}
+                                        {people.length > 0 && assignedPeopleIds.length === people.length ? "Clear all" : "Split all"}
                                     </Button>
                                 )}
                             </div>
                         </div>
-                        <div className="h-72">
+                        <div className="h-64 sm:h-72">
                             <ScrollArea className="h-full w-full">
                                 <div className="p-2 space-y-1">
                                     {people.map((p) => {
