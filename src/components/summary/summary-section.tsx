@@ -155,18 +155,18 @@ export function SummarySection() {
             </CardHeader>
             <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
                 <ScrollArea className="flex-1 px-3 sm:px-4 md:px-6">
-                    <div className="space-y-4 sm:space-y-6 py-4 sm:py-6 pr-1 sm:pr-3">
+                    <div className="space-y-4 sm:space-y-6 pt-3 pb-8 sm:py-6 pr-1 sm:pr-3">
                         {/* Summary Stats */}
                         <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
-                            <div className="bg-card/30 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border border-foreground/5 transition-all hover:border-primary/20 group">
+                            <div className="bg-card/30 rounded-xl sm:rounded-2xl p-2 xs:p-2.5 sm:p-4 border border-foreground/5 transition-all hover:border-primary/20 group" title={`Items Subtotal: ${formatCurrency(totalItemCost)}`}>
                                 <div className="text-[9px] sm:text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1 group-hover:text-primary transition-colors">Items</div>
-                                <div className="text-xs sm:text-sm font-bold text-foreground tabular-nums truncate">{formatCurrency(totalItemCost)}</div>
+                                <div className="text-[11px] xs:text-xs sm:text-sm font-bold text-foreground tabular-nums truncate tracking-tight">{formatCurrency(totalItemCost)}</div>
                             </div>
-                            <div className="bg-amber-500/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border border-amber-500/20 transition-all hover:bg-amber-500/20">
+                            <div className="bg-amber-500/10 rounded-xl sm:rounded-2xl p-2 xs:p-2.5 sm:p-4 border border-amber-500/20 transition-all hover:bg-amber-500/20" title={`Extras/Taxes: ${formatCurrency(totalExtras)}`}>
                                 <div className="text-[9px] sm:text-[10px] text-amber-600 dark:text-amber-400 uppercase font-black tracking-widest mb-1">Extras</div>
-                                <div className="text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400 tabular-nums truncate">+{formatCurrency(totalExtras)}</div>
+                                <div className="text-[11px] xs:text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400 tabular-nums truncate tracking-tight">+{formatCurrency(totalExtras)}</div>
                             </div>
-                            <div className="relative overflow-hidden bg-primary/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border border-primary/20 transition-all hover:bg-primary/20 group text-primary">
+                            <div className="relative overflow-hidden bg-primary/10 rounded-xl sm:rounded-2xl p-2 xs:p-2.5 sm:p-4 border border-primary/20 transition-all hover:bg-primary/20 group text-primary" title={`Total Bill: ${formatCurrency(totalBill)}`}>
                                 <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110" />
                                 <div className="text-[9px] sm:text-[10px] uppercase font-black tracking-[0.15em] sm:tracking-[0.2em] mb-1 opacity-90 text-primary">Total Bill</div>
                                 <div className="text-xs xs:text-sm sm:text-xl font-black tabular-nums tracking-tight drop-shadow-sm text-primary truncate">{formatCurrency(totalBill)}</div>

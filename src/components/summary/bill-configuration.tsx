@@ -110,18 +110,18 @@ export function BillConfiguration({
                     <span className="hidden sm:inline text-[10px] font-black uppercase tracking-widest">Configure</span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[680px] md:max-w-[760px] w-full p-4 sm:p-8 rounded-2xl sm:rounded-3xl border-foreground/10 bg-background shadow-2xl max-h-[92dvh] flex flex-col">
-                <DialogHeader className="shrink-0">
-                    <div className="flex items-center justify-between pr-8">
+            <DialogContent className="sm:max-w-[680px] md:max-w-[760px] w-full p-3.5 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl border-foreground/10 bg-background shadow-2xl max-h-[min(92dvh,calc(100dvh-1.5rem))] flex flex-col">
+                <DialogHeader className="shrink-0 pb-1 sm:pb-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pr-7 sm:pr-8">
                         <div className="space-y-0.5 text-left">
-                            <DialogTitle className="text-lg sm:text-xl font-black uppercase tracking-widest flex items-center gap-2 text-foreground">
+                            <DialogTitle className="text-base sm:text-xl font-black uppercase tracking-widest flex items-center gap-2 text-foreground">
                                 <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-foreground/80 shrink-0" /> Configuration
                             </DialogTitle>
-                            <DialogDescription className="text-[10px] uppercase font-black tracking-tighter opacity-70">
+                            <DialogDescription className="text-[10px] uppercase font-bold tracking-tight opacity-70">
                                 Setup session details and automated charges
                             </DialogDescription>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
                             {saving ? (
                                 <div className="flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 bg-foreground/5 rounded-full border border-foreground/10">
                                     <div className="w-2 h-2 border-[1.5px] border-foreground/30 border-t-foreground rounded-full animate-spin" />
@@ -278,25 +278,25 @@ export function BillConfiguration({
                             {/* Upfront Payments */}
                             <div className="space-y-4">
                                 <Label className="text-[11px] font-black text-foreground/60 uppercase tracking-[0.2em] pl-1">Upfront Payments</Label>
-                                <div className="grid gap-3">
+                                <div className="grid gap-2 sm:gap-3">
                                     {people.map((p) => (
-                                        <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/10 border border-foreground/[0.03]">
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <div className="w-8 h-8 rounded-full bg-foreground/5 flex items-center justify-center font-black text-xs text-foreground/80 border border-foreground/10 shrink-0">
+                                        <div key={p.id} className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-muted/10 border border-foreground/[0.03] gap-2">
+                                            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-foreground/5 flex items-center justify-center font-black text-xs text-foreground/80 border border-foreground/10 shrink-0">
                                                     {p.name[0]}
                                                 </div>
                                                 <span className="text-xs font-bold truncate">{p.name}</span>
                                             </div>
                                             <div className="flex items-center gap-2 shrink-0">
                                                 {p.id === hostId ? (
-                                                    <div className="h-9 px-3 flex items-center justify-center bg-foreground/5 rounded-lg border border-foreground/10">
-                                                        <span className="text-[10px] font-black text-foreground/80 uppercase">Pays Remaining</span>
+                                                    <div className="h-8 sm:h-9 px-2.5 sm:px-3 flex items-center justify-center bg-foreground/5 rounded-lg border border-foreground/10">
+                                                        <span className="text-[9px] sm:text-[10px] font-black text-foreground/80 uppercase">Pays Remaining</span>
                                                     </div>
                                                 ) : (
                                                     <CurrencyInput
                                                         value={p.paidAmount || 0}
                                                         onChange={(val) => updatePerson(p.id, { paidAmount: val })}
-                                                        className="w-32 h-9 text-right text-xs bg-background border-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-foreground/20 rounded-lg font-bold tabular-nums"
+                                                        className="w-24 xs:w-28 sm:w-32 h-8 sm:h-9 text-right text-xs bg-background border-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-foreground/20 rounded-lg font-bold tabular-nums"
                                                         showCurrencySymbol={true}
                                                     />
                                                 )}
@@ -313,41 +313,41 @@ export function BillConfiguration({
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-8 gap-1.5 text-[10px] font-black uppercase text-foreground hover:bg-foreground/10 rounded-full px-4 border border-foreground/10"
+                                        className="h-8 gap-1.5 text-[10px] font-black uppercase text-foreground hover:bg-foreground/10 rounded-full px-3 sm:px-4 border border-foreground/10 touch-manipulation active:scale-95"
                                         onClick={() => addGlobalCharge({ name: "Service Tax", amount: 10, type: 'percent' })}
                                     >
                                         <Plus className="w-3.5 h-3.5" /> Add Charge
                                     </Button>
                                 </div>
 
-                                <div className="space-y-3">
+                                <div className="space-y-2.5 sm:space-y-3">
                                     {globalCharges.map((charge) => (
-                                        <div key={charge.id} className="group relative flex items-start gap-4 p-5 bg-muted/10 border border-foreground/[0.03] rounded-2xl transition-all hover:border-foreground/20 hover:bg-muted/20">
-                                            <div className="grid gap-3 flex-1">
+                                        <div key={charge.id} className="group relative flex items-start gap-2.5 sm:gap-4 p-3 sm:p-5 bg-muted/10 border border-foreground/[0.03] rounded-2xl transition-all hover:border-foreground/20 hover:bg-muted/20">
+                                            <div className="grid gap-2 sm:gap-3 flex-1 min-w-0">
                                                 <Input
                                                     value={charge.name}
                                                     onChange={(e) => updateGlobalCharge(charge.id, { name: e.target.value })}
                                                     className="h-7 text-xs font-black bg-transparent border-none p-0 focus-visible:ring-0 placeholder:text-muted-foreground/30 text-foreground"
                                                     placeholder="Charge name..."
                                                 />
-                                                <div className="flex items-center gap-2">
-                                                    <div className="relative flex-1">
+                                                <div className="flex items-center gap-1.5 sm:gap-2">
+                                                    <div className="relative flex-1 min-w-0">
                                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-foreground/70 font-black z-10 pointer-events-none">
                                                             {charge.type === 'percent' ? <Percent className="w-3.5 h-3.5" /> : <Banknote className="w-3.5 h-3.5" />}
                                                         </span>
                                                         <CurrencyInput
                                                             value={charge.amount}
                                                             onChange={(val) => updateGlobalCharge(charge.id, { amount: val })}
-                                                            className="h-10 pl-10 text-xs bg-background border-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-foreground/20 rounded-xl font-bold"
+                                                            className="h-9 sm:h-10 pl-9 sm:pl-10 text-xs bg-background border-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-foreground/20 rounded-xl font-bold"
                                                             placeholder="0"
                                                         />
                                                     </div>
-                                                    <div className="flex bg-background border border-foreground/[0.1] rounded-xl p-0.5 gap-0.5 shadow-sm">
+                                                    <div className="flex bg-background border border-foreground/[0.1] rounded-xl p-0.5 gap-0.5 shadow-sm shrink-0">
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
                                                             className={cn(
-                                                                "h-9 px-3 rounded-lg text-[10px] font-black transition-all",
+                                                                "h-8 sm:h-9 px-2 sm:px-3 rounded-lg text-[10px] font-black transition-all touch-manipulation active:scale-95",
                                                                 charge.type === 'percent'
                                                                     ? "bg-foreground text-background shadow-md scale-[1.02]"
                                                                     : "text-muted-foreground hover:text-foreground hover:bg-foreground/5 opacity-50"
@@ -360,7 +360,7 @@ export function BillConfiguration({
                                                             variant="ghost"
                                                             size="sm"
                                                             className={cn(
-                                                                "h-9 px-3 rounded-lg text-[10px] font-black transition-all",
+                                                                "h-8 sm:h-9 px-2 sm:px-3 rounded-lg text-[10px] font-black transition-all touch-manipulation active:scale-95",
                                                                 charge.type === 'fixed'
                                                                     ? "bg-foreground text-background shadow-md scale-[1.02]"
                                                                     : "text-muted-foreground hover:text-foreground hover:bg-foreground/5 opacity-50"
@@ -375,10 +375,11 @@ export function BillConfiguration({
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-10 w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors rounded-xl opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                                                className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors rounded-xl opacity-100 sm:opacity-0 sm:group-hover:opacity-100 shrink-0 touch-manipulation active:scale-95"
                                                 onClick={() => removeGlobalCharge(charge.id)}
+                                                title="Delete charge"
                                             >
-                                                <Trash2 className="w-4 h-4" />
+                                                <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                             </Button>
                                         </div>
                                     ))}

@@ -120,7 +120,7 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
                 </div>
 
                 <div className="flex flex-col min-w-0 flex-1">
-                    <span className="font-black text-sm tracking-tight text-foreground truncate max-w-[140px] xs:max-w-[180px] sm:max-w-none" title={person.name}>{person.name}</span>
+                    <span className="font-black text-sm tracking-tight text-foreground truncate" title={person.name}>{person.name}</span>
                     <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                         {/* Host Badge - Pays Remaining */}
                         {person.id === hostId && (
@@ -145,7 +145,7 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
                         )}
                         {!(person.paidAmount > 0) && !(person.sponsorAmount > 0) && !isReadOnly && person.id !== hostId && (
                             <button
-                                className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-foreground/[0.05] border border-foreground/[0.1] text-[9px] font-black uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all"
+                                className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-foreground/[0.05] border border-foreground/[0.1] text-[9px] font-black uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all touch-manipulation active:scale-95"
                                 onClick={handleStartEdit}
                             >
                                 <PlusCircle className="w-2.5 h-2.5" /> Sponsor
@@ -157,10 +157,10 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
 
             {!isReadOnly && (
                 <div className="flex items-center gap-0.5 shrink-0">
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/5 rounded-lg" onClick={handleStartEdit} title="Edit">
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/5 rounded-lg touch-manipulation active:scale-95" onClick={handleStartEdit} title="Edit">
                         <Pencil className="w-3.5 h-3.5" />
                     </Button>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-lg" onClick={() => onRemove(person.id)} title="Remove">
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-lg touch-manipulation active:scale-95" onClick={() => onRemove(person.id)} title="Remove">
                         <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                 </div>

@@ -97,7 +97,7 @@ export function PeopleSection() {
                                 </div>
                             </div>
                         )}
-                        <div className="pt-4 mt-4 border-t border-foreground/[0.03]">
+                        <div className="pt-4 mt-4 pb-8 sm:pb-6 border-t border-foreground/[0.03]">
                             <QuickInsights />
                         </div>
                     </div>

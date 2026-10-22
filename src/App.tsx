@@ -160,7 +160,7 @@ function App() {
 
         {view === 'landing' ? (
           <>
-            <div className="flex-none px-4 sm:px-6 md:px-8 lg:px-10 pt-4 md:pt-6 w-full max-w-[94%] 2xl:max-w-[2000px] mx-auto">
+            <div className="flex-none px-4 sm:px-6 md:px-8 lg:px-10 pt-[max(1rem,env(safe-area-inset-top))] md:pt-6 w-full max-w-[94%] 2xl:max-w-[2000px] mx-auto">
               <header className="flex justify-between items-center">
                 <div className="flex items-center gap-2.5 sm:gap-3">
                   <div className="p-2 bg-foreground rounded-xl shadow-lg shadow-black/10">
@@ -229,13 +229,13 @@ function App() {
         ) : (
           <>
             {isReadOnly && (
-              <div className="bg-foreground/5 border-b border-foreground/10 py-2.5 px-4 flex items-center justify-center gap-3 animate-in slide-in-from-top duration-300 flex-none">
-                <Eye className="w-4 h-4 text-foreground/60" />
-                <span className="text-xs font-semibold text-foreground uppercase tracking-wider">View-only Mode - Changes are disabled</span>
+              <div className="bg-foreground/5 border-b border-foreground/10 py-2 px-3 sm:px-4 flex items-center justify-center gap-2 sm:gap-3 animate-in slide-in-from-top duration-300 flex-none text-[11px] sm:text-xs">
+                <Eye className="w-3.5 h-3.5 text-foreground/60 shrink-0" />
+                <span className="font-semibold text-foreground uppercase tracking-wider truncate">View-only Mode - Changes disabled</span>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 text-[10px] ml-4 hover:bg-foreground/5"
+                  className="h-6 sm:h-7 text-[10px] ml-2 hover:bg-foreground/5 px-2"
                   onClick={() => setIsReadOnlyModalOpen(true)}
                 >
                   New Bill
@@ -249,28 +249,28 @@ function App() {
               onSubmit={handleStartNewBill}
             />
 
-              {/* Header - Fixed */}
-              <div className="flex-none px-3 sm:px-6 md:px-8 lg:px-10 pt-2.5 sm:pt-4 md:pt-6 w-full max-w-[94%] 2xl:max-w-[2000px] mx-auto">
-                <header className="flex justify-between items-center mb-2.5 sm:mb-4 md:mb-6 gap-2">
-                  <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
-                    <Button variant="ghost" size="icon" onClick={handleBackToLanding} className="h-9 w-9 rounded-xl shrink-0" title="Back to Bills">
+              {/* Header - Fixed & Safe-Area Aware */}
+              <div className="flex-none px-3 sm:px-6 md:px-8 lg:px-10 pt-[max(0.625rem,env(safe-area-inset-top))] sm:pt-4 md:pt-6 w-full max-w-[94%] 2xl:max-w-[2000px] mx-auto">
+                <header className="flex justify-between items-center mb-2 sm:mb-3 md:mb-5 gap-1.5 sm:gap-3">
+                  <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
+                    <Button variant="ghost" size="icon" onClick={handleBackToLanding} className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl shrink-0 touch-manipulation active:scale-95" title="Back to Bills">
                       <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                     </Button>
-                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                      <div className="hidden xs:flex p-2 bg-foreground rounded-xl shadow-lg shadow-black/10 shrink-0">
-                        <AppLogo className="w-5 h-5 text-background" />
+                    <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
+                      <div className="hidden xs:flex p-1.5 sm:p-2 bg-foreground rounded-xl shadow-lg shadow-black/10 shrink-0">
+                        <AppLogo className="w-4 h-4 sm:w-5 sm:h-5 text-background" />
                       </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                          <h1 className="text-base sm:text-xl md:text-2xl font-black tracking-tight text-foreground truncate max-w-[120px] xs:max-w-[160px] sm:max-w-xs md:max-w-md" title={billName || "Untitled Bill"}>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                          <h1 className="text-sm sm:text-lg md:text-xl font-black tracking-tight text-foreground truncate" title={billName || "Untitled Bill"}>
                             {billName || "Untitled Bill"}
                           </h1>
-                          <span className="hidden sm:inline-flex text-[9px] text-muted-foreground border border-foreground/10 uppercase font-black tracking-[0.2em] bg-foreground/5 px-2 py-0.5 rounded-full shrink-0">
+                          <span className="hidden md:inline-flex text-[9px] text-muted-foreground border border-foreground/10 uppercase font-black tracking-[0.2em] bg-foreground/5 px-2 py-0.5 rounded-full shrink-0">
                             {currentBillId ? `SESSION ${currentBillId.slice(0, 8)}` : "LIVE SESSION"}
                           </span>
                         </div>
                         {location && (
-                          <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center gap-1 font-medium truncate mt-0.5">
+                          <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1 font-medium truncate mt-0.5">
                             <MapPin className="w-3 h-3 text-muted-foreground shrink-0" />
                             <span className="truncate">{location}</span>
                           </p>
@@ -278,14 +278,25 @@ function App() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                    {/* Currency Switcher */}
-                    <div className="flex items-center bg-foreground/[0.04] p-0.5 rounded-xl border border-foreground/10 text-xs font-bold">
+                  <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                    {/* Compact Currency Switcher for Mobile */}
+                    <button
+                      type="button"
+                      onClick={() => setCurrency(currency === 'VND' ? 'USD' : 'VND')}
+                      className="sm:hidden h-8 px-2 rounded-xl bg-foreground/[0.04] hover:bg-foreground/[0.08] border border-foreground/10 text-xs font-black transition-all flex items-center gap-1 text-foreground touch-manipulation active:scale-95 shadow-sm"
+                      title={`Current currency: ${currency}. Tap to switch to ${currency === 'VND' ? 'USD ($)' : 'VND (₫)'}`}
+                    >
+                      <span className="font-black text-xs text-primary">{currency === 'VND' ? '₫' : '$'}</span>
+                      <span className="text-[10px] opacity-70 uppercase tracking-tighter">{currency}</span>
+                    </button>
+
+                    {/* Segmented Currency Switcher for Tablet / Desktop */}
+                    <div className="hidden sm:flex items-center bg-foreground/[0.04] p-0.5 rounded-xl border border-foreground/10 text-xs font-bold">
                       <button
                         type="button"
                         onClick={() => setCurrency('VND')}
                         className={cn(
-                          "px-1.5 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-black transition-all flex items-center gap-0.5 sm:gap-1",
+                          "px-2 sm:px-2.5 py-1 rounded-lg text-xs font-black transition-all flex items-center gap-1",
                           currency === 'VND'
                             ? "bg-foreground text-background shadow-sm"
                             : "text-muted-foreground hover:text-foreground"
@@ -293,13 +304,13 @@ function App() {
                         title="Switch to Vietnamese Dong (₫)"
                       >
                         <span>₫</span>
-                        <span className="hidden sm:inline">VND</span>
+                        <span>VND</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => setCurrency('USD')}
                         className={cn(
-                          "px-1.5 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-black transition-all flex items-center gap-0.5 sm:gap-1",
+                          "px-2 sm:px-2.5 py-1 rounded-lg text-xs font-black transition-all flex items-center gap-1",
                           currency === 'USD'
                             ? "bg-foreground text-background shadow-sm"
                             : "text-muted-foreground hover:text-foreground"
@@ -307,7 +318,7 @@ function App() {
                         title="Switch to US Dollar ($) - auto-converts amounts"
                       >
                         <span>$</span>
-                        <span className="hidden sm:inline">USD</span>
+                        <span>USD</span>
                       </button>
                     </div>
 
@@ -355,7 +366,7 @@ function App() {
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-9 w-9 rounded-xl border-foreground/10 hover:bg-foreground/5"
+                        className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl border-foreground/10 hover:bg-foreground/5"
                       >
                         <Github className="w-4 h-4" />
                       </Button>

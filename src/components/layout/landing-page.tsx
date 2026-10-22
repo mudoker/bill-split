@@ -151,7 +151,7 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                     })()}
                 </div>
 
-                <div className="flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-4">
+                <div className="flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-4 overscroll-contain">
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -170,7 +170,7 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                             billHistory.map((bill) => (
                                 <Card
                                     key={bill.id}
-                                    className="group overflow-hidden border-border/50 hover:border-foreground/20 hover:shadow-2xl hover:shadow-black/5 transition-all duration-300 cursor-pointer rounded-2xl"
+                                    className="group overflow-hidden border-border/50 hover:border-foreground/20 hover:shadow-2xl hover:shadow-black/5 transition-all duration-300 cursor-pointer rounded-2xl touch-manipulation active:scale-[0.99]"
                                     onClick={() => onSelectBill(bill.id)}
                                 >
                                     <CardContent className="p-0">
@@ -181,11 +181,11 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
 
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                                                    <h3 className="font-bold text-base sm:text-lg truncate max-w-[170px] sm:max-w-xs text-foreground">
+                                                    <h3 className="font-bold text-base sm:text-lg truncate flex-1 min-w-0 text-foreground">
                                                         {bill.name || `Bill ${bill.id.slice(0, 8)}`}
                                                     </h3>
                                                     {bill.totalAmount !== undefined && (
-                                                        <span className="text-foreground font-black tabular-nums text-sm sm:text-base">
+                                                        <span className="text-foreground font-black tabular-nums text-sm sm:text-base shrink-0">
                                                             {formatCurrency(bill.totalAmount)}
                                                         </span>
                                                     )}

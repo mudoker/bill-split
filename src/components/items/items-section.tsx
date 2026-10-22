@@ -105,7 +105,7 @@ export function ItemsSection() {
                         )}
 
                         {/* Item List */}
-                        <div className="space-y-2.5 pb-4">
+                        <div className="space-y-2.5 pb-8 sm:pb-6">
                             {items.length === 0 && (
                                 <div className="text-center text-muted-foreground py-10 text-sm border-2 border-dashed rounded-xl bg-muted/10">
                                     No items added yet.<br />

@@ -149,17 +149,17 @@ export function ItemRow({ item }: { item: Item }) {
                     <div className="flex justify-between items-start gap-2">
                         <div className="flex-1 min-w-0 pr-1 sm:pr-4">
                             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-1">
-                                <span className="font-black text-sm tracking-tight text-foreground truncate max-w-[140px] xs:max-w-[180px] sm:max-w-[240px]" title={item.name}>
+                                <span className="font-black text-sm tracking-tight text-foreground truncate flex-1 min-w-0" title={item.name}>
                                     {item.name}
                                 </span>
-                                <div className="flex items-center gap-1 flex-wrap">
+                                <div className="flex items-center gap-1 shrink-0">
                                     {qty > 1 && (
                                         <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full border border-amber-500/20">
                                             ×{qty}
                                         </span>
-                                )}
+                                    )}
                                     <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 tabular-nums">
-                                    {formatCurrency(item.price)}
+                                        {formatCurrency(item.price)}
                                     </span>
                                 </div>
                             </div>
@@ -167,8 +167,8 @@ export function ItemRow({ item }: { item: Item }) {
                                 {qty > 1 && (
                                     <span className="text-[10px] font-bold text-foreground/70 uppercase tracking-tighter">
                                         {formatCurrency(unitPrice)} PER UNIT
-                                </span>
-                            )}
+                                    </span>
+                                )}
                                 <div className="h-3 w-[1px] bg-foreground/10 mx-1 hidden xs:block" />
                                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-90 flex items-center gap-1.5">
                                     {assignedPeopleIds.length > 0 ? (
@@ -178,36 +178,36 @@ export function ItemRow({ item }: { item: Item }) {
                                     ) : (
                                         people.length > 0 ? "Default total split" : "Awaiting participants"
                                     )}
-                            </span>
+                                </span>
+                            </div>
                         </div>
-                    </div>
                         {!isReadOnly && (
                             <Popover>
                                 <PopoverTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-xl transition-all shrink-0">
-                                        < MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-xl transition-all shrink-0 touch-manipulation active:scale-95">
+                                        <MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-40 p-1.5 bg-background/95 backdrop-blur-xl border-primary/20 shadow-2xl" align="end">
                                     <div className="flex flex-col gap-1">
-                                        <Button variant="ghost" size="sm" className="justify-start h-9 text-[10px] font-black uppercase tracking-widest gap-2" onClick={() => { setName(item.name); setPrice(item.price); setQuantity(item.quantity?.toString() || "1"); setIsEditing(true); }}>
+                                        <Button variant="ghost" size="sm" className="justify-start h-9 text-[10px] font-black uppercase tracking-widest gap-2 touch-manipulation active:scale-95" onClick={() => { setName(item.name); setPrice(item.price); setQuantity(item.quantity?.toString() || "1"); setIsEditing(true); }}>
                                             <Edit2 className="w-3.5 h-3.5" /> Edit Details
                                         </Button>
-                                        <Button variant="ghost" size="sm" className="justify-start h-9 text-[10px] font-black uppercase tracking-widest gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => removeItem(item.id)}>
+                                        <Button variant="ghost" size="sm" className="justify-start h-9 text-[10px] font-black uppercase tracking-widest gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive touch-manipulation active:scale-95" onClick={() => removeItem(item.id)}>
                                             <Trash2 className="w-3.5 h-3.5" /> Delete Item
                                         </Button>
                                     </div>
                                 </PopoverContent>
                             </Popover>
                         )}
-                </div>
+                    </div>
             )}
 
             {/* Splits row */}
             <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-3 sm:mt-4 items-center">
                 <Popover>
                     <PopoverTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-7 sm:h-8 text-[9px] font-black uppercase tracking-widest gap-1.5 border-foreground/10 bg-foreground/5 text-foreground hover:bg-foreground/10 rounded-full px-2.5 sm:px-3 transition-all shrink-0">
+                        <Button variant="outline" size="sm" className="h-7 sm:h-8 text-[9px] font-black uppercase tracking-widest gap-1.5 border-foreground/10 bg-foreground/5 text-foreground hover:bg-foreground/10 rounded-full px-2.5 sm:px-3 transition-all shrink-0 touch-manipulation active:scale-95">
                             <Users className="w-3.5 h-3.5" />
                             {isReadOnly ? "View Splits" : (assignedPeopleIds.length > 0 ? "Modify Splits" : "Assign Shares")}
                         </Button>
