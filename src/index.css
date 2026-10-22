@@ -53,12 +53,24 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
     @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Prevent automatic iOS zoom while preserving responsive sizing */
+  @media screen and (max-width: 639px) {
+    input[type="text"]:not(.no-auto-zoom-override),
+    input[type="email"]:not(.no-auto-zoom-override),
+    input[type="password"]:not(.no-auto-zoom-override),
+    input[type="search"]:not(.no-auto-zoom-override) {
+      font-size: 16px;
+    }
+  }
 
   /* Remove default number input spin arrows across all browsers */
   input[type="number"]::-webkit-inner-spin-button,
@@ -96,7 +108,7 @@
   gap: 0.75rem;
 }
 
-@container (min-width: 400px) {
+@container (min-width: 380px) {
   .insights-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -105,10 +117,10 @@
 .person-edit-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.75rem;
+  gap: 0.625rem;
 }
 
-@container (min-width: 320px) {
+@container (min-width: 360px) {
   .person-edit-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

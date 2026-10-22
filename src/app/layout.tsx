@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import '@/index.css';
 
 export const metadata: Metadata = {
@@ -7,6 +7,13 @@ export const metadata: Metadata = {
   icons: {
     icon: '/logo.svg',
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
