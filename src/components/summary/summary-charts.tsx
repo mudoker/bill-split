@@ -128,9 +128,9 @@ export function CompareBarChart({ data }: { data: BarDataItem[] }) {
                     wrapperStyle={{ fontSize: 10, fontWeight: 900, paddingTop: '20px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
                     iconType="circle"
                 />
-                <Bar dataKey="ordered" name="Ordered" fill={CHART_COLORS[0]} radius={[6, 6, 0, 0]} barSize={24} />
-                <Bar dataKey="sponsored" name="Sponsored" fill={CHART_COLORS[1]} radius={[6, 6, 0, 0]} barSize={24} />
-                <Bar dataKey="toPay" name="To Pay" fill={CHART_COLORS[2]} radius={[6, 6, 0, 0]} barSize={24} />
+                <Bar dataKey="ordered" name="Ordered" fill={CHART_COLORS[0]} radius={[6, 6, 0, 0]} maxBarSize={18} />
+                <Bar dataKey="sponsored" name="Sponsored" fill={CHART_COLORS[1]} radius={[6, 6, 0, 0]} maxBarSize={18} />
+                <Bar dataKey="toPay" name="To Pay" fill={CHART_COLORS[2]} radius={[6, 6, 0, 0]} maxBarSize={18} />
             </BarChart>
         </ResponsiveContainer>
     );

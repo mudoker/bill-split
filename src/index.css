@@ -56,6 +56,12 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  html,
+  body {
+    overscroll-behavior-y: none;
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;
@@ -69,12 +75,11 @@
     touch-action: manipulation;
   }
 
-  /* Prevent automatic iOS zoom while preserving responsive sizing */
+  /* Prevent automatic iOS zoom on mobile while preserving responsive sizing */
   @media screen and (max-width: 639px) {
-    input[type="text"]:not(.no-auto-zoom-override),
-    input[type="email"]:not(.no-auto-zoom-override),
-    input[type="password"]:not(.no-auto-zoom-override),
-    input[type="search"]:not(.no-auto-zoom-override) {
+    input:not(.no-auto-zoom-override):not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]),
+    select:not(.no-auto-zoom-override),
+    textarea:not(.no-auto-zoom-override) {
       font-size: 16px;
     }
   }
@@ -89,6 +94,12 @@
   input[type="number"] {
     -moz-appearance: textfield !important;
     appearance: textfield !important;
+  }
+
+  /* Touch scrolling enhancement for Radix scroll containers */
+  [data-radix-scroll-area-viewport] {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
   }
 }
 
