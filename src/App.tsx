@@ -153,21 +153,24 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <div className="min-h-screen bg-background font-sans text-foreground antialiased selection:bg-foreground/20 flex flex-col items-stretch h-screen overflow-hidden supports-[height:100dvh]:h-[100dvh]">
+      <div className={cn(
+        "min-h-screen bg-background font-sans text-foreground antialiased selection:bg-foreground/20 flex flex-col items-stretch",
+        view === 'landing' ? "min-h-[100dvh] overflow-y-auto" : "h-screen supports-[height:100dvh]:h-[100dvh] overflow-hidden"
+      )}>
 
         {view === 'landing' ? (
           <>
-            <div className="flex-none px-4 md:px-8 lg:px-10 pt-4 md:pt-6 md:pb-0 w-full max-w-[94%] 2xl:max-w-[2000px] mx-auto">
+            <div className="flex-none px-4 sm:px-6 md:px-8 lg:px-10 pt-4 md:pt-6 w-full max-w-[94%] 2xl:max-w-[2000px] mx-auto">
               <header className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3">
                   <div className="p-2 bg-foreground rounded-xl shadow-lg shadow-black/10">
-                    <AppLogo className="w-6 h-6 text-background" />
+                    <AppLogo className="w-5 h-5 sm:w-6 sm:h-6 text-background" />
                   </div>
-                  <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
                     Bill Split
                   </h1>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <a
                     href="https://github.com/mudoker/bill-split"
                     target="_blank"
@@ -247,42 +250,42 @@ function App() {
             />
 
               {/* Header - Fixed */}
-              <div className="flex-none px-4 md:px-8 lg:px-10 pt-4 md:pt-6 md:pb-0 w-full max-w-[94%] 2xl:max-w-[2000px] mx-auto">
-                <header className="flex justify-between items-center mb-4 md:mb-6">
-                  <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={handleBackToLanding} className="rounded-xl">
-                      <ArrowLeft className="w-5 h-5" />
+              <div className="flex-none px-3 sm:px-6 md:px-8 lg:px-10 pt-2.5 sm:pt-4 md:pt-6 w-full max-w-[94%] 2xl:max-w-[2000px] mx-auto">
+                <header className="flex justify-between items-center mb-2.5 sm:mb-4 md:mb-6 gap-2">
+                  <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+                    <Button variant="ghost" size="icon" onClick={handleBackToLanding} className="h-9 w-9 rounded-xl shrink-0" title="Back to Bills">
+                      <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                     </Button>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-foreground rounded-2xl shadow-lg shadow-black/10 shrink-0">
-                        <AppLogo className="w-6 h-6 text-background" />
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                      <div className="hidden xs:flex p-2 bg-foreground rounded-xl shadow-lg shadow-black/10 shrink-0">
+                        <AppLogo className="w-5 h-5 text-background" />
                       </div>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h1 className="text-xl md:text-2xl font-black tracking-tight text-foreground truncate max-w-[150px] sm:max-w-xs md:max-w-md">
+                        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                          <h1 className="text-base sm:text-xl md:text-2xl font-black tracking-tight text-foreground truncate max-w-[120px] xs:max-w-[160px] sm:max-w-xs md:max-w-md" title={billName || "Untitled Bill"}>
                             {billName || "Untitled Bill"}
                           </h1>
-                          <span className="text-[9px] text-muted-foreground border border-foreground/10 uppercase font-black tracking-[0.2em] bg-foreground/5 px-2 py-0.5 rounded-full shrink-0">
+                          <span className="hidden sm:inline-flex text-[9px] text-muted-foreground border border-foreground/10 uppercase font-black tracking-[0.2em] bg-foreground/5 px-2 py-0.5 rounded-full shrink-0">
                             {currentBillId ? `SESSION ${currentBillId.slice(0, 8)}` : "LIVE SESSION"}
                           </span>
                         </div>
                         {location && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1 font-medium truncate mt-0.5">
-                            <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center gap-1 font-medium truncate mt-0.5">
+                            <MapPin className="w-3 h-3 text-muted-foreground shrink-0" />
                             <span className="truncate">{location}</span>
                           </p>
                         )}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                     {/* Currency Switcher */}
                     <div className="flex items-center bg-foreground/[0.04] p-0.5 rounded-xl border border-foreground/10 text-xs font-bold">
                       <button
                         type="button"
                         onClick={() => setCurrency('VND')}
                         className={cn(
-                          "px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-black transition-all flex items-center gap-0.5 sm:gap-1",
+                          "px-1.5 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-black transition-all flex items-center gap-0.5 sm:gap-1",
                           currency === 'VND'
                             ? "bg-foreground text-background shadow-sm"
                             : "text-muted-foreground hover:text-foreground"
@@ -290,13 +293,13 @@ function App() {
                         title="Switch to Vietnamese Dong (₫)"
                       >
                         <span>₫</span>
-                        <span className="hidden xs:inline">VND</span>
+                        <span className="hidden sm:inline">VND</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => setCurrency('USD')}
                         className={cn(
-                          "px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-black transition-all flex items-center gap-0.5 sm:gap-1",
+                          "px-1.5 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-black transition-all flex items-center gap-0.5 sm:gap-1",
                           currency === 'USD'
                             ? "bg-foreground text-background shadow-sm"
                             : "text-muted-foreground hover:text-foreground"
@@ -304,7 +307,7 @@ function App() {
                         title="Switch to US Dollar ($) - auto-converts amounts"
                       >
                         <span>$</span>
-                        <span className="hidden xs:inline">USD</span>
+                        <span className="hidden sm:inline">USD</span>
                       </button>
                     </div>
 
@@ -347,6 +350,7 @@ function App() {
                       target="_blank"
                       rel="noopener noreferrer"
                       title="View GitHub repository"
+                      className="hidden sm:block"
                     >
                       <Button
                         variant="outline"
@@ -364,7 +368,7 @@ function App() {
               <DiscrepancyBanner />
 
               {/* Main Content - Flex Grow */}
-              <main className="flex-1 w-full mx-auto max-w-[94%] 2xl:max-w-[2000px] px-4 md:px-8 lg:px-10 md:pt-0 overflow-hidden relative flex flex-col">
+              <main className="flex-1 w-full mx-auto max-w-[94%] 2xl:max-w-[2000px] px-3 sm:px-6 md:px-8 lg:px-10 md:pt-0 overflow-hidden relative flex flex-col min-h-0">
                 {/* Desktop Grid Layout */}
                 <div className="hidden md:block h-full overflow-hidden">
                   {view === 'editor' ? (
@@ -383,7 +387,7 @@ function App() {
                 </div>
 
                 {/* Mobile Tab Layout */}
-                <div className="md:hidden flex-1 relative overflow-hidden flex flex-col px-4 pb-2">
+                <div className="md:hidden flex-1 relative overflow-hidden flex flex-col pb-1 min-h-0">
                   <div className="flex-1 overflow-hidden h-full">
                     {mobileTab === 'people' && (
                       <div className="flex flex-col gap-4 h-full">
@@ -399,31 +403,71 @@ function App() {
               </main>
 
               {/* Mobile Bottom Nav */}
-              <div className="md:hidden flex-none bg-card border-t flex items-center justify-around h-16 px-4 pb-1">
-                <Button
-                  variant="ghost"
-                  className={cn("flex flex-col items-center gap-1 h-auto py-2 px-4 rounded-xl transition-all", mobileTab === 'people' ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:text-foreground")}
+              <div className="md:hidden flex-none bg-card/95 backdrop-blur-md border-t border-foreground/10 flex items-center justify-around h-16 px-2 pb-[max(0.35rem,env(safe-area-inset-bottom))] shadow-lg z-30">
+                <button
+                  type="button"
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1 flex-1 py-1 px-2 rounded-xl transition-all relative",
+                    mobileTab === 'people'
+                      ? "text-primary font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
                   onClick={() => setMobileTab('people')}
                 >
-                  <Users className="w-5 h-5" />
-                  <span className="text-[10px] font-medium">People</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className={cn("flex flex-col items-center gap-1 h-auto py-2 px-4 rounded-xl transition-all", mobileTab === 'items' ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:text-foreground")}
+                  <div className="relative">
+                    <Users className="w-5 h-5" />
+                    {people.length > 0 && (
+                      <span className="absolute -top-1.5 -right-2 bg-foreground text-background text-[9px] font-black h-4 min-w-4 px-1 rounded-full flex items-center justify-center">
+                        {people.length}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] tracking-tight">People</span>
+                  {mobileTab === 'people' && (
+                    <span className="absolute bottom-0 w-8 h-0.5 bg-primary rounded-full" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1 flex-1 py-1 px-2 rounded-xl transition-all relative",
+                    mobileTab === 'items'
+                      ? "text-primary font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
                   onClick={() => setMobileTab('items')}
                 >
-                  <Receipt className="w-5 h-5" />
-                  <span className="text-[10px] font-medium">Items</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className={cn("flex flex-col items-center gap-1 h-auto py-2 px-4 rounded-xl transition-all", mobileTab === 'summary' ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:text-foreground")}
+                  <div className="relative">
+                    <Receipt className="w-5 h-5" />
+                    {items.length > 0 && (
+                      <span className="absolute -top-1.5 -right-2 bg-foreground text-background text-[9px] font-black h-4 min-w-4 px-1 rounded-full flex items-center justify-center">
+                        {items.length}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] tracking-tight">Items</span>
+                  {mobileTab === 'items' && (
+                    <span className="absolute bottom-0 w-8 h-0.5 bg-primary rounded-full" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1 flex-1 py-1 px-2 rounded-xl transition-all relative",
+                    mobileTab === 'summary'
+                      ? "text-primary font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
                   onClick={() => setMobileTab('summary')}
                 >
-                  <CreditCard className="w-5 h-5" />
-                  <span className="text-[10px] font-medium">Summary</span>
-                </Button>
+                  <div className="relative">
+                    <CreditCard className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] tracking-tight">Summary</span>
+                  {mobileTab === 'summary' && (
+                    <span className="absolute bottom-0 w-8 h-0.5 bg-primary rounded-full" />
+                  )}
+                </button>
               </div>
 
               {/* Desktop Footer */}
