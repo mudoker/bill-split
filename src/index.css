@@ -54,25 +54,58 @@
   * {
     @apply border-border;
     -webkit-tap-highlight-color: transparent;
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
   }
 
-  html,
-  body {
-    overscroll-behavior-y: none;
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  html {
+    min-height: 100%;
+    scroll-behavior: smooth;
+    overscroll-behavior: none;
     -webkit-text-size-adjust: 100%;
-  }
-
-  body {
-    @apply bg-background text-foreground;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
+    @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    overscroll-behavior: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   button,
   input,
   select,
   textarea {
+    font-family: inherit;
     touch-action: manipulation;
+  }
+
+  input,
+  textarea,
+  [contenteditable="true"],
+  .selectable-text {
+    -webkit-user-select: text;
+    user-select: text;
   }
 
   /* Prevent automatic iOS zoom on mobile while preserving responsive sizing */
@@ -96,7 +129,11 @@
     appearance: textfield !important;
   }
 
-  /* Touch scrolling enhancement for Radix scroll containers */
+  /* Hide scrollbars on Radix scroll areas to maintain native mobile app feel */
+  [data-radix-scroll-area-scrollbar] {
+    display: none !important;
+  }
+
   [data-radix-scroll-area-viewport] {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;

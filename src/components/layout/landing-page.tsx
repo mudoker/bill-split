@@ -31,7 +31,7 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
     return (
         <div className="flex-1 flex flex-col min-h-0 bg-background">
             {/* Hero Section */}
-            <div className="flex-none pt-6 sm:pt-12 pb-8 sm:pb-16 px-4 sm:px-6 text-center space-y-4 sm:space-y-6 max-w-2xl mx-auto w-full">
+            <div className="flex-none pt-4 sm:pt-12 pb-6 sm:pb-16 px-4 sm:px-6 text-center space-y-3.5 sm:space-y-6 max-w-2xl mx-auto w-full">
                 <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -44,7 +44,7 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ duration: 0.5, delay: 0.1 }}
-                    className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-foreground leading-tight"
+                    className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-foreground leading-tight"
                 >
                     Split Bills. <br />Not Friendships.
                 </motion.h1>
@@ -52,7 +52,7 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
-                    className="text-muted-foreground text-sm sm:text-lg max-w-md mx-auto px-2"
+                    className="text-muted-foreground text-xs sm:text-lg max-w-md mx-auto px-2 leading-relaxed"
                 >
                     The smartest way to split group bills, handle sponsors, and manage late arrivals.
                 </motion.p>
@@ -62,23 +62,23 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                     transition={{ duration: 0.5, delay: 0.3 }}
                     className="flex flex-col items-center gap-3 sm:gap-4 pt-2 sm:pt-4 w-full"
                 >
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center w-full max-w-sm sm:max-w-none">
+                    <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-4 justify-center w-full max-w-sm sm:max-w-none">
                         {hasActiveLocalData && (
                             <Button
                                 onClick={() => onSelectBill('current')}
                                 variant="outline"
                                 size="lg"
-                                className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg font-bold gap-2 rounded-2xl border-2 transition-all hover:bg-foreground/5 w-full sm:w-auto"
+                                className="h-11 sm:h-14 px-5 sm:px-8 text-sm sm:text-lg font-bold gap-2 rounded-xl sm:rounded-2xl border-2 transition-all hover:bg-foreground/5 w-full sm:w-auto touch-manipulation active:scale-95"
                             >
-                                <Play className="w-5 h-5 sm:w-6 sm:h-6" /> Resume Last
+                                <Play className="w-4 h-4 sm:w-6 sm:h-6" /> Resume Last
                             </Button>
                         )}
                         <Button
                             onClick={() => setIsCreateModalOpen(true)}
                             size="lg"
-                            className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg font-bold gap-2 rounded-2xl shadow-xl shadow-foreground/10 transition-all hover:scale-105 active:scale-95 bg-foreground text-background hover:bg-foreground/90 w-full sm:w-auto"
+                            className="h-11 sm:h-14 px-5 sm:px-8 text-sm sm:text-lg font-bold gap-2 rounded-xl sm:rounded-2xl shadow-xl shadow-foreground/10 transition-all hover:scale-105 active:scale-95 bg-foreground text-background hover:bg-foreground/90 w-full sm:w-auto touch-manipulation"
                         >
-                            <Plus className="w-5 h-5 sm:w-6 sm:h-6" /> Start New
+                            <Plus className="w-4 h-4 sm:w-6 sm:h-6" /> Start New
                         </Button>
                     </div>
 
