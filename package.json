@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "db:migrate": "bun run scripts/migrate-to-neon.ts",
+    "bump-sw": "bash scripts/bump-sw-version.sh",
     "lint": "eslint ."
   },
   "dependencies": {
