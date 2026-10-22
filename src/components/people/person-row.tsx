@@ -120,7 +120,7 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
                 </div>
 
                 <div className="flex flex-col min-w-0 flex-1">
-                    <span className="font-black text-sm tracking-tight text-foreground truncate" title={person.name}>{person.name}</span>
+                    <span className="font-black text-sm tracking-tight text-foreground truncate max-w-[140px] xs:max-w-[180px] sm:max-w-none" title={person.name}>{person.name}</span>
                     <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                         {/* Host Badge - Pays Remaining */}
                         {person.id === hostId && (

@@ -24,16 +24,21 @@ export function PeopleSection() {
         <Card className="w-full h-full flex flex-col border border-foreground/[0.05] bg-card/20 overflow-hidden shadow-none">
             <CardHeader className="pb-3 pt-3 px-3.5 sm:px-4 md:px-5 md:pt-5 shrink-0">
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                    <CardTitle className="text-xl font-black uppercase tracking-widest flex items-center gap-2 text-foreground">
-                        <UserPlus className="w-5 h-5 text-foreground/80" />
+                    <CardTitle className="text-lg sm:text-xl font-black uppercase tracking-widest flex items-center gap-2 text-foreground">
+                        <UserPlus className="w-4 h-4 sm:w-5 sm:h-5 text-foreground/80 shrink-0" />
                         Participants
+                        {people.length > 0 && (
+                            <span className="text-[10px] font-black bg-foreground/5 text-muted-foreground px-2 py-0.5 rounded-full border border-foreground/10">
+                                {people.length}
+                            </span>
+                        )}
                     </CardTitle>
                     {IS_DEV && people.length === 0 && !isReadOnly && (
                         <Button
                             variant="ghost"
                             size="sm"
                             onClick={loadSeedData}
-                            className="h-8 gap-2 text-[10px] font-black uppercase tracking-widest text-foreground/80 hover:bg-foreground/10 transition-all border border-foreground/20 rounded-full px-3"
+                            className="h-7 sm:h-8 gap-1.5 text-[10px] font-black uppercase tracking-widest text-foreground/80 hover:bg-foreground/10 transition-all border border-foreground/20 rounded-full px-3"
                         >
                             <Sparkles className="w-3.5 h-3.5" /> Demo Sample
                         </Button>
@@ -43,7 +48,7 @@ export function PeopleSection() {
             </CardHeader>
             <CardContent className="flex-1 p-0 overflow-hidden flex flex-col container-query-pane">
                 <ScrollArea className="flex-1 px-3 sm:px-4 md:px-5">
-                    <div className="space-y-5 py-3 pr-2">
+                    <div className="space-y-4 sm:space-y-5 py-3 pr-1 sm:pr-2">
                         {!isReadOnly && (
                             <div className="relative group">
                                 <div className="relative flex gap-2">
@@ -52,7 +57,7 @@ export function PeopleSection() {
                                         value={newName}
                                         onChange={(e) => setNewName(e.target.value)}
                                         onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-                                        className="h-10 sm:h-11 bg-background border-foreground/[0.05] rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-bold px-3.5 text-xs sm:text-sm"
+                                        className="h-10 sm:h-11 bg-background border-foreground/[0.05] rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-bold px-3.5 text-base sm:text-sm"
                                     />
                                     <Button onClick={handleAdd} size="icon" className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 bg-foreground text-background hover:bg-foreground/90 rounded-xl transition-all active:scale-95 shadow-sm">
                                         <PlusCircle className="w-5 h-5" />
