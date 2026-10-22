@@ -403,72 +403,77 @@ function App() {
               </main>
 
               {/* Mobile Bottom Nav */}
-              <div className="md:hidden flex-none bg-card/95 backdrop-blur-md border-t border-foreground/10 flex items-center justify-around h-16 px-2 pb-[max(0.35rem,env(safe-area-inset-bottom))] shadow-lg z-30">
-                <button
-                  type="button"
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-1 flex-1 py-1 px-2 rounded-xl transition-all relative",
-                    mobileTab === 'people'
-                      ? "text-primary font-bold"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                  onClick={() => setMobileTab('people')}
-                >
-                  <div className="relative">
-                    <Users className="w-5 h-5" />
-                    {people.length > 0 && (
-                      <span className="absolute -top-1.5 -right-2 bg-foreground text-background text-[9px] font-black h-4 min-w-4 px-1 rounded-full flex items-center justify-center">
-                        {people.length}
-                      </span>
+              <nav
+                aria-label="Mobile Navigation"
+                className="md:hidden flex-none bg-card/95 backdrop-blur-xl border-t border-foreground/10 select-none pb-[env(safe-area-inset-bottom)] shadow-lg z-30"
+              >
+                <div className="flex h-14 items-center justify-around px-2">
+                  <button
+                    type="button"
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-1 flex-1 py-1 px-2 rounded-xl transition-all relative touch-manipulation active:scale-95",
+                      mobileTab === 'people'
+                        ? "text-primary font-bold"
+                        : "text-muted-foreground hover:text-foreground"
                     )}
-                  </div>
-                  <span className="text-[10px] tracking-tight">People</span>
-                  {mobileTab === 'people' && (
-                    <span className="absolute bottom-0 w-8 h-0.5 bg-primary rounded-full" />
-                  )}
-                </button>
-                <button
-                  type="button"
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-1 flex-1 py-1 px-2 rounded-xl transition-all relative",
-                    mobileTab === 'items'
-                      ? "text-primary font-bold"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                  onClick={() => setMobileTab('items')}
-                >
-                  <div className="relative">
-                    <Receipt className="w-5 h-5" />
-                    {items.length > 0 && (
-                      <span className="absolute -top-1.5 -right-2 bg-foreground text-background text-[9px] font-black h-4 min-w-4 px-1 rounded-full flex items-center justify-center">
-                        {items.length}
-                      </span>
+                    onClick={() => setMobileTab('people')}
+                  >
+                    <div className="relative">
+                      <Users className="w-5 h-5" />
+                      {people.length > 0 && (
+                        <span className="absolute -top-1.5 -right-2 bg-foreground text-background text-[9px] font-black h-4 min-w-4 px-1 rounded-full flex items-center justify-center">
+                          {people.length}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] tracking-tight">People</span>
+                    {mobileTab === 'people' && (
+                      <span className="absolute bottom-0 w-8 h-0.5 bg-primary rounded-full" />
                     )}
-                  </div>
-                  <span className="text-[10px] tracking-tight">Items</span>
-                  {mobileTab === 'items' && (
-                    <span className="absolute bottom-0 w-8 h-0.5 bg-primary rounded-full" />
-                  )}
-                </button>
-                <button
-                  type="button"
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-1 flex-1 py-1 px-2 rounded-xl transition-all relative",
-                    mobileTab === 'summary'
-                      ? "text-primary font-bold"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                  onClick={() => setMobileTab('summary')}
-                >
-                  <div className="relative">
-                    <CreditCard className="w-5 h-5" />
-                  </div>
-                  <span className="text-[10px] tracking-tight">Summary</span>
-                  {mobileTab === 'summary' && (
-                    <span className="absolute bottom-0 w-8 h-0.5 bg-primary rounded-full" />
-                  )}
-                </button>
-              </div>
+                  </button>
+                  <button
+                    type="button"
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-1 flex-1 py-1 px-2 rounded-xl transition-all relative touch-manipulation active:scale-95",
+                      mobileTab === 'items'
+                        ? "text-primary font-bold"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    onClick={() => setMobileTab('items')}
+                  >
+                    <div className="relative">
+                      <Receipt className="w-5 h-5" />
+                      {items.length > 0 && (
+                        <span className="absolute -top-1.5 -right-2 bg-foreground text-background text-[9px] font-black h-4 min-w-4 px-1 rounded-full flex items-center justify-center">
+                          {items.length}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] tracking-tight">Items</span>
+                    {mobileTab === 'items' && (
+                      <span className="absolute bottom-0 w-8 h-0.5 bg-primary rounded-full" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-1 flex-1 py-1 px-2 rounded-xl transition-all relative touch-manipulation active:scale-95",
+                      mobileTab === 'summary'
+                        ? "text-primary font-bold"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    onClick={() => setMobileTab('summary')}
+                  >
+                    <div className="relative">
+                      <CreditCard className="w-5 h-5" />
+                    </div>
+                    <span className="text-[10px] tracking-tight">Summary</span>
+                    {mobileTab === 'summary' && (
+                      <span className="absolute bottom-0 w-8 h-0.5 bg-primary rounded-full" />
+                    )}
+                  </button>
+                </div>
+              </nav>
 
               {/* Desktop Footer */}
               <footer className="hidden md:block mt-6 text-center text-xs text-muted-foreground shrink-0 pb-4">

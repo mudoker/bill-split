@@ -219,7 +219,7 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
             </div>
 
             {/* Feature Pills */}
-            <div className="flex-none py-6 sm:py-8 px-4 sm:px-6 border-t bg-muted/30">
+            <div className="flex-none pt-6 sm:pt-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-8 px-4 sm:px-6 border-t bg-muted/30">
                 <div className="max-w-2xl mx-auto flex flex-wrap justify-center gap-x-6 sm:gap-x-8 gap-y-3 sm:gap-y-4 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
                     <div className="flex items-center gap-1.5 sm:gap-2">
                         <UsersIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground/40" />

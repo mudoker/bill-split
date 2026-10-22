@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { formatNumber } from '@/lib/format';
 import { useBillStore, type CurrencyCode } from '@/store/useBillStore';
@@ -27,12 +27,14 @@ export function CurrencyInput({
     const currency = propCurrency || storeCurrency || 'VND';
     const [isFocused, setIsFocused] = useState(false);
     const [rawText, setRawText] = useState(value === 0 ? '' : value.toString());
+    const [prevValue, setPrevValue] = useState(value);
 
-    useEffect(() => {
+    if (value !== prevValue) {
+        setPrevValue(value);
         if (!isFocused) {
             setRawText(value === 0 ? '' : value.toString());
         }
-    }, [value, isFocused]);
+    }
 
     const handleFocus = useCallback(() => {
         setIsFocused(true);

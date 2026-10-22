@@ -27,17 +27,20 @@ export function ResizableSplit({
 
   // Restore saved column width from localStorage
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        const val = parseFloat(saved);
-        if (!isNaN(val) && val >= minLeftPercent && val <= maxLeftPercent) {
-          setLeftPercent(val);
+    const frame = requestAnimationFrame(() => {
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const val = parseFloat(saved);
+          if (!isNaN(val) && val >= minLeftPercent && val <= maxLeftPercent) {
+            setLeftPercent(val);
+          }
         }
+      } catch {
+        // Ignore storage access errors
       }
-    } catch {
-      // Ignore storage access errors
-    }
+    });
+    return () => cancelAnimationFrame(frame);
   }, [storageKey, minLeftPercent, maxLeftPercent]);
 
   const updateWidth = useCallback(

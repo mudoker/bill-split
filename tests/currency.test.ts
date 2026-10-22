@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import { formatCurrency, formatNumber, getActiveCurrency } from '../src/lib/format';
-import { useBillStore, VND_PER_USD } from '../src/store/useBillStore';
+import { formatCurrency } from '../src/lib/format';
+import { useBillStore } from '../src/store/useBillStore';
 
 describe('Currency Support', () => {
   it('formats VND properly', () => {

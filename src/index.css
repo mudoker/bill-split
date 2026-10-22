@@ -62,6 +62,13 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  button,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
   /* Prevent automatic iOS zoom while preserving responsive sizing */
   @media screen and (max-width: 639px) {
     input[type="text"]:not(.no-auto-zoom-override),

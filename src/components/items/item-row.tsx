@@ -281,7 +281,7 @@ export function ItemRow({ item }: { item: Item }) {
                                                                 <button
                                                                     type="button"
                                                                     disabled={Math.round(pQty) <= 1}
-                                                                    className="h-5 w-5 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all"
+                                                                    className="h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all touch-manipulation"
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         updatePersonQty(p.id, Math.round(pQty || 1) - 1);
@@ -306,7 +306,7 @@ export function ItemRow({ item }: { item: Item }) {
                                                                 <button
                                                                     type="button"
                                                                     disabled={Math.round(pQty) >= qty}
-                                                                    className="h-5 w-5 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all"
+                                                                    className="h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all touch-manipulation"
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         updatePersonQty(p.id, Math.round(pQty || 1) + 1);
