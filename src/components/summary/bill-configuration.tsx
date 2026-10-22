@@ -103,36 +103,37 @@ export function BillConfiguration({
                 <Button
                     variant="outline"
                     size="sm"
-                    className="h-10 gap-2 rounded-xl bg-background border-foreground/10 hover:bg-foreground/5 hover:border-foreground/20 hover:text-foreground transition-all group"
+                    className="h-9 px-2.5 sm:px-3 gap-1.5 sm:gap-2 rounded-xl bg-background border-foreground/10 hover:bg-foreground/5 hover:border-foreground/20 hover:text-foreground transition-all group"
+                    title="Configure Bill Settings"
                 >
-                    <Settings className="w-4 h-4 group-hover:rotate-45 transition-transform" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Configure Bill</span>
+                    <Settings className="w-4 h-4 group-hover:rotate-45 transition-transform shrink-0" />
+                    <span className="hidden sm:inline text-[10px] font-black uppercase tracking-widest">Configure</span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[680px] md:max-w-[760px] w-full p-6 sm:p-8 rounded-3xl border-foreground/10 bg-background shadow-2xl">
-                <DialogHeader>
-                    <div className="flex items-center justify-between pr-6">
-                        <div className="space-y-1">
-                            <DialogTitle className="text-xl font-black uppercase tracking-widest flex items-center gap-2 text-foreground">
-                                <Settings className="w-5 h-5 text-foreground/80" /> Configuration
+            <DialogContent className="sm:max-w-[680px] md:max-w-[760px] w-full p-4 sm:p-8 rounded-2xl sm:rounded-3xl border-foreground/10 bg-background shadow-2xl max-h-[92dvh] flex flex-col">
+                <DialogHeader className="shrink-0">
+                    <div className="flex items-center justify-between pr-8">
+                        <div className="space-y-0.5 text-left">
+                            <DialogTitle className="text-lg sm:text-xl font-black uppercase tracking-widest flex items-center gap-2 text-foreground">
+                                <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-foreground/80 shrink-0" /> Configuration
                             </DialogTitle>
                             <DialogDescription className="text-[10px] uppercase font-black tracking-tighter opacity-70">
                                 Setup session details and automated charges
                             </DialogDescription>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                             {saving ? (
-                                <div className="flex items-center gap-1.5 px-3 py-1 bg-foreground/5 rounded-full border border-foreground/10">
+                                <div className="flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 bg-foreground/5 rounded-full border border-foreground/10">
                                     <div className="w-2 h-2 border-[1.5px] border-foreground/30 border-t-foreground rounded-full animate-spin" />
                                     <span className="text-[9px] font-black uppercase text-foreground/80 tracking-widest">Saving...</span>
                                 </div>
                             ) : saved ? (
-                                <div className="flex items-center gap-1.5 px-3 py-1 bg-foreground/10 rounded-full border border-foreground/20 animate-in fade-in zoom-in-95">
+                                <div className="flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 bg-foreground/10 rounded-full border border-foreground/20 animate-in fade-in zoom-in-95">
                                     <Check className="w-2.5 h-2.5 text-foreground" />
                                     <span className="text-[9px] font-black uppercase text-foreground tracking-widest">Saved</span>
                                 </div>
                             ) : (
-                                <div className="flex items-center gap-1.5 px-3 py-1 bg-foreground/[0.03] rounded-full border border-foreground/[0.05]">
+                                <div className="flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 bg-foreground/[0.03] rounded-full border border-foreground/[0.05]">
                                     <CloudUpload className="w-2.5 h-2.5 text-muted-foreground/40" />
                                     <span className="text-[9px] font-black uppercase text-muted-foreground/40 tracking-widest">Synced</span>
                                 </div>
@@ -141,29 +142,29 @@ export function BillConfiguration({
                     </div>
                 </DialogHeader>
 
-                <div className="flex flex-col h-[70vh] max-h-[720px] -mx-1">
-                    <ScrollArea className="flex-1 px-1">
-                        <div className="grid gap-8 pb-4 py-4 pr-3">
+                <div className="flex-1 min-h-0 -mx-1">
+                    <ScrollArea className="h-full px-1">
+                        <div className="grid gap-6 sm:gap-8 pb-4 py-3 pr-2 sm:pr-3">
                             {/* Bill Metadata */}
-                            <div className="space-y-4">
+                            <div className="space-y-3 sm:space-y-4">
                                 <Label className="text-[11px] font-black text-foreground/60 uppercase tracking-[0.2em] pl-1">Bill Details</Label>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                                     <div className="relative group">
-                                        <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
+                                        <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
                                         <Input
                                             placeholder="Bill name (e.g. Lunch at KFC)"
                                             value={billName}
                                             onChange={(e) => setBillName(e.target.value)}
-                                            className="pl-12 h-12 bg-muted/20 border-foreground/5 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-bold"
+                                            className="pl-10 sm:pl-12 h-11 sm:h-12 bg-muted/20 border-foreground/5 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-bold"
                                         />
                                     </div>
                                     <div className="relative group">
-                                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
+                                        <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
                                         <Input
                                             placeholder="Location"
                                             value={location}
                                             onChange={(e) => setLocation(e.target.value)}
-                                            className="pl-12 h-12 bg-muted/20 border-foreground/5 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-bold"
+                                            className="pl-10 sm:pl-12 h-11 sm:h-12 bg-muted/20 border-foreground/5 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-bold"
                                         />
                                     </div>
                                 </div>
@@ -366,7 +367,7 @@ export function BillConfiguration({
                                                                 )}
                                                             onClick={() => handleTypeChange(charge.id, charge.amount, charge.type, 'fixed')}
                                                         >
-                                                            ₫
+                                                            {currency === 'USD' ? '$' : '₫'}
                                                         </Button>
                                                     </div>
                                                 </div>
