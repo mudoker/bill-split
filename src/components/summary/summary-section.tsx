@@ -103,7 +103,7 @@ export function SummarySection() {
                                     <span className="hidden sm:inline">Pay Host</span>
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="sm:max-w-md rounded-2xl border-foreground/10 bg-background shadow-2xl p-4 sm:p-6">
+                            <DialogContent className="w-[calc(100vw-28px)] sm:w-full max-w-sm rounded-2xl border-border bg-card shadow-2xl p-4 sm:p-6">
                                 <DialogHeader>
                                     <DialogTitle className="text-lg sm:text-xl font-black uppercase tracking-widest flex items-center gap-2 text-primary">
                                         <QrCode className="w-5 h-5" /> Host Payment

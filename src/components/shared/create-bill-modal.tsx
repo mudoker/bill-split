@@ -54,116 +54,118 @@ export function CreateBillModal({ open, onOpenChange, onSubmit }: CreateBillModa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[440px] rounded-2xl sm:rounded-3xl border-foreground/10 bg-background shadow-2xl p-4 sm:p-6 max-h-[92dvh] overflow-y-auto">
-        <DialogHeader className="space-y-1.5 sm:space-y-2 text-left">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-foreground/5 border border-foreground/10 flex items-center justify-center text-foreground mb-0.5 sm:mb-1">
-            <ReceiptText className="w-5 h-5 sm:w-6 sm:h-6" />
+      <DialogContent className="w-[calc(100vw-28px)] sm:w-full max-w-md max-h-[86vh] max-h-[86dvh] flex flex-col p-4 sm:p-6 text-foreground shadow-2xl overflow-hidden rounded-2xl sm:rounded-3xl border border-border bg-card">
+        <DialogHeader className="space-y-1 text-left pr-8 pb-3 border-b border-border/60 shrink-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-foreground/5 border border-border flex items-center justify-center text-foreground mb-0.5">
+            <ReceiptText className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <DialogTitle className="text-lg sm:text-xl font-black uppercase tracking-tight">
+          <DialogTitle className="text-base sm:text-lg font-bold tracking-tight">
             Create New Bill
           </DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground font-medium">
-            Enter basic information before entering the bill page.
+          <DialogDescription className="text-xs text-muted-foreground">
+            Set up bill details and currency to get started.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4 py-1 sm:py-2">
-          <div className="space-y-1 sm:space-y-1.5">
-            <Label htmlFor="bill-name" className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
-              <Tag className="w-3.5 h-3.5 text-muted-foreground" /> Bill Name <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="bill-name"
-              placeholder="e.g. Friday BBQ, Team Lunch, Trip to Da Lat"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                if (error) setError('');
-              }}
-              autoFocus
-              className="h-10 sm:h-11 bg-muted/20 border-foreground/10 focus-visible:ring-foreground/20 rounded-xl font-bold text-base sm:text-sm"
-            />
-            {error && (
-              <p className="text-[11px] font-bold text-destructive pl-1">{error}</p>
-            )}
-          </div>
+        <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto overscroll-contain space-y-3.5 py-3 pr-0.5">
+            <div className="space-y-1 sm:space-y-1.5">
+              <Label htmlFor="bill-name" className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5 text-muted-foreground" /> Bill Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="bill-name"
+                placeholder="e.g. Friday BBQ, Team Lunch"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (error) setError('');
+                }}
+                autoFocus
+                className="h-10 sm:h-11 bg-foreground/[0.03] border-border focus-visible:ring-foreground/20 rounded-xl font-medium text-base sm:text-sm"
+              />
+              {error && (
+                <p className="text-[11px] font-bold text-destructive pl-1">{error}</p>
+              )}
+            </div>
 
-          <div className="space-y-1 sm:space-y-1.5">
-            <Label htmlFor="bill-location" className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5" /> Venue / Location (Optional)
-            </Label>
-            <Input
-              id="bill-location"
-              placeholder="e.g. Gyu-Kaku, District 1"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="h-10 sm:h-11 bg-muted/20 border-foreground/10 focus-visible:ring-foreground/20 rounded-xl font-bold text-base sm:text-sm"
-            />
-          </div>
+            <div className="space-y-1 sm:space-y-1.5">
+              <Label htmlFor="bill-location" className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5" /> Venue / Location (Optional)
+              </Label>
+              <Input
+                id="bill-location"
+                placeholder="e.g. Gyu-Kaku, District 1"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="h-10 sm:h-11 bg-foreground/[0.03] border-border focus-visible:ring-foreground/20 rounded-xl font-medium text-base sm:text-sm"
+              />
+            </div>
 
-          <div className="space-y-1 sm:space-y-1.5">
-            <Label htmlFor="bill-host" className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5" /> Host / Payer (Optional)
-            </Label>
-            <Input
-              id="bill-host"
-              placeholder="e.g. Alex"
-              value={hostName}
-              onChange={(e) => setHostName(e.target.value)}
-              className="h-10 sm:h-11 bg-muted/20 border-foreground/10 focus-visible:ring-foreground/20 rounded-xl font-bold text-base sm:text-sm"
-            />
-            <p className="text-[10px] text-muted-foreground/60 pl-1">
-              Creates the first participant and sets them as the payer.
-            </p>
-          </div>
+            <div className="space-y-1 sm:space-y-1.5">
+              <Label htmlFor="bill-host" className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5" /> Host / Payer (Optional)
+              </Label>
+              <Input
+                id="bill-host"
+                placeholder="e.g. Alex"
+                value={hostName}
+                onChange={(e) => setHostName(e.target.value)}
+                className="h-10 sm:h-11 bg-foreground/[0.03] border-border focus-visible:ring-foreground/20 rounded-xl font-medium text-base sm:text-sm"
+              />
+              <p className="text-[10px] text-muted-foreground/70 pl-1">
+                Creates the first participant and sets them as the primary payer.
+              </p>
+            </div>
 
-          <div className="space-y-1 sm:space-y-1.5">
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <Coins className="w-3.5 h-3.5" /> Currency
-            </Label>
-            <div className="grid grid-cols-2 gap-2 bg-muted/20 p-1 rounded-2xl border border-foreground/10">
-              <button
-                type="button"
-                onClick={() => setCurrency('VND')}
-                className={cn(
-                  "flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-black transition-all",
-                  currency === 'VND'
-                    ? "bg-foreground text-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
-                )}
-              >
-                <span>₫</span>
-                <span>VND</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrency('USD')}
-                className={cn(
-                  "flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-black transition-all",
-                  currency === 'USD'
-                    ? "bg-foreground text-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
-                )}
-              >
-                <span>$</span>
-                <span>USD</span>
-              </button>
+            <div className="space-y-1 sm:space-y-1.5">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Coins className="w-3.5 h-3.5" /> Currency
+              </Label>
+              <div className="grid grid-cols-2 gap-2 bg-foreground/[0.03] p-1 rounded-xl border border-border">
+                <button
+                  type="button"
+                  onClick={() => setCurrency('VND')}
+                  className={cn(
+                    "flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all touch-manipulation active:scale-95",
+                    currency === 'VND'
+                      ? "bg-foreground text-background shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+                  )}
+                >
+                  <span className="font-bold">₫</span>
+                  <span>VND</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrency('USD')}
+                  className={cn(
+                    "flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all touch-manipulation active:scale-95",
+                    currency === 'USD'
+                      ? "bg-foreground text-background shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+                  )}
+                >
+                  <span className="font-bold">$</span>
+                  <span>USD</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          <DialogFooter className="pt-2 sm:pt-3 gap-2 flex-col-reverse sm:flex-row">
+          <DialogFooter className="pt-3 border-t border-border/60 shrink-0 gap-2 flex-col-reverse sm:flex-row">
             <Button
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="rounded-xl font-bold w-full sm:w-auto h-10 sm:h-10"
+              className="rounded-xl font-semibold w-full sm:w-auto h-10 touch-manipulation active:scale-95"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={!name.trim()}
-              className="rounded-xl font-bold gap-2 px-5 bg-foreground text-background hover:bg-foreground/90 shadow-md w-full sm:w-auto h-10 sm:h-10"
+              className="rounded-xl font-semibold gap-2 px-5 bg-foreground text-background hover:bg-foreground/90 shadow-md w-full sm:w-auto h-10 touch-manipulation active:scale-95"
             >
               Continue to Bill <ArrowRight className="w-4 h-4" />
             </Button>

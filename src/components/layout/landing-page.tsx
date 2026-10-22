@@ -102,7 +102,7 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
             </div>
 
             {/* Recent History Section */}
-            <div className="flex-1 px-4 sm:px-6 max-w-2xl mx-auto w-full flex flex-col min-h-0">
+            <div className="flex-1 px-4 sm:px-6 max-w-2xl mx-auto w-full flex flex-col">
                 <div className="flex items-center justify-between mb-3 sm:mb-4 shrink-0 flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-muted-foreground" />
@@ -151,7 +151,7 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                     })()}
                 </div>
 
-                <div className="flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-4 overscroll-contain">
+                <div className="w-full">
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}

@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Settings, Percent, Banknote, Tag, MapPin, Check, CloudUpload } from "lucide-react";
 import { useBillStore, type Person, type GlobalCharge, type Item } from "@/store/useBillStore";
 import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { CurrencyInput } from "@/components/shared/currency-input";
 import {
     Dialog,
@@ -110,14 +109,14 @@ export function BillConfiguration({
                     <span className="hidden sm:inline text-[10px] font-black uppercase tracking-widest">Configure</span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[680px] md:max-w-[760px] w-full p-3.5 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl border-foreground/10 bg-background shadow-2xl max-h-[min(92dvh,calc(100dvh-1.5rem))] flex flex-col">
-                <DialogHeader className="shrink-0 pb-1 sm:pb-2">
+            <DialogContent className="w-[calc(100vw-28px)] sm:w-full max-w-lg md:max-w-2xl max-h-[86vh] max-h-[86dvh] flex flex-col p-4 sm:p-6 text-foreground shadow-2xl overflow-hidden rounded-2xl sm:rounded-3xl border border-border bg-card">
+                <DialogHeader className="shrink-0 pb-3 border-b border-border/60">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pr-7 sm:pr-8">
                         <div className="space-y-0.5 text-left">
-                            <DialogTitle className="text-base sm:text-xl font-black uppercase tracking-widest flex items-center gap-2 text-foreground">
-                                <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-foreground/80 shrink-0" /> Configuration
+                            <DialogTitle className="text-base sm:text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
+                                <Settings className="w-4 h-4 text-foreground/80 shrink-0" /> Configuration
                             </DialogTitle>
-                            <DialogDescription className="text-[10px] uppercase font-bold tracking-tight opacity-70">
+                            <DialogDescription className="text-xs text-muted-foreground">
                                 Setup session details and automated charges
                             </DialogDescription>
                         </div>
@@ -142,33 +141,32 @@ export function BillConfiguration({
                     </div>
                 </DialogHeader>
 
-                <div className="flex-1 min-h-0 -mx-1">
-                    <ScrollArea className="h-full px-1">
-                        <div className="grid gap-6 sm:gap-8 pb-4 py-3 pr-2 sm:pr-3">
-                            {/* Bill Metadata */}
-                            <div className="space-y-3 sm:space-y-4">
-                                <Label className="text-[11px] font-black text-foreground/60 uppercase tracking-[0.2em] pl-1">Bill Details</Label>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                                    <div className="relative group">
-                                        <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
-                                        <Input
-                                            placeholder="Bill name (e.g. Lunch at KFC)"
-                                            value={billName}
-                                            onChange={(e) => setBillName(e.target.value)}
-                                            className="pl-10 sm:pl-12 h-11 sm:h-12 bg-muted/20 border-foreground/5 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-bold"
-                                        />
-                                    </div>
-                                    <div className="relative group">
-                                        <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
-                                        <Input
-                                            placeholder="Location"
-                                            value={location}
-                                            onChange={(e) => setLocation(e.target.value)}
-                                            className="pl-10 sm:pl-12 h-11 sm:h-12 bg-muted/20 border-foreground/5 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-bold"
-                                        />
-                                    </div>
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain py-3 space-y-6 pr-1">
+                    <div className="grid gap-6 sm:gap-7 pb-4">
+                        {/* Bill Metadata */}
+                        <div className="space-y-3 sm:space-y-4">
+                            <Label className="text-[11px] font-black text-foreground/60 uppercase tracking-[0.2em] pl-1">Bill Details</Label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                                <div className="relative group">
+                                    <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
+                                    <Input
+                                        placeholder="Bill name (e.g. Lunch at KFC)"
+                                        value={billName}
+                                        onChange={(e) => setBillName(e.target.value)}
+                                        className="pl-10 sm:pl-12 h-10 sm:h-11 bg-foreground/[0.03] border-border rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-medium text-sm"
+                                    />
+                                </div>
+                                <div className="relative group">
+                                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
+                                    <Input
+                                        placeholder="Location"
+                                        value={location}
+                                        onChange={(e) => setLocation(e.target.value)}
+                                        className="pl-10 sm:pl-12 h-10 sm:h-11 bg-foreground/[0.03] border-border rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-medium text-sm"
+                                    />
                                 </div>
                             </div>
+                        </div>
 
                             {/* Currency Setting */}
                             <div className="space-y-3">
@@ -398,7 +396,6 @@ export function BillConfiguration({
                                 </div>
                             </div>
                         </div>
-                    </ScrollArea>
                 </div>
             </DialogContent>
         </Dialog>

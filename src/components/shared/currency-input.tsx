@@ -64,6 +64,7 @@ export function CurrencyInput({
             )}
             <Input
                 type={isFocused ? 'number' : 'text'}
+                inputMode="decimal"
                 step={currency === 'USD' ? "0.01" : "1"}
                 value={isFocused ? rawText : (value === 0 ? '' : formatNumber(value, currency))}
                 onChange={handleChange}
