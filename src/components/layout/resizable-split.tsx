@@ -118,7 +118,7 @@ export function ResizableSplit({
       {/* Left Column (Participants) */}
       <div
         style={{ width: `${leftPercent}%` }}
-        className="h-full overflow-hidden flex flex-col shrink-0 pr-2"
+        className="h-full overflow-hidden flex flex-col shrink-0 pr-2 min-h-0"
       >
         {left}
       </div>
@@ -159,7 +159,7 @@ export function ResizableSplit({
       {/* Right Column (Items - Main) */}
       <div
         style={{ width: `calc(${100 - leftPercent}% - 1.25rem)` }}
-        className="h-full overflow-hidden flex flex-col flex-1 min-w-0 pl-2"
+        className="h-full overflow-hidden flex flex-col flex-1 min-w-0 pl-2 min-h-0"
       >
         {right}
       </div>

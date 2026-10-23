@@ -59,8 +59,8 @@ export function PeopleSection() {
     };
 
     return (
-        <Card className="w-full h-full flex flex-col border-0 md:border md:border-foreground/[0.05] bg-transparent md:bg-card/20 overflow-hidden shadow-none rounded-none md:rounded-2xl">
-            <CardHeader className="pb-2.5 pt-1 px-1.5 sm:px-4 md:px-5 md:pt-5 shrink-0">
+        <Card className="w-full h-full flex flex-col min-h-0 border-0 md:border md:border-foreground/[0.05] bg-transparent md:bg-card/20 overflow-hidden shadow-none rounded-none md:rounded-2xl">
+            <CardHeader className="pb-1.5 pt-0 px-1.5 sm:px-4 md:px-5 md:pt-5 shrink-0">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                     <CardTitle className="text-lg sm:text-xl font-black uppercase tracking-widest flex items-center gap-2 text-foreground">
                         <UserPlus className="w-4 h-4 sm:w-5 sm:h-5 text-foreground/80 shrink-0" />
@@ -86,9 +86,9 @@ export function PeopleSection() {
                     Add registered members or Anon friends
                 </CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 p-0 overflow-hidden flex flex-col container-query-pane">
-                <ScrollArea className="flex-1 px-1 sm:px-4 md:px-5">
-                    <div className="space-y-4 sm:space-y-5 py-3 pr-1 sm:pr-2">
+            <CardContent className="flex-1 min-h-0 p-0 overflow-hidden flex flex-col container-query-pane">
+                <ScrollArea className="flex-1 min-h-0 h-full px-1 sm:px-4 md:px-5">
+                    <div className="space-y-2.5 sm:space-y-5 py-1.5 pr-1 sm:pr-2">
                         {!isReadOnly && (
                             <div className="relative group">
                                 <div className="relative flex gap-2">
@@ -167,7 +167,7 @@ export function PeopleSection() {
                                 </div>
                             </div>
                         )}
-                        <div className="pt-4 mt-4 pb-8 sm:pb-6 border-t border-foreground/[0.03]">
+                        <div className="pt-2 mt-2 pb-2 sm:pb-6 border-t border-foreground/[0.03]">
                             <QuickInsights />
                         </div>
                     </div>

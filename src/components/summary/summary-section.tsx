@@ -74,8 +74,8 @@ export function SummarySection() {
     };
 
     return (
-        <Card id="summary-card" className="w-full h-full flex flex-col border-none shadow-none md:border md:shadow-sm bg-background">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 pt-2.5 sm:pt-4 px-2 xs:px-3 sm:px-4 md:px-6 md:pt-6 shrink-0 gap-1.5 sm:gap-2">
+        <Card id="summary-card" className="w-full h-full flex flex-col min-h-0 border-none shadow-none md:border md:shadow-sm bg-background overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between pb-1.5 pt-1 sm:pt-4 px-2 xs:px-3 sm:px-4 md:px-6 md:pt-6 shrink-0 gap-1.5 sm:gap-2">
                 <div className="space-y-0.5 min-w-0 flex-1">
                     <CardTitle className="text-sm xs:text-base sm:text-xl font-black uppercase tracking-widest flex items-center gap-1.5 sm:gap-2 text-foreground truncate max-w-[150px] xs:max-w-xs sm:max-w-md">
                         <Receipt className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" /> <span className="truncate">{billName || "Summary"}</span>
@@ -178,9 +178,9 @@ export function SummarySection() {
                     </Button>
                 </div>
             </CardHeader>
-            <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
-                <ScrollArea className="flex-1 px-1.5 xs:px-2.5 sm:px-4 md:px-6">
-                    <div className="space-y-3.5 sm:space-y-6 pt-2 pb-8 sm:py-6 pr-0.5 sm:pr-2">
+            <CardContent className="flex-1 min-h-0 p-0 overflow-hidden flex flex-col">
+                <ScrollArea className="flex-1 min-h-0 h-full px-1.5 xs:px-2.5 sm:px-4 md:px-6">
+                    <div className="space-y-2.5 sm:space-y-6 pt-1 pb-2 sm:py-6 pr-0.5 sm:pr-2">
                         {/* Summary Stats */}
                         <div className="grid grid-cols-3 gap-1 xs:gap-1.5 sm:gap-3">
                             <div className="bg-card/30 rounded-xl sm:rounded-2xl p-1.5 xs:p-2 sm:p-4 border border-foreground/5 transition-all hover:border-primary/20 group min-w-0" title={`Items Subtotal: ${formatCurrency(totalItemCost)}`}>

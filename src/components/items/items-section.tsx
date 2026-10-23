@@ -31,9 +31,9 @@ export function ItemsSection() {
     const totalItemsCost = items.reduce((sum, item) => sum + item.price, 0);
 
     return (
-        <Card className="w-full h-full flex flex-col border-0 md:border md:border-foreground/[0.05] bg-transparent md:bg-card/20 overflow-hidden shadow-none rounded-none md:rounded-2xl">
+        <Card className="w-full h-full flex flex-col min-h-0 border-0 md:border md:border-foreground/[0.05] bg-transparent md:bg-card/20 overflow-hidden shadow-none rounded-none md:rounded-2xl">
             {/* Header: compact single-line on mobile with money and OCR scan to save space */}
-            <div className="pb-2 pt-1 px-1 sm:px-4 md:px-6 md:pt-4 flex items-center justify-between shrink-0 gap-2">
+            <div className="pb-1.5 pt-0 px-1 sm:px-4 md:px-6 md:pt-4 flex items-center justify-between shrink-0 gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                     <div className="hidden md:flex items-center gap-2 text-foreground font-black uppercase tracking-widest text-lg">
                         <Receipt className="w-4 h-4 text-primary shrink-0" />
@@ -65,9 +65,9 @@ export function ItemsSection() {
                 )}
             </div>
 
-            <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
-                <ScrollArea className="flex-1 px-1 sm:px-4 md:px-6">
-                    <div className="space-y-2.5 sm:space-y-4 py-1.5 sm:py-4 pr-1 sm:pr-3">
+            <CardContent className="flex-1 min-h-0 p-0 overflow-hidden flex flex-col">
+                <ScrollArea className="flex-1 min-h-0 h-full px-1 sm:px-4 md:px-6">
+                    <div className="space-y-2 sm:space-y-4 py-1 sm:py-4 pr-1 sm:pr-3">
                         {showScanner && !isReadOnly && (
                             <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                                 <BillUploader onScanComplete={() => setShowScanner(false)} />
@@ -122,7 +122,7 @@ export function ItemsSection() {
                         )}
 
                         {/* Item List */}
-                        <div className="space-y-2.5 pb-8 sm:pb-6">
+                        <div className="space-y-2 pb-2 sm:pb-6">
                             {items.length === 0 && (
                                 <div className="text-center text-muted-foreground py-10 text-sm border-2 border-dashed rounded-xl bg-muted/10">
                                     No items added yet.<br />
