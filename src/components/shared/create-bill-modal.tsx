@@ -81,7 +81,6 @@ export function CreateBillModal({ open, onOpenChange, onSubmit }: CreateBillModa
                   setName(e.target.value);
                   if (error) setError('');
                 }}
-                autoFocus
                 className="h-9 bg-foreground/[0.03] border-border focus-visible:ring-1 focus-visible:ring-foreground/20 rounded-xl font-medium text-xs"
               />
               {error && (

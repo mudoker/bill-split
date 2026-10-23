@@ -87,12 +87,20 @@ export function CurrencyDropdown({
         }
     };
 
+    const dismissKeyboard = () => {
+        if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
+    };
+
     return (
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={setOpen} modal={false}>
             <PopoverTrigger asChild>
                 {variant === 'compact' ? (
                     <button
                         type="button"
+                        onClick={dismissKeyboard}
+                        onTouchStart={dismissKeyboard}
                         disabled={disabled || isConverting}
                         className={cn(
                             "h-8 px-2 rounded-xl bg-foreground/[0.04] hover:bg-foreground/[0.08] border border-foreground/10 text-xs font-black transition-all flex items-center gap-1.5 text-foreground touch-manipulation active:scale-95 shadow-sm",
@@ -112,6 +120,8 @@ export function CurrencyDropdown({
                 ) : variant === 'pill' ? (
                     <button
                         type="button"
+                        onClick={dismissKeyboard}
+                        onTouchStart={dismissKeyboard}
                         disabled={disabled || isConverting}
                         className={cn(
                             "h-9 px-3 rounded-xl bg-foreground/[0.04] hover:bg-foreground/[0.08] border border-foreground/10 text-xs font-bold transition-all flex items-center gap-2 text-foreground touch-manipulation active:scale-95 shadow-sm",
@@ -132,6 +142,8 @@ export function CurrencyDropdown({
                 ) : (
                     <Button
                         type="button"
+                        onClick={dismissKeyboard}
+                        onTouchStart={dismissKeyboard}
                         variant="outline"
                         disabled={disabled || isConverting}
                         className={cn(
@@ -161,9 +173,10 @@ export function CurrencyDropdown({
             </PopoverTrigger>
 
             <PopoverContent
-                className="w-72 xs:w-80 p-2 bg-card/95 backdrop-blur-xl border-border rounded-2xl shadow-2xl z-50 text-foreground"
+                className="w-72 xs:w-80 p-2 bg-card/95 backdrop-blur-xl border-border rounded-2xl shadow-2xl z-[150] text-foreground max-h-[60vh] flex flex-col"
                 align="start"
-                sideOffset={6}
+                sideOffset={8}
+                collisionPadding={16}
             >
                 <div className="space-y-2">
                     {/* Search */}
@@ -174,7 +187,6 @@ export function CurrencyDropdown({
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="h-8 pl-8 pr-2 text-xs bg-muted/40 border-border/60 rounded-lg focus-visible:ring-1"
-                            autoFocus
                         />
                     </div>
 
