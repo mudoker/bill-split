@@ -36,7 +36,7 @@ function App() {
   });
   const [mobileTab, setMobileTab] = useState<'people' | 'items' | 'summary'>('items');
   const [isReadOnlyModalOpen, setIsReadOnlyModalOpen] = useState(false);
-  const { user, fetchUser } = useAuthStore();
+  const { user, fetchUser, signOut } = useAuthStore();
   const {
     isReadOnly,
     isHydrated,
@@ -499,8 +499,17 @@ function App() {
               </nav>
 
               {/* Desktop Footer */}
-              <footer className="hidden md:block mt-6 text-center text-xs text-muted-foreground shrink-0 pb-4">
+              <footer className="hidden md:flex flex-col items-center gap-1.5 mt-6 text-center text-xs text-muted-foreground shrink-0 pb-4">
                 <p>Designed for easy splitting even with late arrivals & sponsors.</p>
+                {user && (
+                  <Button
+                    variant="link"
+                    onClick={signOut}
+                    className="text-xs text-muted-foreground hover:text-foreground font-semibold p-0 h-auto underline-offset-4 hover:underline"
+                  >
+                    Log out
+                  </Button>
+                )}
               </footer>
           </>
         )}

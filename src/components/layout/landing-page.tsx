@@ -3,12 +3,14 @@ import { useBillStore } from "@/store/useBillStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Clock, ChevronRight, Receipt, Users as UsersIcon, Play, History, MapPin, Database, Shield, LogIn } from "lucide-react";
+import { Plus, Clock, ChevronRight, Receipt, Users as UsersIcon, Play, History, MapPin, Database, Shield, LogIn, Sparkles } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import { formatCurrency } from '@/lib/format';
 import { motion } from 'framer-motion';
 import { IS_DEV } from '@/lib/env';
 import { AppLogo } from '@/components/shared/app-logo';
+import { GoogleIcon } from '@/components/shared/google-icon';
+import { DevLoginModal } from '@/components/layout/dev-login-modal';
 import { CreateBillModal, type CreateBillFormData } from '@/components/shared/create-bill-modal';
 
 interface LandingPageProps {
@@ -19,8 +21,9 @@ interface LandingPageProps {
 
 export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPageProps) {
     const { billHistory, fetchHistory, isHydrated, people, items, dbStatus } = useBillStore();
-    const { user, signInWithGoogle } = useAuthStore();
+    const { user, signInWithGoogle, signOut } = useAuthStore();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isDevLoginOpen, setIsDevLoginOpen] = useState(false);
 
     useEffect(() => {
         if (isHydrated) {
@@ -75,13 +78,24 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                                 <Play className="w-4 h-4 sm:w-6 sm:h-6" /> Resume Last
                             </Button>
                         )}
-                        <Button
-                            onClick={() => setIsCreateModalOpen(true)}
-                            size="lg"
-                            className="h-11 sm:h-14 px-5 sm:px-8 text-sm sm:text-lg font-bold gap-2 rounded-xl sm:rounded-2xl shadow-xl shadow-foreground/10 transition-all hover:scale-105 active:scale-95 bg-foreground text-background hover:bg-foreground/90 w-full sm:w-auto touch-manipulation"
-                        >
-                            <Plus className="w-4 h-4 sm:w-6 sm:h-6" /> Start New
-                        </Button>
+                        {user ? (
+                            <Button
+                                onClick={() => setIsCreateModalOpen(true)}
+                                size="lg"
+                                className="h-11 sm:h-14 px-5 sm:px-8 text-sm sm:text-lg font-bold gap-2 rounded-xl sm:rounded-2xl shadow-xl shadow-foreground/10 transition-all hover:scale-105 active:scale-95 bg-foreground text-background hover:bg-foreground/90 w-full sm:w-auto touch-manipulation"
+                            >
+                                <Plus className="w-4 h-4 sm:w-6 sm:h-6" /> Start New
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={signInWithGoogle}
+                                size="lg"
+                                className="h-11 sm:h-14 px-5 sm:px-8 text-sm sm:text-lg font-bold gap-3 rounded-xl sm:rounded-2xl shadow-xl shadow-foreground/10 transition-all hover:scale-105 active:scale-95 bg-foreground text-background hover:bg-foreground/90 w-full sm:w-auto touch-manipulation"
+                            >
+                                <GoogleIcon className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
+                                <span>Sign in with Google</span>
+                            </Button>
+                        )}
                     </div>
 
                     <CreateBillModal
@@ -90,15 +104,29 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                         onSubmit={onNewBill}
                     />
 
-                    {IS_DEV && onLoadDemo && (
-                        <Button
-                            onClick={onLoadDemo}
-                            variant="ghost"
-                            size="sm"
-                            className="text-xs font-bold text-muted-foreground hover:text-foreground gap-2 mt-1 sm:mt-2"
-                        >
-                            <Database className="w-3.5 h-3.5" /> Load Demo Data
-                        </Button>
+                    {IS_DEV && (
+                        <div className="flex flex-wrap items-center justify-center gap-2 mt-1 sm:mt-2">
+                            {!user && (
+                                <Button
+                                    onClick={() => setIsDevLoginOpen(true)}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-xs font-bold text-muted-foreground hover:text-foreground gap-1.5"
+                                >
+                                    <Sparkles className="w-3.5 h-3.5" /> Dev Mock Login
+                                </Button>
+                            )}
+                            {onLoadDemo && (
+                                <Button
+                                    onClick={onLoadDemo}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-xs font-bold text-muted-foreground hover:text-foreground gap-1.5"
+                                >
+                                    <Database className="w-3.5 h-3.5" /> Load Demo Data
+                                </Button>
+                            )}
+                        </div>
                     )}
                 </motion.div>
             </div>
@@ -251,23 +279,43 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                 </div>
             </div>
 
-            {/* Feature Pills */}
+            {/* Feature Pills & Bottom Bar */}
             <div className="flex-none pt-6 sm:pt-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-8 px-4 sm:px-6 border-t bg-muted/30">
-                <div className="max-w-2xl mx-auto flex flex-wrap justify-center gap-x-6 sm:gap-x-8 gap-y-3 sm:gap-y-4 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                        <UsersIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground/40" />
-                        <span>Group Splitting</span>
+                <div className="max-w-2xl mx-auto flex flex-col items-center gap-3.5 text-center">
+                    <div className="flex flex-wrap justify-center gap-x-6 sm:gap-x-8 gap-y-3 sm:gap-y-4 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                            <UsersIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground/40" />
+                            <span>Group Splitting</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                            <ScanLine className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground/40" />
+                            <span>Receipt Scanning</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                            <History className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground/40" />
+                            <span>RBAC &amp; Cloud Sync</span>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                        <ScanLine className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground/40" />
-                        <span>Receipt Scanning</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                        <History className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground/40" />
-                        <span>RBAC &amp; Cloud Sync</span>
-                    </div>
+
+                    {user && (
+                        <div className="flex items-center justify-center gap-2 pt-1 text-xs text-muted-foreground">
+                            <span>Signed in as <strong className="text-foreground font-bold">{user.name || user.email}</strong></span>
+                            <span>•</span>
+                            <Button
+                                variant="link"
+                                onClick={signOut}
+                                className="text-xs text-muted-foreground hover:text-foreground font-semibold p-0 h-auto underline-offset-4 hover:underline"
+                            >
+                                Log out
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </div>
+
+            {IS_DEV && (
+                <DevLoginModal open={isDevLoginOpen} onOpenChange={setIsDevLoginOpen} />
+            )}
         </div>
     );
 }
