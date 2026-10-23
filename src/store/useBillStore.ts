@@ -1,11 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { fetchExchangeRate, convertCurrency } from '@/lib/currency';
 
 export interface Person {
     id: string;
     name: string;
     sponsorAmount: number;
     paidAmount: number;
+    userId?: string | null;
+    email?: string | null;
 }
 
 export interface Item {
@@ -30,6 +33,9 @@ export interface BillHistoryItem {
     name?: string;
     location?: string;
     totalAmount?: number;
+    owner_id?: string | null;
+    role?: 'owner' | 'participant' | 'viewer';
+    is_owner?: boolean;
 }
 
 export interface DbStatus {
@@ -40,7 +46,7 @@ export interface DbStatus {
     isOnline: boolean;
 }
 
-export type CurrencyCode = 'VND' | 'USD';
+export type CurrencyCode = string;
 export const VND_PER_USD = 25400;
 
 interface BillState {
@@ -61,11 +67,11 @@ interface BillState {
     currency: CurrencyCode;
 
     // Actions
-    setCurrency: (currency: CurrencyCode) => void;
+    setCurrency: (currency: CurrencyCode) => Promise<void>;
     setBillName: (name: string) => void;
     setLocation: (location: string) => void;
     setQrCode: (url: string) => void;
-    addPerson: (name: string) => void;
+    addPerson: (name: string, email?: string | null, userId?: string | null) => void;
     updatePerson: (id: string, data: Partial<Person>) => void;
     removePerson: (id: string) => void;
 
@@ -84,7 +90,7 @@ interface BillState {
 
     // Database actions
     saveToDb: () => Promise<string | null>;
-    fetchBill: (id: string) => Promise<void>;
+    fetchBill: (id: string, isShare?: boolean) => Promise<void>;
     fetchHistory: () => Promise<void>;
     fetchDbStatus: () => Promise<void>;
     loadSeedData: () => void;
@@ -115,52 +121,60 @@ export const useBillStore = create<BillState>()(
             qrCode: null,
             currency: 'VND',
 
-            setCurrency: (newCurrency) => {
+            setCurrency: async (newCurrency) => {
                 const currentCurrency = get().currency;
                 if (currentCurrency === newCurrency) return;
 
-                const rate = VND_PER_USD;
-                const isToUSD = newCurrency === 'USD';
+                if (get().items.length === 0 && get().people.length === 0) {
+                    set({ currency: newCurrency });
+                    await get().saveToDb();
+                    return;
+                }
 
-                const convertValue = (val: number): number => {
-                    if (!val || val === 0) return 0;
-                    if (isToUSD) {
-                        return Number((val / rate).toFixed(2));
-                    } else {
-                        return Math.round(val * rate);
-                    }
-                };
+                try {
+                    const rate = await fetchExchangeRate(currentCurrency, newCurrency);
+                    set((state) => ({
+                        currency: newCurrency,
+                        items: state.items.map((item) => ({
+                            ...item,
+                            price: convertCurrency(item.price, currentCurrency, newCurrency, rate),
+                        })),
+                        people: state.people.map((p) => ({
+                            ...p,
+                            paidAmount: convertCurrency(p.paidAmount || 0, currentCurrency, newCurrency, rate),
+                            sponsorAmount: convertCurrency(p.sponsorAmount || 0, currentCurrency, newCurrency, rate),
+                        })),
+                        globalCharges: state.globalCharges.map((ch) =>
+                            ch.type === 'fixed'
+                                ? { ...ch, amount: convertCurrency(ch.amount, currentCurrency, newCurrency, rate) }
+                                : ch
+                        ),
+                    }));
 
-                set((state) => ({
-                    currency: newCurrency,
-                    items: state.items.map((item) => ({
-                        ...item,
-                        price: convertValue(item.price),
-                    })),
-                    people: state.people.map((p) => ({
-                        ...p,
-                        paidAmount: convertValue(p.paidAmount || 0),
-                        sponsorAmount: convertValue(p.sponsorAmount || 0),
-                    })),
-                    globalCharges: state.globalCharges.map((ch) =>
-                        ch.type === 'fixed'
-                            ? { ...ch, amount: convertValue(ch.amount) }
-                            : ch
-                    ),
-                }));
-
-                get().saveToDb();
+                    await get().saveToDb();
+                } catch (err) {
+                    console.error('[Store] Failed to convert currency:', err);
+                    set({ currency: newCurrency });
+                    await get().saveToDb();
+                }
             },
 
             setBillName: (name) => set({ billName: name }),
             setLocation: (location) => set({ location: location }),
             setQrCode: (url) => set({ qrCode: url }),
 
-            addPerson: (name) =>
+            addPerson: (name, email = null, userId = null) =>
                 set((state) => ({
                     people: [
                         ...state.people,
-                        { id: crypto.randomUUID(), name, sponsorAmount: 0, paidAmount: 0 },
+                        {
+                            id: crypto.randomUUID(),
+                            name,
+                            sponsorAmount: 0,
+                            paidAmount: 0,
+                            userId: userId || null,
+                            email: email || null,
+                        },
                     ],
                 })),
 
@@ -304,10 +318,14 @@ export const useBillStore = create<BillState>()(
                 return null;
             },
 
-            fetchBill: async (id: string) => {
+            fetchBill: async (id: string, isShare: boolean = false) => {
                 try {
-                    const response = await fetch(`/api/bills/${id}`);
-                    if (!response.ok) throw new Error("Bill not found");
+                    const url = isShare ? `/api/bills/${id}?share=1` : `/api/bills/${id}`;
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        const err = await response.json().catch(() => ({}));
+                        throw new Error(err.error || "Bill not found");
+                    }
 
                     const result = await response.json();
                     set({
@@ -318,10 +336,11 @@ export const useBillStore = create<BillState>()(
                         currency: result.data.currency || 'VND',
                         currentBillId: result.id,
                         lastSaved: result.updated_at,
-                        isReadOnly: false
+                        isReadOnly: Boolean(isShare || result.isReadOnly),
                     });
                 } catch (error) {
                     console.error("Failed to fetch bill:", error);
+                    throw error;
                 }
             },
 

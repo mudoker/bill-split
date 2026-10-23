@@ -11,13 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tag, MapPin, User, ArrowRight, ReceiptText, Coins } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { CurrencyDropdown } from "@/components/shared/currency-dropdown";
 
 export interface CreateBillFormData {
   name: string;
   location: string;
   hostName?: string;
-  currency?: 'VND' | 'USD';
+  currency?: string;
 }
 
 interface CreateBillModalProps {
@@ -30,7 +30,7 @@ export function CreateBillModal({ open, onOpenChange, onSubmit }: CreateBillModa
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
   const [hostName, setHostName] = useState('');
-  const [currency, setCurrency] = useState<'VND' | 'USD'>('VND');
+  const [currency, setCurrency] = useState<string>('VND');
   const [error, setError] = useState('');
 
   const handleSubmit = (e?: React.FormEvent) => {
@@ -122,34 +122,11 @@ export function CreateBillModal({ open, onOpenChange, onSubmit }: CreateBillModa
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                 <Coins className="w-3.5 h-3.5" /> Currency
               </Label>
-              <div className="grid grid-cols-2 gap-2 bg-foreground/[0.03] p-1 rounded-xl border border-border">
-                <button
-                  type="button"
-                  onClick={() => setCurrency('VND')}
-                  className={cn(
-                    "flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all touch-manipulation active:scale-95",
-                    currency === 'VND'
-                      ? "bg-foreground text-background shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
-                  )}
-                >
-                  <span className="font-bold">₫</span>
-                  <span>VND</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCurrency('USD')}
-                  className={cn(
-                    "flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all touch-manipulation active:scale-95",
-                    currency === 'USD'
-                      ? "bg-foreground text-background shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
-                  )}
-                >
-                  <span className="font-bold">$</span>
-                  <span>USD</span>
-                </button>
-              </div>
+              <CurrencyDropdown
+                value={currency}
+                onChange={(c) => setCurrency(c)}
+                variant="default"
+              />
             </div>
           </div>
 

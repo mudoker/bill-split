@@ -7,6 +7,8 @@ import { Plus, Trash2, Settings, Percent, Banknote, Tag, MapPin, Check, CloudUpl
 import { useBillStore, type Person, type GlobalCharge, type Item } from "@/store/useBillStore";
 import { cn } from "@/lib/utils";
 import { CurrencyInput } from "@/components/shared/currency-input";
+import { CurrencyDropdown } from "@/components/shared/currency-dropdown";
+import { getCurrencySymbol } from "@/lib/currency";
 import {
     Dialog,
     DialogContent,
@@ -56,7 +58,6 @@ export function BillConfiguration({
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const currency = useBillStore((state) => state.currency);
-    const setCurrency = useBillStore((state) => state.setCurrency);
 
     const totalItemCost = items.reduce((sum, item) => sum + (item.price || 0), 0);
 
@@ -148,68 +149,35 @@ export function BillConfiguration({
                             <Label className="text-[11px] font-black text-foreground/60 uppercase tracking-[0.2em] pl-1">Bill Details</Label>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                                 <div className="relative group">
-                                    <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
+                                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors pointer-events-none" />
                                     <Input
                                         placeholder="Bill name (e.g. Lunch at KFC)"
                                         value={billName}
                                         onChange={(e) => setBillName(e.target.value)}
-                                        className="pl-10 sm:pl-12 h-10 sm:h-11 bg-foreground/[0.03] border-border rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-medium text-sm"
+                                        className="pl-9 sm:pl-10 h-9 sm:h-10 bg-foreground/[0.03] border-border rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-medium text-xs sm:text-sm"
                                     />
                                 </div>
                                 <div className="relative group">
-                                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
+                                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors pointer-events-none" />
                                     <Input
                                         placeholder="Location"
                                         value={location}
                                         onChange={(e) => setLocation(e.target.value)}
-                                        className="pl-10 sm:pl-12 h-10 sm:h-11 bg-foreground/[0.03] border-border rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-medium text-sm"
+                                        className="pl-9 sm:pl-10 h-9 sm:h-10 bg-foreground/[0.03] border-border rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-medium text-xs sm:text-sm"
                                     />
                                 </div>
                             </div>
                         </div>
 
-                            {/* Currency Setting */}
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between px-1">
-                                    <Label className="text-[11px] font-black text-foreground/60 uppercase tracking-[0.2em]">Currency</Label>
-                                    <span className="text-[10px] text-muted-foreground font-semibold">1 USD ≈ 25,400 VND</span>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2 bg-muted/20 p-1.5 rounded-2xl border border-foreground/5">
-                                    <button
-                                        type="button"
-                                        onClick={() => setCurrency('VND')}
-                                        className={cn(
-                                            "flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black transition-all",
-                                            currency === 'VND'
-                                                ? "bg-foreground text-background shadow-sm"
-                                                : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
-                                        )}
-                                    >
-                                        <span className="text-sm font-black">₫</span>
-                                        <div className="flex flex-col items-start leading-none">
-                                            <span className="font-black text-xs">VND</span>
-                                            <span className="text-[8px] opacity-70">Vietnam Dong</span>
-                                        </div>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setCurrency('USD')}
-                                        className={cn(
-                                            "flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black transition-all",
-                                            currency === 'USD'
-                                                ? "bg-foreground text-background shadow-sm"
-                                                : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
-                                        )}
-                                    >
-                                        <span className="text-sm font-black">$</span>
-                                        <div className="flex flex-col items-start leading-none">
-                                            <span className="font-black text-xs">USD</span>
-                                            <span className="text-[8px] opacity-70">US Dollar</span>
-                                        </div>
-                                    </button>
-                                </div>
-                                <p className="text-[10px] text-muted-foreground/80 px-1 font-medium">Switching currency automatically converts all prices and amounts.</p>
+                        {/* Currency Setting */}
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between px-1">
+                                <Label className="text-[11px] font-black text-foreground/60 uppercase tracking-[0.2em]">Currency</Label>
+                                <span className="text-[10px] text-muted-foreground font-semibold">Live Frankfurter exchange rates</span>
                             </div>
+                            <CurrencyDropdown variant="default" />
+                            <p className="text-[10px] text-muted-foreground/80 px-1 font-medium">Switching currency automatically converts all prices and amounts using central bank rates.</p>
+                        </div>
 
                             {/* QR Code Upload */}
                             <div className="space-y-4">
@@ -259,10 +227,10 @@ export function BillConfiguration({
                             </div>
 
                             {/* Host Selection */}
-                            <div className="space-y-4">
+                            <div className="space-y-2 sm:space-y-3">
                                 <Label className="text-[11px] font-black text-foreground/60 uppercase tracking-[0.2em] pl-1">Primary Payer (Host)</Label>
                                 <Select value={hostId || ""} onValueChange={setHostId}>
-                                    <SelectTrigger className="w-full h-12 bg-muted/20 border-foreground/5 rounded-xl hover:bg-foreground/5 hover:border-foreground/20 transition-all font-bold">
+                                    <SelectTrigger className="w-full h-9 sm:h-10 bg-muted/20 border-foreground/5 rounded-xl hover:bg-foreground/5 hover:border-foreground/20 transition-all font-semibold text-xs sm:text-sm">
                                         <SelectValue placeholder="Who paid the bill?" />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl border-foreground/10 bg-background">
@@ -365,7 +333,7 @@ export function BillConfiguration({
                                                                 )}
                                                             onClick={() => handleTypeChange(charge.id, charge.amount, charge.type, 'fixed')}
                                                         >
-                                                            {currency === 'USD' ? '$' : '₫'}
+                                                            {getCurrencySymbol(currency)}
                                                         </Button>
                                                     </div>
                                                 </div>
