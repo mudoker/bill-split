@@ -1,28 +1,67 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { UserPlus, PlusCircle, Sparkles } from "lucide-react";
+import { UserPlus, PlusCircle, Sparkles, UserCheck } from "lucide-react";
 import { useBillStore } from "@/store/useBillStore";
 import { PersonRow } from "./person-row";
 import { QuickInsights } from "../summary/quick-insights";
 import { IS_DEV } from "@/lib/env";
 
+interface UserSuggestion {
+    id: string;
+    email: string;
+    name: string | null;
+    avatar_url: string | null;
+}
+
 export function PeopleSection() {
     const { people, addPerson, updatePerson, removePerson, isReadOnly, loadSeedData } = useBillStore();
     const [newName, setNewName] = useState("");
+    const [suggestions, setSuggestions] = useState<UserSuggestion[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
 
-    const handleAdd = () => {
-        if (newName.trim()) {
-            addPerson(newName.trim());
+    useEffect(() => {
+        const term = newName.trim();
+        if (term.length < 2) {
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            try {
+                const res = await fetch(`/api/users/search?q=${encodeURIComponent(term)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setSuggestions(data.users || []);
+                    setShowSuggestions((data.users || []).length > 0);
+                }
+            } catch {
+                setSuggestions([]);
+                setShowSuggestions(false);
+            }
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [newName]);
+
+    const handleAdd = (email?: string, userId?: string, selectedName?: string) => {
+        const participantName = (selectedName || newName).trim();
+        if (participantName) {
+            const isEmailFormat = participantName.includes('@');
+            const resolvedEmail = email || (isEmailFormat ? participantName : null);
+            const resolvedName = selectedName || (isEmailFormat ? participantName.split('@')[0] : participantName);
+
+            addPerson(resolvedName, resolvedEmail, userId || null);
             setNewName("");
+            setSuggestions([]);
+            setShowSuggestions(false);
         }
     };
 
     return (
-        <Card className="w-full h-full flex flex-col border border-foreground/[0.05] bg-card/20 overflow-hidden shadow-none">
-            <CardHeader className="pb-3 pt-3 px-3.5 sm:px-4 md:px-5 md:pt-5 shrink-0">
+        <Card className="w-full h-full flex flex-col border-0 md:border md:border-foreground/[0.05] bg-transparent md:bg-card/20 overflow-hidden shadow-none rounded-none md:rounded-2xl">
+            <CardHeader className="pb-2.5 pt-1 px-1.5 sm:px-4 md:px-5 md:pt-5 shrink-0">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                     <CardTitle className="text-lg sm:text-xl font-black uppercase tracking-widest flex items-center gap-2 text-foreground">
                         <UserPlus className="w-4 h-4 sm:w-5 sm:h-5 text-foreground/80 shrink-0" />
@@ -44,25 +83,57 @@ export function PeopleSection() {
                         </Button>
                     )}
                 </div>
-                <CardDescription className="text-[10px] uppercase font-bold tracking-tight text-muted-foreground/90">Manage friends and their payment contributions</CardDescription>
+                <CardDescription className="text-[10px] uppercase font-bold tracking-tight text-muted-foreground/90">
+                    Add registered members or Anon friends
+                </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 p-0 overflow-hidden flex flex-col container-query-pane">
-                <ScrollArea className="flex-1 px-3 sm:px-4 md:px-5">
+                <ScrollArea className="flex-1 px-1 sm:px-4 md:px-5">
                     <div className="space-y-4 sm:space-y-5 py-3 pr-1 sm:pr-2">
                         {!isReadOnly && (
                             <div className="relative group">
                                 <div className="relative flex gap-2">
                                     <Input
-                                        placeholder="Add a participant..."
+                                        placeholder="Add participant name or email..."
                                         value={newName}
-                                        onChange={(e) => setNewName(e.target.value)}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setNewName(val);
+                                            if (val.trim().length < 2) {
+                                                setSuggestions([]);
+                                                setShowSuggestions(false);
+                                            }
+                                        }}
                                         onKeyDown={(e) => e.key === "Enter" && handleAdd()}
                                         className="h-10 sm:h-11 bg-background border-foreground/[0.05] rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-bold px-3.5 text-base sm:text-sm"
                                     />
-                                    <Button onClick={handleAdd} size="icon" className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 bg-foreground text-background hover:bg-foreground/90 rounded-xl transition-all active:scale-95 shadow-sm">
+                                    <Button onClick={() => handleAdd()} size="icon" className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 bg-foreground text-background hover:bg-foreground/90 rounded-xl transition-all active:scale-95 shadow-sm">
                                         <PlusCircle className="w-5 h-5" />
                                     </Button>
                                 </div>
+
+                                {/* Autocomplete dropdown for app users */}
+                                {showSuggestions && suggestions.length > 0 && (
+                                    <div className="absolute z-20 left-0 right-12 mt-1 bg-card border border-border rounded-xl shadow-xl p-1 max-h-48 overflow-y-auto">
+                                        <div className="px-2 py-1 text-[10px] font-bold text-muted-foreground uppercase">
+                                            Found App Users
+                                        </div>
+                                        {suggestions.map((s) => (
+                                            <button
+                                                key={s.id}
+                                                type="button"
+                                                onClick={() => handleAdd(s.email, s.id, s.name || s.email.split('@')[0])}
+                                                className="w-full text-left px-2.5 py-1.5 hover:bg-foreground/5 rounded-lg flex items-center justify-between text-xs"
+                                            >
+                                                <div className="min-w-0">
+                                                    <span className="font-bold text-foreground block truncate">{s.name || s.email}</span>
+                                                    <span className="text-[10px] text-muted-foreground block truncate">{s.email}</span>
+                                                </div>
+                                                <UserCheck className="w-3.5 h-3.5 text-primary shrink-0" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
 

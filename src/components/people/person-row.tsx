@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, PlusCircle, Check, X, Heart, Pencil, Banknote } from "lucide-react";
+import { Trash2, PlusCircle, Check, X, Heart, Pencil, Banknote, User } from "lucide-react";
 import { useBillStore, type Person } from "@/store/useBillStore";
 import { formatCurrency } from "@/lib/format";
 import { CurrencyInput } from "@/components/shared/currency-input";
@@ -20,15 +20,18 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
     const { isReadOnly, hostId } = useBillStore();
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(person.name);
+    const [editEmail, setEditEmail] = useState(person.email || '');
     const [editSponsor, setEditSponsor] = useState(person.sponsorAmount);
     const [editPaid, setEditPaid] = useState(person.paidAmount || 0);
 
     const avatarGradient = getAvatarColor(person.name);
     const initials = getInitials(person.name);
+    const isAppMember = Boolean(person.userId || person.email);
 
     const handleStartEdit = () => {
         if (isReadOnly) return;
         setEditName(person.name);
+        setEditEmail(person.email || '');
         setEditSponsor(person.sponsorAmount);
         setEditPaid(person.paidAmount || 0);
         setIsEditing(true);
@@ -37,6 +40,7 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
     const handleSave = () => {
         onUpdate(person.id, {
             name: editName,
+            email: editEmail.trim() || null,
             sponsorAmount: editSponsor,
             paidAmount: editPaid
         });
@@ -45,6 +49,7 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
 
     const handleCancel = () => {
         setEditName(person.name);
+        setEditEmail(person.email || '');
         setEditSponsor(person.sponsorAmount);
         setEditPaid(person.paidAmount || 0);
         setIsEditing(false);
@@ -77,6 +82,19 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
                     />
                 </div>
 
+                <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black uppercase text-foreground/60 tracking-widest pl-1">
+                        User Email (Optional - Leave blank for Anon)
+                    </Label>
+                    <Input
+                        type="email"
+                        value={editEmail}
+                        onChange={(e) => setEditEmail(e.target.value)}
+                        className="h-9 bg-background/50 border-foreground/5 rounded-xl text-xs font-medium"
+                        placeholder="e.g. friend@example.com"
+                    />
+                </div>
+
                 <div className="person-edit-grid">
                     <div className="space-y-1.5 min-w-0">
                         <Label className="text-[10px] font-black uppercase text-foreground/60 tracking-widest pl-1 flex items-center gap-1.5">
@@ -101,7 +119,7 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
                         />
                     </div>
                 </div>
-                <p className="text-[10px] text-muted-foreground font-medium italic px-1">Tip: Use "Paid" if this person paid part of the bill at the venue.</p>
+                <p className="text-[10px] text-muted-foreground font-medium italic px-1">Tip: If no email is provided, this person is an Anon participant.</p>
             </div>
         );
     }
@@ -120,7 +138,28 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
                 </div>
 
                 <div className="flex flex-col min-w-0 flex-1">
-                    <span className="font-black text-sm tracking-tight text-foreground truncate" title={person.name}>{person.name}</span>
+                    <div className="flex items-center gap-1.5">
+                        <span className="font-black text-sm tracking-tight text-foreground truncate" title={person.name}>
+                            {person.name}
+                        </span>
+                        {/* Anon or Member Badge */}
+                        {isAppMember ? (
+                            <span
+                                className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20 text-[9px] font-black uppercase tracking-wider shrink-0"
+                                title={person.email ? `Registered user: ${person.email}` : "App User"}
+                            >
+                                <User className="w-2.5 h-2.5" /> Member
+                            </span>
+                        ) : (
+                            <span
+                                className="inline-flex items-center px-1.5 py-0.2 rounded bg-muted/70 text-muted-foreground border border-border text-[9px] font-black uppercase tracking-wider shrink-0"
+                                title="Guest participant (no account in app)"
+                            >
+                                Anon
+                            </span>
+                        )}
+                    </div>
+
                     <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                         {/* Host Badge - Pays Remaining */}
                         {person.id === hostId && (
