@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { MoreHorizontal, Trash2, Edit2, Users, Check, X, Plus, Minus } from "lucide-react";
@@ -101,7 +100,7 @@ export function ItemRow({ item }: { item: Item }) {
     };
 
     return (
-        <div className="relative group bg-card border border-foreground/[0.05] rounded-xl p-3 sm:p-4 hover:bg-muted/5 hover:border-primary/30 transition-all duration-200">
+        <div className="relative group bg-card border border-foreground/[0.05] rounded-xl p-2.5 sm:p-4 hover:bg-muted/5 hover:border-primary/30 transition-all duration-200">
             {isEditing ? (
                 <div className="space-y-3 sm:space-y-4 animate-in fade-in zoom-in-95 duration-200">
                     <div className="flex items-center justify-between">
@@ -205,7 +204,7 @@ export function ItemRow({ item }: { item: Item }) {
             )}
 
             {/* Splits row */}
-            <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-3 sm:mt-4 items-center">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 sm:mt-4 items-center">
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button variant="outline" size="sm" className="h-7 sm:h-8 text-[9px] font-black uppercase tracking-widest gap-1.5 border-foreground/10 bg-foreground/5 text-foreground hover:bg-foreground/10 rounded-full px-2.5 sm:px-3 transition-all shrink-0 touch-manipulation active:scale-95">
@@ -345,7 +344,7 @@ export function ItemRow({ item }: { item: Item }) {
                     </PopoverContent>
                 </Popover>
 
-                {/* Person badges with shadcn Tooltip */}
+                {/* Person badges with click/tap Popover */}
                 {people.length > 0 && assignedPeopleIds.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 pt-0.5">
                         {people.filter(p => assignments[p.id] !== undefined).slice(0, 8).map(p => {
@@ -354,10 +353,11 @@ export function ItemRow({ item }: { item: Item }) {
                             const isAppMember = Boolean(p.userId || p.email);
 
                             return (
-                                <Tooltip key={p.id}>
-                                    <TooltipTrigger asChild>
+                                <Popover key={p.id}>
+                                    <PopoverTrigger asChild>
                                         <button
                                             type="button"
+                                            title={`${p.name}: ${formatCurrency(pShare)} ${qty > 1 && Math.round(pQty) > 1 ? `(${Math.round(pQty)} of ${qty} portions)` : ''}`}
                                             className="px-2.5 py-1 rounded-lg text-[10px] border font-bold uppercase tracking-tight transition-all flex items-center gap-1.5 bg-foreground/[0.04] hover:bg-foreground/[0.08] hover:border-foreground/20 border-foreground/10 text-muted-foreground hover:text-foreground cursor-pointer touch-manipulation active:scale-95"
                                         >
                                             <span className="truncate max-w-[70px] sm:max-w-[100px]">{p.name}</span>
@@ -370,8 +370,8 @@ export function ItemRow({ item }: { item: Item }) {
                                                 <span className="text-amber-500 font-black">×{Math.round(pQty)}</span>
                                             )}
                                         </button>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top" className="text-xs p-2.5 space-y-1 shadow-2xl border-border bg-popover">
+                                    </PopoverTrigger>
+                                    <PopoverContent side="top" align="center" sideOffset={6} className="w-auto min-w-[140px] max-w-xs text-xs p-2.5 space-y-1 shadow-2xl border-border bg-popover/95 backdrop-blur-md rounded-xl z-[200]">
                                         <div className="flex items-center gap-1.5 font-bold">
                                             <span className="text-foreground">{p.name}</span>
                                             {isAppMember ? (
@@ -392,34 +392,34 @@ export function ItemRow({ item }: { item: Item }) {
                                                 </span>
                                             )}
                                         </div>
-                                    </TooltipContent>
-                                </Tooltip>
+                                    </PopoverContent>
+                                </Popover>
                             );
                         })}
                         {assignedPeopleIds.length > 8 && (
-                            <Tooltip>
-                                <TooltipTrigger asChild>
+                            <Popover>
+                                <PopoverTrigger asChild>
                                     <button
                                         type="button"
                                         className="px-2 py-1 rounded-lg text-[10px] font-black bg-primary/10 text-primary border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
                                     >
                                         +{assignedPeopleIds.length - 8}
                                     </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="text-xs p-2.5 max-w-xs space-y-1 shadow-2xl border-border bg-popover">
+                                </PopoverTrigger>
+                                <PopoverContent side="top" align="center" sideOffset={6} className="w-auto min-w-[160px] max-w-xs text-xs p-2.5 space-y-1.5 shadow-2xl border-border bg-popover/95 backdrop-blur-md rounded-xl z-[200]">
                                     <div className="font-bold text-muted-foreground text-[10px] uppercase">
                                         +{assignedPeopleIds.length - 8} More Participants:
                                     </div>
-                                    <div className="space-y-1 max-h-36 overflow-y-auto">
+                                    <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
                                         {people.filter(p => assignments[p.id] !== undefined).slice(8).map(extra => (
                                             <div key={extra.id} className="flex justify-between items-center gap-3 text-xs">
-                                                <span className="truncate text-foreground">{extra.name}</span>
+                                                <span className="truncate text-foreground font-medium">{extra.name}</span>
                                                 <span className="font-bold text-primary tabular-nums">{formatCurrency(getPersonShare(assignments[extra.id]))}</span>
                                             </div>
                                         ))}
                                     </div>
-                                </TooltipContent>
-                            </Tooltip>
+                                </PopoverContent>
+                            </Popover>
                         )}
                     </div>
                 )}
