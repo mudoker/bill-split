@@ -1,5 +1,5 @@
 {
-  "name": "bill_split",
+  "name": "ledger",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -22,9 +22,11 @@
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tabs": "^1.1.13",
+    "@radix-ui/react-tooltip": "^1.4.1",
     "@types/pg": "^8.23.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "country-flag-icons": "^1.6.20",
     "date-fns": "^4.1.0",
     "dotenv": "^18.0.8",
     "framer-motion": "^12.34.1",
