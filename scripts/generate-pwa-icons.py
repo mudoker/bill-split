@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 scripts/generate-pwa-icons.py
-Generates all PWA app icons and favicons from src/assets/Receipt-Stack-Dollar-Icon.svg
+Generates all PWA app icons and favicons using the Lucide Volleyball icon.
 """
 
 import os
@@ -9,18 +9,21 @@ import subprocess
 from PIL import Image
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SVG_SRC = os.path.join(REPO_ROOT, "src", "assets", "Receipt-Stack-Dollar-Icon.svg")
 PUBLIC_DIR = os.path.join(REPO_ROOT, "public")
-TEMP_SVG = "/tmp/ledger-icon-white.svg"
-TEMP_PNG = "/tmp/ledger-glyph-1024.png"
+TEMP_SVG = "/tmp/ledger-volleyball-white.svg"
+TEMP_PNG = "/tmp/ledger-volleyball-1024.png"
 
-# Read original SVG and generate white-fill version
-with open(SVG_SRC, "r") as f:
-    svg_content = f.read()
+VOLLEYBALL_SVG = """<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M11.1 7.1a16.55 16.55 0 0 1 10.9 4" />
+  <path d="M12 12a12.6 12.6 0 0 1-8.7 5" />
+  <path d="M16.8 13.6a16.55 16.55 0 0 1-9 7.5" />
+  <path d="M20.7 17a12.8 12.8 0 0 0-8.7-5 13.3 13.3 0 0 1 0-10" />
+  <path d="M6.3 3.8a16.55 16.55 0 0 0 1.9 11.5" />
+  <circle cx="12" cy="12" r="10" />
+</svg>"""
 
-white_svg = svg_content.replace('fill="#000000"', 'fill="#ffffff"')
 with open(TEMP_SVG, "w") as f:
-    f.write(white_svg)
+    f.write(VOLLEYBALL_SVG)
 
 # Render white glyph at high resolution (1024x1024)
 subprocess.run(["rsvg-convert", "-w", "1024", "-h", "1024", TEMP_SVG, "-o", TEMP_PNG], check=True)
@@ -69,4 +72,4 @@ apple_icon.convert("RGB").save(os.path.join(PUBLIC_DIR, "apple-touch-icon.png"),
 fav = create_icon(64, 0.75)
 fav.save(os.path.join(PUBLIC_DIR, "favicon.ico"), format="ICO", sizes=[(16, 16), (32, 32), (48, 48)])
 
-print("✅ Generated all PWA icons and favicons successfully from Receipt-Stack-Dollar-Icon.svg!")
+print("✅ Generated all PWA icons and favicons successfully using Volleyball icon!")
