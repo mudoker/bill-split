@@ -3,7 +3,7 @@ import { useBillStore } from "@/store/useBillStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Clock, ChevronRight, Receipt, Users as UsersIcon, Play, History, MapPin, Database, Shield, LogIn, Sparkles } from "lucide-react";
+import { Plus, Clock, ChevronRight, Receipt, Users as UsersIcon, Play, History, MapPin, Shield, LogIn, Sparkles } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import { formatCurrency } from '@/lib/format';
 import { motion } from 'framer-motion';

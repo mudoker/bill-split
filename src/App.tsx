@@ -15,7 +15,6 @@ import { Eye } from "lucide-react";
 import { LandingPage } from "@/components/layout/landing-page";
 import { BillConfiguration } from "@/components/summary/bill-configuration";
 import { DiscrepancyBanner } from "@/components/shared/discrepancy-banner";
-import { IS_DEV } from "@/lib/env";
 import { AppLogo } from "@/components/shared/app-logo";
 import { CreateBillModal, type CreateBillFormData } from "@/components/shared/create-bill-modal";
 import { ResizableSplit } from "@/components/layout/resizable-split";
@@ -182,7 +181,7 @@ function App() {
 
         {view === 'landing' ? (
           <>
-            <div className="flex-none px-4 sm:px-6 md:px-8 lg:px-10 pt-[max(1rem,env(safe-area-inset-top))] md:pt-6 w-full max-w-[94%] 2xl:max-w-[2000px] mx-auto">
+            <div className="flex-none px-4 sm:px-6 md:px-8 lg:px-10 pt-[calc(env(safe-area-inset-top,0px)+1.625rem)] md:pt-6 w-full max-w-[94%] 2xl:max-w-[2000px] mx-auto">
               <header className="flex justify-between items-center">
                 <div className="flex items-center gap-2.5 sm:gap-3">
                   <div className="p-2 bg-foreground rounded-xl shadow-lg shadow-black/10">
@@ -250,7 +249,7 @@ function App() {
             />
 
               {/* Header - Fixed & Safe-Area Aware */}
-              <div className="flex-none px-2.5 sm:px-6 md:px-8 lg:px-10 pt-[max(0.625rem,env(safe-area-inset-top))] sm:pt-4 md:pt-6 w-full max-w-full md:max-w-[94%] 2xl:max-w-[2000px] mx-auto">
+              <div className="flex-none px-2.5 sm:px-6 md:px-8 lg:px-10 pt-[calc(env(safe-area-inset-top,0px)+1.625rem)] sm:pt-4 md:pt-6 w-full max-w-full md:max-w-[94%] 2xl:max-w-[2000px] mx-auto">
                 <header className="flex justify-between items-center mb-2 sm:mb-3 md:mb-5 gap-1.5 sm:gap-3">
                   <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
                     <Button variant="ghost" size="icon" onClick={handleBackToLanding} className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl shrink-0 touch-manipulation active:scale-95" title="Back to Bills">

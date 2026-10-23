@@ -7,7 +7,6 @@ import { UserPlus, PlusCircle, Sparkles, UserCheck } from "lucide-react";
 import { useBillStore } from "@/store/useBillStore";
 import { PersonRow } from "./person-row";
 import { QuickInsights } from "../summary/quick-insights";
-import { IS_DEV } from "@/lib/env";
 
 interface UserSuggestion {
     id: string;
