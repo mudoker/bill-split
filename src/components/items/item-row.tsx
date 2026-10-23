@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { MoreHorizontal, Trash2, Edit2, Users, Check, X, Plus, Minus } from "lucide-react";
@@ -260,7 +261,14 @@ export function ItemRow({ item }: { item: Item }) {
                                                     {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                                                 </div>
                                                 <div className={cn("flex-1 min-w-0 pr-2", !isReadOnly && "cursor-pointer")} onClick={() => !isReadOnly && togglePerson(p.id)}>
-                                                    <div className={cn("text-xs font-black tracking-tight", isSelected ? "text-foreground" : "text-muted-foreground")}>{p.name}</div>
+                                                    <div className={cn("text-xs font-black tracking-tight flex items-center gap-1.5", isSelected ? "text-foreground" : "text-muted-foreground")}>
+                                                        <span className="truncate">{p.name}</span>
+                                                        {!(p.userId || p.email) && (
+                                                            <span className="text-[8px] font-black uppercase px-1 py-0.2 rounded bg-muted text-muted-foreground border border-border shrink-0">
+                                                                Anon
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     {isSelected && (
                                                         <div className="text-[10px] font-bold text-primary tabular-nums mt-0.5">
                                                             {formatCurrency(getPersonShare(pQty))}
@@ -337,30 +345,81 @@ export function ItemRow({ item }: { item: Item }) {
                     </PopoverContent>
                 </Popover>
 
-                {/* Person tags - Neon style */}
+                {/* Person badges with shadcn Tooltip */}
                 {people.length > 0 && assignedPeopleIds.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
                         {people.filter(p => assignments[p.id] !== undefined).slice(0, 8).map(p => {
                             const pQty = assignments[p.id];
+                            const pShare = getPersonShare(pQty);
+                            const isAppMember = Boolean(p.userId || p.email);
+
                             return (
-                                <div
-                                    key={p.id}
-                                    onClick={() => !isReadOnly && togglePerson(p.id)}
-                                    className={cn(
-                                        "px-2.5 py-1 rounded-lg text-[9px] border font-black uppercase tracking-tighter transition-all flex items-center gap-1.5",
-                                        !isReadOnly && "cursor-pointer hover:border-primary/40 hover:bg-primary/5",
-                                        "bg-foreground/[0.03] border-foreground/10 text-muted-foreground"
-                                    )}
-                                >
-                                    <span className="truncate max-w-[60px]">{p.name}</span>
-                                    {qty > 1 && Math.round(pQty) > 1 && <span className="text-amber-500 opacity-90">×{Math.round(pQty)}</span>}
-                                </div>
+                                <Tooltip key={p.id}>
+                                    <TooltipTrigger asChild>
+                                        <button
+                                            type="button"
+                                            className="px-2.5 py-1 rounded-lg text-[10px] border font-bold uppercase tracking-tight transition-all flex items-center gap-1.5 bg-foreground/[0.04] hover:bg-foreground/[0.08] hover:border-foreground/20 border-foreground/10 text-muted-foreground hover:text-foreground cursor-pointer touch-manipulation active:scale-95"
+                                        >
+                                            <span className="truncate max-w-[70px] sm:max-w-[100px]">{p.name}</span>
+                                            {!isAppMember && (
+                                                <span className="text-[8px] font-bold px-1 py-0.2 rounded bg-muted text-muted-foreground border border-border shrink-0">
+                                                    Anon
+                                                </span>
+                                            )}
+                                            {qty > 1 && Math.round(pQty) > 1 && (
+                                                <span className="text-amber-500 font-black">×{Math.round(pQty)}</span>
+                                            )}
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="text-xs p-2.5 space-y-1 shadow-2xl border-border bg-popover">
+                                        <div className="flex items-center gap-1.5 font-bold">
+                                            <span className="text-foreground">{p.name}</span>
+                                            {isAppMember ? (
+                                                <span className="text-[8px] font-black uppercase px-1 py-0.2 rounded bg-primary/10 text-primary border border-primary/20 shrink-0">
+                                                    Member
+                                                </span>
+                                            ) : (
+                                                <span className="text-[8px] font-black uppercase px-1 py-0.2 rounded bg-muted text-muted-foreground border border-border shrink-0">
+                                                    Anon
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="text-primary font-black text-xs tabular-nums">
+                                            {formatCurrency(pShare)}
+                                            {qty > 1 && Math.round(pQty) > 1 && (
+                                                <span className="text-muted-foreground font-normal ml-1.5 text-[11px]">
+                                                    ({Math.round(pQty)} of {qty} portions)
+                                                </span>
+                                            )}
+                                        </div>
+                                    </TooltipContent>
+                                </Tooltip>
                             );
                         })}
                         {assignedPeopleIds.length > 8 && (
-                            <div className="px-2 py-1 rounded-lg text-[9px] font-black bg-primary/10 text-primary border border-primary/20">
-                                +{assignedPeopleIds.length - 8}
-                            </div>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="px-2 py-1 rounded-lg text-[10px] font-black bg-primary/10 text-primary border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
+                                    >
+                                        +{assignedPeopleIds.length - 8}
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs p-2.5 max-w-xs space-y-1 shadow-2xl border-border bg-popover">
+                                    <div className="font-bold text-muted-foreground text-[10px] uppercase">
+                                        +{assignedPeopleIds.length - 8} More Participants:
+                                    </div>
+                                    <div className="space-y-1 max-h-36 overflow-y-auto">
+                                        {people.filter(p => assignments[p.id] !== undefined).slice(8).map(extra => (
+                                            <div key={extra.id} className="flex justify-between items-center gap-3 text-xs">
+                                                <span className="truncate text-foreground">{extra.name}</span>
+                                                <span className="font-bold text-primary tabular-nums">{formatCurrency(getPersonShare(assignments[extra.id]))}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </TooltipContent>
+                            </Tooltip>
                         )}
                     </div>
                 )}
