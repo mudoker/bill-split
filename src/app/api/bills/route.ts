@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '../../../../db';
+import { getSessionUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,8 +16,9 @@ export async function OPTIONS() {
 
 export async function GET() {
   try {
+    const user = await getSessionUser();
     const db = await getDb();
-    const summary = await db.listBills();
+    const summary = await db.listBills(user?.id || null);
     return NextResponse.json(summary, { headers: corsHeaders });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Failed to list bills';
@@ -27,17 +29,19 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const user = await getSessionUser();
     const body = await req.json();
     const { id, data } = body;
     const billId = id || crypto.randomUUID();
 
     const db = await getDb();
-    await db.saveBill(billId, data || {});
+    await db.saveBill(billId, data || {}, user?.id || null);
 
     return NextResponse.json({ id: billId, success: true }, { headers: corsHeaders });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Failed to save bill';
     console.error('Save error:', error);
-    return NextResponse.json({ error: msg }, { status: 500, headers: corsHeaders });
+    const isForbidden = msg.toLowerCase().includes('forbidden');
+    return NextResponse.json({ error: msg }, { status: isForbidden ? 403 : 500, headers: corsHeaders });
   }
 }
