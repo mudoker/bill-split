@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { formatNumber } from '@/lib/format';
-import { useBillStore, type CurrencyCode } from '@/store/useBillStore';
+import { useBillStore } from '@/store/useBillStore';
+import { getCurrencySymbol, getCurrencyDecimals } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 
 interface CurrencyInputProps {
@@ -11,7 +12,7 @@ interface CurrencyInputProps {
     placeholder?: string;
     prefix?: string;
     showCurrencySymbol?: boolean;
-    currency?: CurrencyCode;
+    currency?: string;
 }
 
 export function CurrencyInput({
@@ -25,6 +26,9 @@ export function CurrencyInput({
 }: CurrencyInputProps) {
     const storeCurrency = useBillStore((state) => state.currency);
     const currency = propCurrency || storeCurrency || 'VND';
+    const decimals = getCurrencyDecimals(currency);
+    const currencySymbol = getCurrencySymbol(currency);
+
     const [isFocused, setIsFocused] = useState(false);
     const [rawText, setRawText] = useState(value === 0 ? '' : value.toString());
     const [prevValue, setPrevValue] = useState(value);
@@ -44,16 +48,16 @@ export function CurrencyInput({
     const handleBlur = useCallback(() => {
         setIsFocused(false);
         const parsed = parseFloat(rawText.replace(/[^\d.-]/g, '')) || 0;
-        const finalVal = currency === 'USD' ? Number(parsed.toFixed(2)) : Math.round(parsed);
+        const finalVal = decimals === 0 ? Math.round(parsed) : Number(parsed.toFixed(decimals));
         onChange(finalVal);
         setRawText(finalVal === 0 ? '' : finalVal.toString());
-    }, [rawText, onChange, currency]);
+    }, [rawText, onChange, decimals]);
 
     const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setRawText(e.target.value);
     }, []);
 
-    const activePrefix = prefix !== undefined ? prefix : (showCurrencySymbol ? (currency === 'USD' ? '$' : '₫') : undefined);
+    const activePrefix = prefix !== undefined ? prefix : (showCurrencySymbol ? currencySymbol : undefined);
 
     return (
         <div className="relative flex items-center w-full">
@@ -65,13 +69,13 @@ export function CurrencyInput({
             <Input
                 type={isFocused ? 'number' : 'text'}
                 inputMode="decimal"
-                step={currency === 'USD' ? "0.01" : "1"}
+                step={decimals === 0 ? "1" : "0.01"}
                 value={isFocused ? rawText : (value === 0 ? '' : formatNumber(value, currency))}
                 onChange={handleChange}
                 onFocus={handleFocus}
                 onBlur={handleBlur}
                 className={cn(activePrefix && 'pl-7', className)}
-                placeholder={placeholder || (currency === 'USD' ? '0.00' : '0')}
+                placeholder={placeholder || (decimals === 0 ? '0' : '0.00')}
             />
         </div>
     );

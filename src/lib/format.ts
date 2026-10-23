@@ -1,6 +1,7 @@
-import { useBillStore, type CurrencyCode } from "@/store/useBillStore";
+import { useBillStore } from "@/store/useBillStore";
+import { getCurrencyDecimals, getCurrencyLocale } from "@/lib/currency";
 
-export const getActiveCurrency = (currency?: CurrencyCode): CurrencyCode => {
+export const getActiveCurrency = (currency?: string): string => {
     if (currency) return currency;
     try {
         return useBillStore.getState()?.currency || 'VND';
@@ -9,38 +10,39 @@ export const getActiveCurrency = (currency?: CurrencyCode): CurrencyCode => {
     }
 };
 
-export const formatCurrency = (amount: number, currency?: CurrencyCode): string => {
+export const formatCurrency = (amount: number, currency?: string): string => {
     const safeAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
-    const curr = getActiveCurrency(currency);
+    const curr = getActiveCurrency(currency).toUpperCase();
+    const decimals = getCurrencyDecimals(curr);
+    const locale = getCurrencyLocale(curr);
 
-    if (curr === 'USD') {
-        return new Intl.NumberFormat('en-US', {
+    try {
+        return new Intl.NumberFormat(locale, {
             style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
+            currency: curr,
+            minimumFractionDigits: decimals === 0 ? 0 : 2,
+            maximumFractionDigits: decimals,
         }).format(safeAmount);
+    } catch {
+        // Fallback formatting if Intl does not support currency code
+        return `${safeAmount.toLocaleString(locale, { maximumFractionDigits: decimals })} ${curr}`;
     }
-
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-        maximumFractionDigits: 0,
-    }).format(safeAmount);
 };
 
-export const formatNumber = (amount: number, currency?: CurrencyCode): string => {
+export const formatNumber = (amount: number, currency?: string): string => {
     const safeAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
-    const curr = getActiveCurrency(currency);
+    const curr = getActiveCurrency(currency).toUpperCase();
+    const decimals = getCurrencyDecimals(curr);
+    const locale = getCurrencyLocale(curr);
 
-    if (curr === 'USD') {
-        return new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: safeAmount % 1 === 0 ? 0 : 2,
-            maximumFractionDigits: 2,
+    try {
+        return new Intl.NumberFormat(locale, {
+            minimumFractionDigits: safeAmount % 1 === 0 ? 0 : Math.min(2, decimals),
+            maximumFractionDigits: decimals,
         }).format(safeAmount);
+    } catch {
+        return safeAmount.toString();
     }
-
-    return new Intl.NumberFormat('vi-VN').format(safeAmount);
 };
 
 /** Parse a formatted string back to number */
