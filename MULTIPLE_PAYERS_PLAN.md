@@ -198,43 +198,62 @@ items: data.i.map((i: any) => ({
 
 ### 4.1 Cost Calculation per Participant
 The calculation of how much each participant **owes** remains grounded in consumption:
+
 1. **Raw Item Cost**:
-   $$\text{RawCost}(p) = \sum_{item} \text{Share}(p, item)$$
+   ```
+   RawCost(p) = Sum of all item shares assigned to person p
+   ```
    Where unassigned items or leftover portions are split equally among active participants.
+
 2. **Proportional Extras (Taxes, Fees, Discounts)**:
-   $$\text{TotalCost}(p) = \text{RawCost}(p) + \text{Extras} \times \frac{\text{RawCost}(p)}{\sum \text{RawCost}}$$
+   ```
+   TotalCost(p) = RawCost(p) + Extras * (RawCost(p) / TotalRawCosts)
+   ```
+
 3. **Sponsorship Subsidies**:
    Sponsor surplus is subtracted from debtors via the established proportional discount ratio:
-   $$\text{FinalPayable}(p) = \max(0, \text{TotalCost}(p) - \text{Sponsor}(p)) \times (1 - \text{DiscountRatio})$$
+   ```
+   FinalPayable(p) = max(0, TotalCost(p) - Sponsor(p)) * (1 - DiscountRatio)
+   ```
 
 ### 4.2 Contribution Calculation per Participant
 The calculation of how much each participant **paid** is now the sum of their item-level payments and bill-level direct payments:
 
-$$\text{ItemPaid}(p) = \sum_{item} (item.payers[p] \text{ if present else } 0)$$
+```
+ItemPaid(p) = Sum of (item.payers[p] || 0) across all items
+```
 
 #### Unallocated Item Costs & Host Fallback:
 For each item:
-$$\text{AllocatedItemPaid} = \sum_{p} item.payers[p]$$
-$$\text{UnallocatedItemCost} = \max(0, item.price - \text{AllocatedItemPaid})$$
+```
+AllocatedItemPaid   = Sum of item.payers for this item
+UnallocatedItemCost = max(0, item.price - AllocatedItemPaid)
+```
 
 - If a **Host** is designated (`hostId` is not null):
   The Host covers all unallocated item costs and all global charges (taxes/fees):
-  $$\text{HostAutoCover} = \sum_{items} \text{UnallocatedItemCost} + \text{TotalExtras}$$
+  ```
+  HostAutoCover = (Sum of all UnallocatedItemCosts) + TotalExtras
+  ```
 - If **No Host** is designated:
-  Any gap between $\sum \text{AllocatedItemPaid}$ and $\text{TotalBill}$ is flagged in the Discrepancy Banner.
+  Any gap between total allocated item payments and `TotalBill` is flagged in the Discrepancy Banner.
 
 #### Total Effective Paid Amount:
-$$\text{EffectivePaid}(p) = \text{ItemPaid}(p) + p.paidAmount + (\text{HostAutoCover if } p == hostId \text{ else } 0)$$
+```
+EffectivePaid(p) = ItemPaid(p) + p.paidAmount + (HostAutoCover if p is Host else 0)
+```
 
 ### 4.3 Net Settlement Balances
 Every participant's net balance is:
-$$\text{Balance}(p) = \text{EffectivePaid}(p) - \text{FinalPayable}(p)$$
+```
+Balance(p) = EffectivePaid(p) - FinalPayable(p)
+```
 
-- $\text{Balance}(p) > +0.01 \implies$ **Creditor** (is owed money, paid more than their share).
-- $\text{Balance}(p) < -0.01 \implies$ **Debtor** (owes money, paid less than their share).
-- $|\text{Balance}(p)| \le 0.01 \implies$ **Settled** (balance is zero).
+- `Balance(p) > +0.01` -> **Creditor** (is owed money, paid more than their share).
+- `Balance(p) < -0.01` -> **Debtor** (owes money, paid less than their share).
+- `|Balance(p)| <= 0.01` -> **Settled** (balance is zero).
 
-> **Invariant**: $\sum_{p} \text{Balance}(p) = 0$ (Zero-sum conservation).
+> **Invariant**: `Sum of all Balances = 0` (Zero-sum conservation).
 
 ### 4.4 Settlement Flow Topology (Dual Mode)
 
@@ -343,7 +362,7 @@ In the item card, next to the existing **"Assign Shares / Splits"** button, intr
 | **Item partially paid (underpaid)** | If `hostId` exists, host covers the remainder. If no host, discrepancy banner notifies user of unallocated payment. |
 | **Item overpaid (sum of payers > price)** | Real-time warning badge in popover; balance calculation honors actual amount paid, crediting payers accordingly. |
 | **Person removed from bill** | When `removePerson(id)` is called, remove them from all `item.payers` maps as well as `item.assignments`. |
-| **Currency conversion** | When changing bill currency (e.g., VND $\leftrightarrow$ USD), convert all values in `item.payers` alongside item prices and person amounts. |
+| **Currency conversion** | When changing bill currency (e.g., VND ↔ USD), convert all values in `item.payers` alongside item prices and person amounts. |
 | **Participant both pays and consumes** | Accurately calculates net offset: if Alice paid $50 and ate $20, she receives $30. |
 
 ---
