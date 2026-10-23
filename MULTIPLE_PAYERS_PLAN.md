@@ -346,26 +346,36 @@ EffectivePaid(p) = ItemPaid(p) + DirectPaid(p) + (HostAutoCover if p == hostId e
 
 ---
 
-### 4.4 Fixed-Point / Integer Arithmetic & Indivisible Cent Distribution (Addressing P1: Floating-Point Drift)
+### 4.4 Fixed-Point / Integer Arithmetic, Decimal-Only Rounding & Indivisible Cent Distribution (Addressing P1: Floating-Point Drift)
 
 > [!IMPORTANT]
 > **Zero Precision Drift via Integer Cent Arithmetic**:
 > Standard IEEE 754 floating-point operations (`0.1 + 0.2 = 0.30000000000000004`) and naive float thresholds (`Math.abs(b) <= 0.01`) drop cents and leave unbalanced residuals.
 > All internal calculations, allocations, and balances MUST operate in **integer atomic units** (cents for USD/EUR, integer dong for VND).
 
+#### Decimal-Only Auto-Rounding Rule:
+> **Core Policy**: Auto round up or down (half-up) **ONLY for decimal fractions**.
+> - **0-Decimal Currencies (VND, JPY, KRW)**:
+>   - Any decimal resulting from divisions/multiplications is rounded to the nearest integer dong: e.g. **`6.666 ₫` automatically rounds to `7 ₫`**; `6.4 ₫` rounds to `6 ₫`.
+>   - **DO NOT round whole digits**: whole amounts are NEVER rounded to nearest 1,000 ₫, 500 ₫, or 100 ₫. An amount of `12,345 ₫` remains strictly `12,345 ₫`.
+> - **2-Decimal Currencies (USD, EUR, SGD, GBP)**:
+>   - Decimal fractions beyond 2 decimal places are rounded to the nearest cent: e.g. `$6.666` automatically rounds to `$6.67`; `$6.664` rounds to `$6.66`.
+
 #### Conversion to Atomic Minor Units:
 ```typescript
-function toMinorUnits(amount: number, decimals: number = 2): number {
+function toMinorUnits(amount: number, decimals: number = 0): number {
+  // Auto-round only the decimal portion to the nearest atomic minor unit
+  // e.g. VND (decimals=0): 6.666 -> 7; USD (decimals=2): 6.666 -> 667 cents
   return Math.round(amount * Math.pow(10, decimals));
 }
 
-function fromMinorUnits(cents: number, decimals: number = 2): number {
+function fromMinorUnits(cents: number, decimals: number = 0): number {
   return cents / Math.pow(10, decimals);
 }
 ```
 
 #### Indivisible Cent Distribution: The Largest Remainder (Hamilton) Method
-When splitting indivisible amounts (e.g. $10.00 split among 3 people = 333.333... cents each, or distributing a proportional tax):
+When splitting indivisible amounts (e.g. $10.00 split among 3 people = 333.333... cents each, or 20 ₫ split among 3 people = 6.666... ₫ each):
 ```typescript
 function distributeIntegerCents(totalCents: number, weights: number[]): number[] {
   const sumWeights = weights.reduce((a, b) => a + b, 0);
@@ -385,7 +395,10 @@ function distributeIntegerCents(totalCents: number, weights: number[]): number[]
   const allocatedSum = baseShares.reduce((a, b) => a + b, 0);
   let leftoverCents = totalCents - allocatedSum;
 
-  // Step 3: Sort remainders descending and assign 1 cent to highest remainder
+  // Step 3: Sort remainders descending and assign 1 unit/cent to highest remainder
+  // e.g. 20 ₫ divided by 3 people yields raw 6.666... each:
+  // baseShares: [6, 6, 6] (sum 18, leftover 2 ₫)
+  // participants with highest remainders receive +1 ₫ -> [7, 7, 6] (sum 20 ₫)
   remainders.sort((a, b) => b.rem - a.rem);
   for (let i = 0; i < leftoverCents; i++) {
     baseShares[remainders[i].idx] += 1;
@@ -396,7 +409,8 @@ function distributeIntegerCents(totalCents: number, weights: number[]): number[]
 }
 ```
 **Outcome**:
-- Guarantees `Sum of baseShares === totalCents` down to the exact single cent.
+- Guarantees `Sum of baseShares === totalCents` down to the exact single cent / dong.
+- Decimal fractions (e.g. 6.666...) naturally auto-round up to 7 while preserving the exact bill sum.
 - Eliminates rounding drift, orphaned pennies, and floating-point inequality.
 
 ---
@@ -634,6 +648,7 @@ flowchart TD
 
 ### Phase 5: Verification & Automated Tests
 - Write automated tests in `tests/multi-payer.test.ts` covering:
+  - **Decimal-only auto-rounding**: 20 ₫ split among 3 people auto-rounds 6.666... ₫ up to 7 ₫ (distributing 7 ₫, 7 ₫, 6 ₫ to total exactly 20 ₫, with no whole-digit truncation).
   - **Indivisible cent conservation**: $10.00 split among 3 people equals exactly $3.34 + $3.33 + $3.33 ($10.00 total, 0 cents lost).
   - **Item quantity & unassigned splits**: Item price $30, quantity 3, 1 portion claimed by Alice -> remaining $20 split among eligible cohort.
   - **Single & multi-item multiple payers**: Bob ($60) & Charlie ($40) on a $100 dish.
