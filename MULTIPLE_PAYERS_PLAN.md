@@ -1,7 +1,7 @@
 # Architecture & Implementation Plan: Multi-Payer Support (Bill-Level & Item-Level)
 
 > **Document Type**: Technical Specification & Implementation Plan  
-> **Status**: Draft for User Review (Planning Mode)  
+> **Status**: Implementation-Ready Final Specification (Planning Mode)  
 > **Target Version**: Ledger 2.1  
 > **Author**: Antigravity Assistant  
 > **Date**: October 2026  
@@ -76,60 +76,83 @@ To ensure rigorous financial accounting, Ledger separates payments by source, de
 1. **Consumers (`Item.assignments: Record<PersonId, Quantity>`)**:
    - Captures who consumed the item and in what quantity ($q_{i, p} \ge 0$).
    - Generates the participant's **Consumption Liability** (what they owe for items).
-2. **Item Payers (`Item.payers: Record<PersonId, Amount>`)**:
-   - Captures payments disbursed **directly to the merchant/venue** for this specific item.
-   - Generates the participant's **Item Payment Credit** (stored in canonical integer minor units).
-3. **Bill-Level Direct Merchant Payments (`Person.paidAmount`) — Migration Contract**:
+2. **Item Payers (`Item.payers: Record<PersonId, bigint>`)**:
+   - Captures payments disbursed **directly to the merchant/venue** for this specific line item.
+   - Generates the participant's **Item Payment Credit** (stored in canonical integer minor units as `bigint`).
+3. **Bill-Level Direct Merchant Payments (`Person.paidAmount: bigint`) — Migration Contract**:
    > [!IMPORTANT]
    > **Explicit Accounting Contract for `Person.paidAmount`**:
    > `Person.paidAmount` strictly represents **Direct Merchant Payments** made by that participant directly to the venue/merchant that are NOT tied to a specific item (e.g. an advance booking deposit paid to the restaurant, or cash handed to the waiter for the table).
    >
    > **Peer-to-Peer Advances vs Merchant Payments**:
-   > If a participant (e.g. Bob) transfers money directly to the Host (e.g. Alice) before or during dinner via bank transfer, that is an **Inter-Participant Peer Transfer**, NOT a merchant payment. Peer transfers reduce Bob's debt to Alice and reduce Alice's credit from Bob; they do NOT increase merchant payments. Entering peer transfers into `paidAmount` would artificially inflate merchant credits. Peer transfers are handled as pre-settlement balance offsets.
-4. **Assumed Merchant Coverage (`bill.hostCoverageEnabled: boolean`)**:
-   - An explicit, persisted bill-level flag.
-   - When enabled and a Host is designated, the Host explicitly confirms assuming any genuine unpaid merchant balance (`OutstandingMerchantDue`) at settlement time. It is not an unverified implicit assumption.
+   > If a participant (e.g. Bob) transfers money directly to the Host (e.g. Alice) before or during dinner via bank transfer, that is an **Inter-Participant Peer Transfer**, NOT a merchant payment. Peer transfers reduce Bob's debt to Alice and reduce Alice's credit from Bob; they do NOT increase merchant payments. Entering peer transfers into `paidAmount` would artificially inflate merchant credits.
+4. **Inter-Participant Peer Transfers (`bill.peerTransfers: PeerTransfer[]`)**:
+   - Recorded pre-settlement advances between participants.
+   - Applied as explicit balance offsets before generating final settlement transfers:
+     ```
+     InitialBalance(p) = EffectiveMerchantPaid(p) - FinalPayable(p)
+     NetBalance(p)     = InitialBalance(p) + Sum(advances received) - Sum(advances sent)
+     ```
+   - Zero-sum invariant is strictly conserved because each advance adds $x$ to recipient and subtracts $x$ from sender ($+x - x \equiv 0$).
+5. **Assumed Merchant Coverage (`bill.hostCoverageStatus`)**:
+   - An explicit, persisted bill-level state: `'disabled' | 'confirmed' | 'waived'`.
+   - When set to `'confirmed'` and a Host is designated, the Host explicitly confirms assuming any genuine unpaid merchant balance (`OutstandingMerchantDue`) at settlement time. It is recorded as an auditable commitment, distinguishable from verified merchant transactions.
 
 ---
 
 ## 3. Canonical Money Unit Contract & Data Architecture
 
-### 3.1 The Canonical Money Unit Contract
+### 3.1 The Canonical Money Unit Contract (`bigint`)
 To prevent dangerous conversions between major units (e.g. `$10.50`) and minor units (e.g. `1050` cents), Ledger enforces a strict boundary contract across the entire stack:
 
-- **Calculation & Domain Engine (`useBillState.ts`, algorithms)**:
-  All monetary values (`price`, `paidAmount`, `payers`, `extras`, `balances`) are strictly **integer minor units** (represented as `bigint` for internal calculations, bounded by `Number.MAX_SAFE_INTEGER`).
-- **Database Persistence (`db/sqlite.ts`, `db/postgres.ts`)**:
-  - SQLite: `INTEGER NOT NULL` storing integer minor units.
-  - PostgreSQL: `BIGINT NOT NULL` storing integer minor units. The database driver returns `BIGINT` as strings, which are parsed via `BigInt(val)` at the adapter boundary.
-- **Frontend State Store (`useBillStore.ts`)**:
-  All store properties represent integer minor units.
+- **Calculation & Domain Engine (`useBillState.ts`, algorithms, store)**:
+  All monetary values (`price`, `paidAmount`, `payers`, `extras`, `discounts`, `balances`) are strictly **canonical integer minor units stored as `bigint`**.
+- **JSON Serialization & Share URLs**:
+  Because `JSON.stringify` throws a `TypeError` on `bigint`, all API payloads, store persistence (localStorage/IndexedDB), and share URL serialization serialize `bigint` values as **decimal strings** (e.g. `"350000"`, `"1050"`). A universal reviver parses them back to `bigint` upon deserialization.
+- **Database Persistence**:
+  - SQLite: `INTEGER NOT NULL` storing 64-bit integer minor units. Adapter returns `bigint`.
+  - PostgreSQL: `BIGINT NOT NULL` storing 64-bit integer minor units. Adapter parses driver string returns via `BigInt(val)`.
 - **User Interface Boundary**:
-  Decimal strings entered by users are parsed to integer minor units via `parseToMinorUnits(input, decimals)` upon input. Formatted strings displayed to users are generated via `formatCurrency(minorUnits, currency)` upon render.
-- **Share URL State Serialization (`src/lib/share.ts`)**:
-  Versioned format (`v: 2`) encoding canonical integer minor units, with backward compatibility for legacy v1 payloads.
+  Decimal strings entered by users are parsed to `bigint` minor units via `parseToMinorUnits(input, decimals)` upon input. Formatted strings displayed to users are generated via `formatCurrency(minorUnits, currency)` upon render.
 
 ### 3.2 Store & Frontend Types (`src/store/useBillStore.ts`, `db/types.ts`)
 
 ```typescript
 // db/types.ts & src/store/useBillStore.ts
 
+export interface PeerTransfer {
+  id: string;
+  fromPersonId: string;
+  toPersonId: string;
+  amount: bigint; // canonical integer minor units
+  note?: string;
+  date: string;
+}
+
 export interface Item {
   id: string;
   name: string;
-  price: number; // Canonical total line price in integer minor units (e.g. 350000 dong or 1050 cents)
+  price: bigint; // Canonical total line price in integer minor units (e.g. 350000n dong or 1050n cents)
   quantity: number; // Integer unit/portion count (>= 1)
   assignments: Record<string, number>; // personId -> portion quantity consumed
-  payers?: Record<string, number>;      // personId -> amount paid to merchant in integer minor units
+  payers?: Record<string, bigint>;      // personId -> amount paid to merchant in integer minor units
 }
 
 export interface ItemData {
   id: string;
   name: string;
-  price: number; // integer minor units
+  price: bigint; // integer minor units
   quantity?: number;
   assignments?: Record<string, number>;
-  payers?: Record<string, number>;
+  payers?: Record<string, bigint>;
+}
+
+export interface Person {
+  id: string;
+  name: string;
+  paidAmount: bigint; // Direct merchant payment in integer minor units
+  userId?: string | null;
+  email?: string | null;
 }
 
 export interface BillDetail {
@@ -137,8 +160,11 @@ export interface BillDetail {
   name: string;
   currency: string;
   hostId: string | null;
-  hostCoverageEnabled: boolean; // Explicit recorded host coverage confirmation
-  // ... other fields in integer minor units
+  hostCoverageStatus: 'disabled' | 'confirmed' | 'waived';
+  taxInclusion: 'inclusive' | 'exclusive'; // Tax inclusive vs exclusive line pricing
+  peerTransfers: PeerTransfer[];
+  items: Item[];
+  people: Person[];
 }
 ```
 
@@ -155,6 +181,19 @@ CREATE TABLE IF NOT EXISTS item_payers (
   FOREIGN KEY(person_id) REFERENCES people(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS peer_transfers (
+  id TEXT PRIMARY KEY,
+  bill_id TEXT NOT NULL,
+  from_person_id TEXT NOT NULL,
+  to_person_id TEXT NOT NULL,
+  amount INTEGER NOT NULL, -- Stored as integer minor units
+  note TEXT,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY(bill_id) REFERENCES bills(id) ON DELETE CASCADE,
+  FOREIGN KEY(from_person_id) REFERENCES people(id) ON DELETE CASCADE,
+  FOREIGN KEY(to_person_id) REFERENCES people(id) ON DELETE CASCADE
+);
+
 -- PostgreSQL Table Definition (amounts stored in BIGINT integer minor units / cents)
 CREATE TABLE IF NOT EXISTS item_payers (
   item_id TEXT NOT NULL,
@@ -164,85 +203,104 @@ CREATE TABLE IF NOT EXISTS item_payers (
   FOREIGN KEY(item_id) REFERENCES items(id) ON DELETE CASCADE,
   FOREIGN KEY(person_id) REFERENCES people(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS peer_transfers (
+  id TEXT PRIMARY KEY,
+  bill_id TEXT NOT NULL,
+  from_person_id TEXT NOT NULL,
+  to_person_id TEXT NOT NULL,
+  amount BIGINT NOT NULL, -- Stored as integer minor units
+  note TEXT,
+  created_at TIMESTAMPTZ NOT NULL,
+  FOREIGN KEY(bill_id) REFERENCES bills(id) ON DELETE CASCADE,
+  FOREIGN KEY(from_person_id) REFERENCES people(id) ON DELETE CASCADE,
+  FOREIGN KEY(to_person_id) REFERENCES people(id) ON DELETE CASCADE
+);
 ```
 
-#### Safe Automatic Migration on Startup:
-```typescript
-// In db/sqlite.ts init()
-this.db.exec(`
-  CREATE TABLE IF NOT EXISTS item_payers (
-    item_id TEXT NOT NULL,
-    person_id TEXT NOT NULL,
-    amount INTEGER NOT NULL,
-    PRIMARY KEY (item_id, person_id),
-    FOREIGN KEY(item_id) REFERENCES items(id) ON DELETE CASCADE,
-    FOREIGN KEY(person_id) REFERENCES people(id) ON DELETE CASCADE
-  );
-`);
-
-// In db/postgres.ts init()
-await this.client.query(`
-  CREATE TABLE IF NOT EXISTS item_payers (
-    item_id TEXT NOT NULL,
-    person_id TEXT NOT NULL,
-    amount BIGINT NOT NULL,
-    PRIMARY KEY (item_id, person_id),
-    FOREIGN KEY(item_id) REFERENCES items(id) ON DELETE CASCADE,
-    FOREIGN KEY(person_id) REFERENCES people(id) ON DELETE CASCADE
-  );
-`);
-```
-
-#### Read & Write Logic (Handling PostgreSQL BIGINT Strings):
-- **`getBill(id)`**:
-  Query `item_payers` alongside `item_assignments`:
+#### Adapter Read & Write Logic (Driver Parity & Parameterization):
+- **SQLite Adapter (`db/sqlite.ts`)**:
+  - Uses `?` parameter placeholders.
+  - Queries return `INTEGER` parsed to `BigInt(row.amount)`.
   ```typescript
-  const rows = await db.query('SELECT person_id, amount FROM item_payers WHERE item_id = $1', [itemId]);
-  const payers: Record<string, number> = {};
+  // getBill(id)
+  const rows = this.db.prepare('SELECT person_id, amount FROM item_payers WHERE item_id = ?').all(itemId) as any[];
+  const payers: Record<string, bigint> = {};
   for (const row of rows) {
-    // Safely parse Postgres BIGINT string to safe integer minor units
-    const minorUnits = typeof row.amount === 'string' ? Number(row.amount) : row.amount;
-    if (!Number.isSafeInteger(minorUnits)) {
-      throw new Error(`Item payer amount exceeds safe integer range: ${row.amount}`);
-    }
-    payers[row.person_id] = minorUnits;
+    payers[row.person_id] = BigInt(row.amount);
+  }
+
+  // saveBill(id, data) inside atomic transaction
+  const insertPayer = this.db.prepare('INSERT INTO item_payers (item_id, person_id, amount) VALUES (?, ?, ?)');
+  for (const [personId, amount] of Object.entries(item.payers || {})) {
+    insertPayer.run(item.id, personId, Number(amount)); // better-sqlite3 handles safe integers
   }
   ```
-- **`saveBill(id, data)`**:
-  Inside the database transaction:
-  ```sql
-  DELETE FROM item_payers WHERE item_id = ?;
-  INSERT INTO item_payers (item_id, person_id, amount) VALUES (?, ?, ?);
+- **PostgreSQL Adapter (`db/postgres.ts`)**:
+  - Uses `$1, $2, ...` positional parameter placeholders.
+  - `pg` driver returns `BIGINT` as strings to prevent JS float overflow.
+  ```typescript
+  // getBill(id)
+  const result = await this.client.query('SELECT person_id, amount FROM item_payers WHERE item_id = $1', [itemId]);
+  const payers: Record<string, bigint> = {};
+  for (const row of result.rows) {
+    payers[row.person_id] = BigInt(row.amount);
+  }
+
+  // saveBill(id, data) inside atomic transaction
+  for (const [personId, amount] of Object.entries(item.payers || {})) {
+    await this.client.query('INSERT INTO item_payers (item_id, person_id, amount) VALUES ($1, $2, $3)', [item.id, personId, amount.toString()]);
+  }
   ```
 
 ### 3.4 Share URL State Serialization (`src/lib/share.ts`)
 
-To maintain compact URL sharing while guaranteeing canonical minor units:
+To maintain compact URL sharing while guaranteeing canonical minor units and JSON compatibility:
 ```typescript
 // serializeState (v2 format):
 // v: 2 (version identifier)
-// i: [id, name, priceMinor, quantity, assignments, payersMinor]
+// i: [id, name, priceStr, quantity, assignments, payersStr]
 v: 2,
 i: state.items.map((i: any) => [
   i.id,
   i.name,
-  i.price,       // canonical integer minor units
-  i.quantity,    // integer portion count
+  i.price.toString(),    // serialized as decimal string to avoid BigInt JSON error
+  i.quantity,            // integer portion count
   i.assignments,
-  i.payers || {} // canonical integer minor units
+  Object.fromEntries(Object.entries(i.payers || {}).map(([pId, amt]) => [pId, amt.toString()]))
 ])
 
 // deserializeState:
-// Validates v2 minor units; gracefully upgrades legacy v1 major-unit payloads if v is missing
-items: data.i.map((i: any) => ({
-  id: i[0],
-  name: i[1],
-  price: i[2],
-  quantity: i[3],
-  assignments: i[4],
-  payers: i[5] || {} // backwards-compatible if index 5 is missing
-}))
+// If v === 2: read decimal strings directly via BigInt(str)
+// If v is missing (legacy v1): execute legacy migration (Section 3.5)
 ```
+
+### 3.5 Legacy Data Migration Specification
+To upgrade existing bills from legacy floating-point major units (e.g. `$10.50` USD) to integer minor units (e.g. `1050n` cents) without data corruption:
+
+1. **Database Schema Versioning**:
+   Track migration status via `PRAGMA user_version = 2` (SQLite) and `schema_migrations` table (Postgres).
+2. **Transactional Migration Procedure**:
+   For every existing bill in the database:
+   - Read the bill's ISO currency code (`bill.currency`).
+   - Determine scale factor: $S = 10^{\text{decimals}}$ (e.g., $S = 100$ for USD/EUR, $S = 1$ for VND/JPY).
+   - In SQLite:
+     ```sql
+     UPDATE items SET price = CAST(ROUND(price * ?) AS INTEGER) WHERE bill_id = ?;
+     UPDATE people SET paid_amount = CAST(ROUND(paid_amount * ?) AS INTEGER) WHERE bill_id = ?;
+     UPDATE global_charges SET amount = CAST(ROUND(amount * ?) AS INTEGER) WHERE bill_id = ? AND type = 'fixed';
+     ```
+   - In PostgreSQL:
+     ```sql
+     UPDATE items SET price = (ROUND(price * $1))::BIGINT WHERE bill_id = $2;
+     UPDATE people SET paid_amount = (ROUND(paid_amount * $1))::BIGINT WHERE bill_id = $2;
+     UPDATE global_charges SET amount = (ROUND(amount * $1))::BIGINT WHERE bill_id = $2 AND type = 'fixed';
+     ```
+3. **Legacy Share URL Upgrades**:
+   When opening a legacy v1 share URL (where `v` is undefined):
+   - Lookup currency decimals for the shared bill.
+   - Multiply float prices and paid amounts by $10^{\text{decimals}}$ half-up, converting to `bigint`.
+   - Resave as version 2 upon next modification.
 
 ---
 
@@ -283,12 +341,20 @@ Depending on the relationship between `ClaimedQty(i)` and `Q_i`:
 
 - **Case C: Undersubscribed / Partially Assigned (`0 < ClaimedQty(i) < Q_i`)**:
   Participants claimed only a fraction of the available quantity (e.g. 1 out of 3 appetizers claimed).
-  1. Assigned cost pool: `AssignedCost(i) = (BigInt(P_i) * BigInt(ClaimedQty(i))) / BigInt(Q_i)`.
-  2. Assigned shares are distributed among claimants via Hamilton:
-     `Share(p, i) = HamiltonAllocate(AssignedCost(i), { p: q(i, p) })[p]`.
-  3. Unassigned cost is the exact integer remainder:
-     `UnassignedCost(i) = P_i - Sum of Share(p, i)`.
-  > Strictly satisfies: `Sum of Share(p, i) + UnassignedCost(i) === P_i` down to the exact single minor unit.
+  To eliminate integer division flooring bias across assigned versus unassigned portions, the engine performs a **Joint Whole-Line Hamilton Allocation** of total line price $P_i$ across all portions, treating the unclaimed portions as a synthetic `__unassigned__` bucket:
+  ```typescript
+  // Weights: each claimant gets their portion weight q(i, p); unassigned remainder gets (Q_i - ClaimedQty(i))
+  const jointWeights = [
+    ...claimants.map(p => ({ participantId: p.id, weight: BigInt(q[i, p]) })),
+    { participantId: '__unassigned__', weight: BigInt(Q_i - ClaimedQty(i)) }
+  ];
+
+  const jointAllocation = distributeIntegerMinorUnits(P_i, jointWeights);
+  Share(p, i) = jointAllocation[p.id];
+  UnassignedCost(i) = jointAllocation['__unassigned__'];
+  ```
+  > **Mathematical Guarantee**: Every portion (claimed or unassigned) receives an exact proportional base share $\lfloor P_i / Q_i \rfloor$ and an equitable, unbiased rank for leftover minor-unit remainders.
+  > Strictly satisfies: `(Sum of Share(p, i) across claimants) + UnassignedCost(i) === P_i` down to the exact single minor unit.
 
 - **Case D: Completely Unassigned (`ClaimedQty(i) == 0`)**:
   ```
@@ -415,11 +481,25 @@ EffectivePaid(host) = ActualMerchantPaid(host) + (HostAssumedMerchantPayment if 
 EffectivePaid(p)    = ActualMerchantPaid(p)  (for all p != hostId)
 ```
 
-#### Item Overpayment Resolution Options:
-If payers enter $A_i > P_i$, settlement is **BLOCKED** until resolved via:
-- **Correction**: Fix erroneous entries.
-- **Convert to Server Tip**: Add $(A_i - P_i)$ to `PositiveExtras`, increasing `TotalBill` to match payments.
-- **Refund**: Return the excess as a documented merchant refund.
+#### Item Overpayment Resolution & Tip Reclassification Protocol:
+If payers enter $A_i = \sum_{p} \text{item.payers}[p] > P_i$, settlement is strictly **BLOCKED** until resolved via one of three explicit user actions:
+1. **Manual Correction**: Participants edit erroneous payment amounts in the "Paid By" popover.
+2. **One-Click Reclassify as Tip (Server Gratuity)**:
+   To satisfy Step 1 validation ($\sum \text{item.payers}[p] \le P_i$) without losing track of money actually paid:
+   - Calculate item excess: $\Delta_i = A_i - P_i > 0n$.
+   - Scale down the item payments so their sum exactly equals $P_i$:
+     For each contributing payer $p$, compute their excess contribution:
+     $\Delta_{i, p} = \text{item.payers}[p] - \text{HamiltonAllocate}(P_i, \{ p: \text{item.payers}[p] \})[p]$.
+     Set $\text{item.payers}[p] \leftarrow \text{item.payers}[p] - \Delta_{i, p}$.
+   - Transfer each payer's excess directly to their verified merchant payments:
+     $\text{DirectMerchantPaid}(p) \leftarrow \text{DirectMerchantPaid}(p) + \Delta_{i, p}$.
+   - Create or increment a bill-level `Tip` in `PositiveExtras` by $\Delta_i$.
+   - **Accounting Outcome**:
+     - Item $i$ payments sum to exactly $P_i$ (Step 1 PASSES).
+     - Payer $p$ receives full credit for their actual cash expenditure under `DirectMerchantPaid(p)` (Step 2 PASSES).
+     - `TotalBill` and `TotalMerchantPaid` increase by identical amounts $\Delta_i$ (Step 3 PASSES).
+     - Ledger balance equation $\sum \text{Balance}(p) \equiv 0n$ is strictly preserved.
+3. **Refund Excess**: Record the overpayment as an immediate merchant refund returned to the paying party.
 
 ---
 
@@ -445,11 +525,20 @@ function parseToMinorUnits(input: string, decimals: number = 0): bigint {
     throw new Error(`Unsupported currency decimal scale: ${decimals}`);
   }
 
-  const trimmed = input.trim().replace(/,/g, '');
+  const trimmed = input.trim();
   if (!trimmed) return 0n;
 
-  // Strict grammar: optional leading sign (+ or -), digits, optional dot and digits
-  const match = trimmed.match(/^([+-])?(\d+)(?:\.(\d+))?$/);
+  // Strict comma grouping validation:
+  // Allows optional sign, followed by either:
+  // - 1 to 3 digits then repeating groups of ,3-digits (standard thousands grouping), OR
+  // - plain ungrouped digits.
+  // Rejects malformed grouping such as "1,,2", "1,2", ",500", or "1000,000".
+  if (!/^[+-]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?$/.test(trimmed)) {
+    throw new Error(`Invalid monetary amount format or grouping: "${input}"`);
+  }
+
+  const raw = trimmed.replace(/,/g, '');
+  const match = raw.match(/^([+-])?(\d+)(?:\.(\d+))?$/);
   if (!match) {
     throw new Error(`Invalid monetary amount format: "${input}"`);
   }
@@ -457,25 +546,25 @@ function parseToMinorUnits(input: string, decimals: number = 0): bigint {
   const sign = match[1] === '-' ? -1n : 1n;
   const wholeStr = match[2];
   const fracStr = match[3] || '';
-  const whole = BigInt(wholeStr);
 
+  // Zero-decimal currencies (e.g. VND, JPY): round directly at 1st decimal digit
   if (decimals === 0) {
-    if (fracStr.length > 0) {
-      // Half-up rounding on first decimal digit
-      const roundDigit = parseInt(fracStr[0], 10);
-      const roundedWhole = whole + (roundDigit >= 5 ? 1n : 0n);
-      return sign * roundedWhole;
+    const whole = BigInt(wholeStr);
+    if (fracStr.length > 0 && parseInt(fracStr[0], 10) >= 5) {
+      return sign * (whole + 1n);
     }
     return sign * whole;
   }
 
+  // Currencies with decimals (e.g. USD, EUR):
+  // Treat as unified digit sequence to eliminate rounding carry bugs (e.g. 1.999 -> 200n, not 2100n)
   const paddedFrac = fracStr.padEnd(decimals + 1, '0');
-  const baseFrac = BigInt(paddedFrac.slice(0, decimals));
+  const significantDigits = wholeStr + paddedFrac.slice(0, decimals);
   const roundDigit = parseInt(paddedFrac[decimals], 10);
-  const roundedFrac = baseFrac + (roundDigit >= 5 ? 1n : 0n);
+  const baseMinor = BigInt(significantDigits);
+  const roundedMinor = roundDigit >= 5 ? baseMinor + 1n : baseMinor;
 
-  const totalMinor = whole * (10n ** BigInt(decimals)) + roundedFrac;
-  return sign * totalMinor;
+  return sign * roundedMinor;
 }
 ```
 
@@ -548,12 +637,12 @@ function distributeIntegerMinorUnits(
     throw new Error(`Hamilton allocation invariant failed: leftover ${leftover} is out of bounds [0, ${participants.length})`);
   }
 
-  // Step 3: Sort by remainder descending, breaking ties deterministically by participantId ascending
+  // Step 3: Sort by remainder descending, breaking ties deterministically by participantId ascending (ASCII code point order)
   shares.sort((a, b) => {
     if (b.remainder !== a.remainder) {
       return b.remainder > a.remainder ? 1 : -1;
     }
-    return a.id.localeCompare(b.id);
+    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
   });
 
   // Step 4: Allocate 1 unit each to top remainders
@@ -588,12 +677,27 @@ function convertMinorUnits(
   sourceDecimals: number,
   targetDecimals: number
 ): bigint {
-  const scaleFactor = 10n ** BigInt(Math.max(0, targetDecimals - sourceDecimals));
-  const divisorFactor = 10n ** BigInt(Math.max(0, sourceDecimals - targetDecimals));
-  const numerator = fromMinor * rate.numerator * scaleFactor;
-  const denominator = rate.denominator * divisorFactor;
-  // Half-up rounding in pure integer arithmetic
-  return (numerator + denominator / 2n) / denominator;
+  if (rate.denominator <= 0n) {
+    throw new Error(`Exchange rate denominator must be strictly positive: ${rate.denominator}`);
+  }
+  if (rate.numerator < 0n) {
+    throw new Error(`Exchange rate numerator must be nonnegative: ${rate.numerator}`);
+  }
+  if (sourceDecimals < 0 || targetDecimals < 0) {
+    throw new Error(`Currency decimals must be nonnegative: source=${sourceDecimals}, target=${targetDecimals}`);
+  }
+
+  const sign = fromMinor < 0n ? -1n : 1n;
+  const absMinor = fromMinor < 0n ? -fromMinor : fromMinor;
+
+  // Exact dimensional conversion formula:
+  // TargetMinor = (SourceMinor * rate.numerator * 10^targetDecimals) / (rate.denominator * 10^sourceDecimals)
+  const totalNumerator = absMinor * rate.numerator * (10n ** BigInt(targetDecimals));
+  const totalDenominator = rate.denominator * (10n ** BigInt(sourceDecimals));
+
+  // Pure integer half-up rounding: (num + den / 2) / den
+  const converted = (totalNumerator + totalDenominator / 2n) / totalDenominator;
+  return sign * converted;
 }
 ```
 
@@ -669,12 +773,12 @@ function computeGreedyTransfers(balances: Record<string, bigint>): TransferFlow[
   const debtors = Object.entries(balances)
     .filter(([_, b]) => b < 0n)
     .map(([id, b]) => ({ id, amount: -b }))
-    .sort((a, b) => (b.amount > a.amount ? 1 : b.amount < a.amount ? -1 : a.id.localeCompare(b.id)));
+    .sort((a, b) => (b.amount !== a.amount ? (b.amount > a.amount ? 1 : -1) : a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
   const creditors = Object.entries(balances)
     .filter(([_, b]) => b > 0n)
     .map(([id, b]) => ({ id, amount: b }))
-    .sort((a, b) => (b.amount > a.amount ? 1 : b.amount < a.amount ? -1 : a.id.localeCompare(b.id)));
+    .sort((a, b) => (b.amount !== a.amount ? (b.amount > a.amount ? 1 : -1) : a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
   const flows: TransferFlow[] = [];
   let d = 0;
@@ -710,10 +814,11 @@ function computeGreedyTransfers(balances: Record<string, bigint>): TransferFlow[
 }
 ```
 
-#### Algorithmic Complexity Clarification:
-- Finding the absolute theoretical minimum number of transactions across $N$ parties is **NP-hard** (reducible to Subset Sum / Partition).
-- The greedy algorithm achieves an optimal upper bound of $N - 1$ transfers in $O(N \log N)$ time.
-- For small groups ($N \le 12$), an optional Dynamic Programming Subset-Sum Partition solver can identify independent zero-sum subgroups to achieve the absolute global minimum ($N - K$ transfers, where $K$ is the number of disjoint zero-sum subsets).
+#### Algorithmic Complexity & Bounds Formalization:
+- **Transfer Bound Theorem**: Let $D$ be the number of debtors and $C$ be the number of creditors ($D + C \le N$). In each iteration of greedy balance matching, either debtor $d$ is fully settled (`debtor.amount === 0n`), creditor $c$ is fully settled (`creditor.amount === 0n`), or both are simultaneously settled. Thus, each transfer strictly eliminates at least one active party from the unmatched pool. The final transfer simultaneously settles the last remaining debtor and creditor. Consequently:
+  $$\text{Total Transfers} \le D + C - 1 \le N - 1$$
+- **NP-Hardness vs. Heuristic**: While finding the *absolute minimum* number of transactions across disjoint zero-sum subsets is NP-hard (reducible to the Subset Sum Partition problem), the greedy matching algorithm runs in $O(N \log N)$ time, guarantees the upper bound of $N - 1$ transfers, and is optimal whenever the ledger cannot be partitioned into multiple disjoint zero-sum subsets.
+- **Postcondition Replay Invariant**: After all flows are applied to `balanceCopy`, the engine asserts that `balanceCopy[p] === 0n` for all $p \in \text{people}$. Any deviation triggers an immediate settlement abort.
 
 #### Alternative Mode: Host-Centered Hub & Spoke
 - Every debtor ($p \ne \text{host}$ where $\text{Balance}(p) < 0$) transfers $|\text{Balance}(p)|$ to Host.
