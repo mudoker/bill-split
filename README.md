@@ -1,73 +1,49 @@
-# React + TypeScript + Vite
+# Ledger
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Smart group expense ledger with multi-currency exchange rates, Google OAuth authentication, role-based bill access, and peer-to-peer settlement optimization.
 
-Currently, two official plugins are available:
+🔗 **GitHub Repository**: [https://github.com/mudoker/ledger](https://github.com/mudoker/ledger)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Multi-Currency & Live Rates**: Seamless currency switching powered by the [Frankfurter API v2](https://api.frankfurter.dev/v2) with country flag badges and intelligent fallback mechanisms.
+- **Smart Splitting**: Split items by exact consumption, proportional shares, or custom quantities.
+- **Sponsorship & Late Arrivals**: Automatic credit subsidies and surplus handling.
+- **P2P Settlement Optimization**: Computes minimum cash transfer flows between members.
+- **Google OAuth 2.0 & RBAC**: Private bill storage with member-only viewing and owner privileges.
+- **Public Read-Only Sharing**: Shareable links for guests without mandatory login.
+- **Offline & PWA Ready**: Installable Progressive Web App with auto-updating service worker cache.
+- **OCR Receipt Scanning**: Scan receipt totals directly into your bill.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Tech Stack
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **Framework**: Next.js 16 (App Router, Turbopack)
+- **UI Components**: Tailwind CSS, Radix UI, Lucide Icons, Country Flag Icons
+- **State Management**: Zustand (persisted)
+- **Database**: Dual Neon PostgreSQL / Local SQLite fallback
+- **Auth**: Google OAuth 2.0 / JWT session cookies
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Getting Started
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+1. Install dependencies:
+   ```bash
+   bun install # or npm install
+   ```
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+2. Copy environment variables:
+   ```bash
+   cp .env.example .env.local
+   ```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.

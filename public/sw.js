@@ -1,5 +1,5 @@
 const SW_VERSION = "1.0.0";
-const CACHE_NAME = `bill-split-v${SW_VERSION}`;
+const CACHE_NAME = `ledger-v${SW_VERSION}`;
 const STATIC_ASSETS = [
   "/",
   "/logo.svg",

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/bump-sw-version.sh
-# Increments the bill-split-vN cache version in public/sw.js and stages the file.
+# Increments the ledger-vN cache version in public/sw.js and stages the file.
 # Usage:
 #   scripts/bump-sw-version.sh [patch|minor|major|--patch|--minor|--major]
 
@@ -56,4 +56,4 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git add "$SW_FILE"
 fi
 
-echo "🔄  PWA cache bumped (${BUMP_KIND}): bill-split-v${CURRENT} → bill-split-v${NEXT}"
+echo "🔄  PWA cache bumped (${BUMP_KIND}): ledger-v${CURRENT} → ledger-v${NEXT}"

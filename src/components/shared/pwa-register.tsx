@@ -14,13 +14,17 @@ import {
 import { cn } from "@/lib/utils";
 
 const VERSION_FALLBACK = "latest";
-const SEEN_VERSION_KEY = "billsplit_pwa_seen_version";
+const SEEN_VERSION_KEY = "ledger_pwa_seen_version";
 
-const clearBillSplitCaches = async () => {
+const clearLedgerCaches = async () => {
   if (typeof window === "undefined" || !("caches" in window)) return;
 
   const keys = await window.caches.keys();
-  await Promise.all(keys.filter((key) => key.startsWith("bill-split-v")).map((key) => window.caches.delete(key)));
+  await Promise.all(
+    keys
+      .filter((key) => key.startsWith("ledger-v"))
+      .map((key) => window.caches.delete(key))
+  );
 };
 
 const reloadWithUpdateToken = () => {
@@ -28,7 +32,7 @@ const reloadWithUpdateToken = () => {
 };
 
 const forceServiceWorkerRefresh = async () => {
-  await clearBillSplitCaches();
+  await clearLedgerCaches();
 
   if ("serviceWorker" in navigator) {
     const registrations = await navigator.serviceWorker.getRegistrations();
@@ -54,7 +58,7 @@ const readServiceWorkerVersion = async () => {
     const source = await response.text();
     return (
       source.match(/SW_VERSION\s*=\s*["']([^"']+)["']/)?.[1] ||
-      source.match(/bill-split-v([0-9]+\.[0-9]+\.[0-9]+)/)?.[1] ||
+      source.match(/ledger-v([0-9]+\.[0-9]+\.[0-9]+)/)?.[1] ||
       VERSION_FALLBACK
     );
   } catch {
@@ -364,7 +368,7 @@ export function PwaRegister() {
               New update available
             </DialogTitle>
             <DialogDescription className="text-xs leading-relaxed text-muted-foreground">
-              Bill Split version {version} is ready. Update now to refresh the app and load the latest features and fixes.
+              Ledger version {version} is ready. Update now to refresh the app and load the latest features and fixes.
             </DialogDescription>
           </div>
         </DialogHeader>

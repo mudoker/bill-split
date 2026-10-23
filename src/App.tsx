@@ -19,6 +19,10 @@ import { IS_DEV } from "@/lib/env";
 import { AppLogo } from "@/components/shared/app-logo";
 import { CreateBillModal, type CreateBillFormData } from "@/components/shared/create-bill-modal";
 import { ResizableSplit } from "@/components/layout/resizable-split";
+import { AuthButton } from "@/components/layout/auth-button";
+import { useAuthStore } from "@/store/useAuthStore";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { CurrencyDropdown } from "@/components/shared/currency-dropdown";
 
 function App() {
   const [view, setView] = useState<'landing' | 'editor' | 'summary'>(() => {
@@ -32,6 +36,7 @@ function App() {
   });
   const [mobileTab, setMobileTab] = useState<'people' | 'items' | 'summary'>('items');
   const [isReadOnlyModalOpen, setIsReadOnlyModalOpen] = useState(false);
+  const { user, fetchUser } = useAuthStore();
   const {
     isReadOnly,
     isHydrated,
@@ -56,11 +61,15 @@ function App() {
     updatePerson,
     qrCode,
     setQrCode,
-    currency,
     setCurrency
   } = useBillStore();
 
-  // Handle URL parameters (Legacy v/e and New id)
+  // Fetch current user on mount
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+  // Handle URL parameters (Legacy v/e and New id, share mode)
   useEffect(() => {
     if (!isHydrated) return;
 
@@ -68,10 +77,13 @@ function App() {
     const id = params.get('id');
     const viewData = params.get('v');
     const editData = params.get('e');
+    const isShare = params.get('share') === '1' || params.get('share') === 'true' || Boolean(viewData);
 
     if (id || viewData || editData) {
       if (id) {
-        fetchBill(id);
+        fetchBill(id, isShare).catch((err) => {
+          console.error("Fetch bill error:", err);
+        });
       } else if (viewData || editData) {
         const state = deserializeState(viewData || editData || '');
         if (state) {
@@ -115,15 +127,23 @@ function App() {
     if (data?.location?.trim()) {
       setLocation(data.location.trim());
     }
-    if (data?.hostName?.trim()) {
-      const hostId = crypto.randomUUID();
-      useBillStore.setState({
-        people: [
-          { id: hostId, name: data.hostName.trim(), sponsorAmount: 0, paidAmount: 0 },
-        ],
-        hostId: hostId,
-      });
-    }
+
+    const hostName = data?.hostName?.trim() || user?.name || (user?.email ? user.email.split('@')[0] : 'Me');
+    const hostId = crypto.randomUUID();
+    useBillStore.setState({
+      people: [
+        {
+          id: hostId,
+          name: hostName,
+          sponsorAmount: 0,
+          paidAmount: 0,
+          userId: user?.id || null,
+          email: user?.email || null,
+        },
+      ],
+      hostId: hostId,
+    });
+
     useBillStore.getState().setHydrated(true);
     setView('editor');
   };
@@ -153,7 +173,8 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <div className={cn(
+      <TooltipProvider delayDuration={100} skipDelayDuration={0}>
+        <div className={cn(
         "min-h-screen bg-background font-sans text-foreground antialiased selection:bg-foreground/20 flex flex-col items-stretch",
         view === 'landing' ? "min-h-[100dvh] overflow-y-auto" : "h-screen supports-[height:100dvh]:h-[100dvh] overflow-hidden"
       )}>
@@ -167,12 +188,12 @@ function App() {
                     <AppLogo className="w-5 h-5 sm:w-6 sm:h-6 text-background" />
                   </div>
                   <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                    Bill Split
+                    Ledger
                   </h1>
                 </div>
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <a
-                    href="https://github.com/mudoker/bill-split"
+                    href="https://github.com/mudoker/ledger"
                     target="_blank"
                     rel="noopener noreferrer"
                     title="View GitHub repository"
@@ -186,6 +207,7 @@ function App() {
                       <span className="hidden sm:inline">GitHub</span>
                     </Button>
                   </a>
+                  <AuthButton />
                   <ModeToggle />
                 </div>
               </header>
@@ -229,16 +251,20 @@ function App() {
         ) : (
           <>
             {isReadOnly && (
-              <div className="bg-foreground/5 border-b border-foreground/10 py-2 px-3 sm:px-4 flex items-center justify-center gap-2 sm:gap-3 animate-in slide-in-from-top duration-300 flex-none text-[11px] sm:text-xs">
-                <Eye className="w-3.5 h-3.5 text-foreground/60 shrink-0" />
-                <span className="font-semibold text-foreground uppercase tracking-wider truncate">View-only Mode - Changes disabled</span>
+              <div className="bg-primary/10 border-b border-primary/20 py-2.5 px-3 sm:px-4 flex items-center justify-between gap-2 sm:gap-3 animate-in slide-in-from-top duration-300 flex-none text-[11px] sm:text-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Eye className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="font-bold text-foreground truncate">
+                    Shared Bill (Read-Only) — No login required to view. Editing is disabled.
+                  </span>
+                </div>
                 <Button
-                  variant="outline"
+                  variant="default"
                   size="sm"
-                  className="h-6 sm:h-7 text-[10px] ml-2 hover:bg-foreground/5 px-2"
+                  className="h-7 text-[10px] font-bold ml-2 shrink-0 px-2.5"
                   onClick={() => setIsReadOnlyModalOpen(true)}
                 >
-                  New Bill
+                  Start New Bill
                 </Button>
               </div>
             )}
@@ -250,7 +276,7 @@ function App() {
             />
 
               {/* Header - Fixed & Safe-Area Aware */}
-              <div className="flex-none px-3 sm:px-6 md:px-8 lg:px-10 pt-[max(0.625rem,env(safe-area-inset-top))] sm:pt-4 md:pt-6 w-full max-w-[94%] 2xl:max-w-[2000px] mx-auto">
+              <div className="flex-none px-2.5 sm:px-6 md:px-8 lg:px-10 pt-[max(0.625rem,env(safe-area-inset-top))] sm:pt-4 md:pt-6 w-full max-w-full md:max-w-[94%] 2xl:max-w-[2000px] mx-auto">
                 <header className="flex justify-between items-center mb-2 sm:mb-3 md:mb-5 gap-1.5 sm:gap-3">
                   <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
                     <Button variant="ghost" size="icon" onClick={handleBackToLanding} className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl shrink-0 touch-manipulation active:scale-95" title="Back to Bills">
@@ -279,48 +305,9 @@ function App() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                    {/* Compact Currency Switcher for Mobile */}
-                    <button
-                      type="button"
-                      onClick={() => setCurrency(currency === 'VND' ? 'USD' : 'VND')}
-                      className="sm:hidden h-8 px-2 rounded-xl bg-foreground/[0.04] hover:bg-foreground/[0.08] border border-foreground/10 text-xs font-black transition-all flex items-center gap-1 text-foreground touch-manipulation active:scale-95 shadow-sm"
-                      title={`Current currency: ${currency}. Tap to switch to ${currency === 'VND' ? 'USD ($)' : 'VND (₫)'}`}
-                    >
-                      <span className="font-black text-xs text-primary">{currency === 'VND' ? '₫' : '$'}</span>
-                      <span className="text-[10px] opacity-70 uppercase tracking-tighter">{currency}</span>
-                    </button>
-
-                    {/* Segmented Currency Switcher for Tablet / Desktop */}
-                    <div className="hidden sm:flex items-center bg-foreground/[0.04] p-0.5 rounded-xl border border-foreground/10 text-xs font-bold">
-                      <button
-                        type="button"
-                        onClick={() => setCurrency('VND')}
-                        className={cn(
-                          "px-2 sm:px-2.5 py-1 rounded-lg text-xs font-black transition-all flex items-center gap-1",
-                          currency === 'VND'
-                            ? "bg-foreground text-background shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                        )}
-                        title="Switch to Vietnamese Dong (₫)"
-                      >
-                        <span>₫</span>
-                        <span>VND</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCurrency('USD')}
-                        className={cn(
-                          "px-2 sm:px-2.5 py-1 rounded-lg text-xs font-black transition-all flex items-center gap-1",
-                          currency === 'USD'
-                            ? "bg-foreground text-background shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                        )}
-                        title="Switch to US Dollar ($) - auto-converts amounts"
-                      >
-                        <span>$</span>
-                        <span>USD</span>
-                      </button>
-                    </div>
+                    {/* Currency Selector */}
+                    <CurrencyDropdown variant="compact" className="sm:hidden" />
+                    <CurrencyDropdown variant="pill" className="hidden sm:flex" />
 
                     <Button
                       variant={view === 'editor' ? 'secondary' : 'outline'}
@@ -357,7 +344,7 @@ function App() {
                       setQrCode={setQrCode}
                     />
                     <a
-                      href="https://github.com/mudoker/bill-split"
+                      href="https://github.com/mudoker/ledger"
                       target="_blank"
                       rel="noopener noreferrer"
                       title="View GitHub repository"
@@ -371,6 +358,7 @@ function App() {
                         <Github className="w-4 h-4" />
                       </Button>
                     </a>
+                    <AuthButton />
                     <ModeToggle />
                   </div>
                 </header>
@@ -379,7 +367,7 @@ function App() {
               <DiscrepancyBanner />
 
               {/* Main Content - Flex Grow */}
-              <main className="flex-1 w-full mx-auto max-w-[94%] 2xl:max-w-[2000px] px-3 sm:px-6 md:px-8 lg:px-10 md:pt-0 overflow-hidden relative flex flex-col min-h-0">
+              <main className="flex-1 w-full mx-auto max-w-full md:max-w-[94%] 2xl:max-w-[2000px] px-1 sm:px-6 md:px-8 lg:px-10 md:pt-0 overflow-hidden relative flex flex-col min-h-0">
                 {/* Desktop Grid Layout */}
                 <div className="hidden md:block h-full overflow-hidden">
                   {view === 'editor' ? (
@@ -517,6 +505,7 @@ function App() {
           </>
         )}
       </div>
+      </TooltipProvider>
     </ThemeProvider>
   )
 }

@@ -1,7 +1,7 @@
 {
-  "name": "Bill Split",
-  "short_name": "Bill Split",
-  "description": "The smartest way to split group bills, handle sponsors, and manage late arrivals.",
+  "name": "Ledger",
+  "short_name": "Ledger",
+  "description": "The smart group expense ledger for splitting bills, tracking sponsors, and settling balances.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -19,7 +19,7 @@ export function ResizableSplit({
   defaultLeftPercent = 38,
   minLeftPercent = 25,
   maxLeftPercent = 55,
-  storageKey = 'bill_split_left_col_width',
+  storageKey = 'ledger_left_col_width',
 }: ResizableSplitProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [leftPercent, setLeftPercent] = useState<number>(defaultLeftPercent);

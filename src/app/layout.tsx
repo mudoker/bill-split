@@ -4,13 +4,13 @@ import { ViewportUnzoom } from '@/components/shared/viewport-unzoom';
 import { PwaRegister } from '@/components/shared/pwa-register';
 
 export const metadata: Metadata = {
-  title: 'Bill Split',
-  description: 'The smartest way to split group bills, handle sponsors, and manage late arrivals.',
+  title: 'Ledger',
+  description: 'The smart group expense ledger for splitting bills, tracking sponsors, and settling balances.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Bill Split',
+    title: 'Ledger',
   },
   icons: {
     icon: '/logo.svg',

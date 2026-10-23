@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useBillStore } from "@/store/useBillStore";
+import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Clock, ChevronRight, Receipt, Users as UsersIcon, Play, History, MapPin, Database } from "lucide-react";
+import { Plus, Clock, ChevronRight, Receipt, Users as UsersIcon, Play, History, MapPin, Database, Shield, LogIn } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import { formatCurrency } from '@/lib/format';
 import { motion } from 'framer-motion';
@@ -18,13 +19,14 @@ interface LandingPageProps {
 
 export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPageProps) {
     const { billHistory, fetchHistory, isHydrated, people, items, dbStatus } = useBillStore();
+    const { user, signInWithGoogle } = useAuthStore();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     useEffect(() => {
         if (isHydrated) {
             fetchHistory();
         }
-    }, [isHydrated, fetchHistory]);
+    }, [isHydrated, fetchHistory, user]);
 
     const hasActiveLocalData = people.length > 0 || items.length > 0;
 
@@ -106,7 +108,9 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                 <div className="flex items-center justify-between mb-3 sm:mb-4 shrink-0 flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-muted-foreground" />
-                        <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-muted-foreground">Recent Transactions</h2>
+                        <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                            {user ? 'My Bills & Shared Bills' : 'Recent Transactions'}
+                        </h2>
                     </div>
                     {(() => {
                         if (!dbStatus.isOnline) {
@@ -158,12 +162,31 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                         transition={{ duration: 0.5, delay: 0.4 }}
                         className="grid gap-3 sm:gap-4 pb-8 sm:pb-12"
                     >
-                        {billHistory.length === 0 ? (
+                        {!user ? (
+                            <div className="flex flex-col items-center justify-center py-10 sm:py-14 text-center space-y-3 sm:space-y-4 rounded-3xl border-2 border-dashed bg-muted/20 px-4">
+                                <div className="p-3 bg-primary/10 rounded-2xl text-primary">
+                                    <Shield className="w-6 h-6 sm:w-8 sm:h-8" />
+                                </div>
+                                <div className="space-y-1 max-w-sm">
+                                    <p className="text-foreground font-bold text-sm">Protected User Workspace</p>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        Sign in with Google to view and sync your bills. Only participants added to a bill have access.
+                                    </p>
+                                </div>
+                                <Button
+                                    onClick={signInWithGoogle}
+                                    size="sm"
+                                    className="gap-2 rounded-xl text-xs font-bold"
+                                >
+                                    <LogIn className="w-3.5 h-3.5" /> Sign In with Google
+                                </Button>
+                            </div>
+                        ) : billHistory.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 sm:py-20 text-center space-y-3 sm:space-y-4 rounded-3xl border-2 border-dashed bg-muted/20 px-4">
                                 <Receipt className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground/30" />
                                 <div className="space-y-1">
-                                    <p className="text-muted-foreground font-medium italic text-sm">No recent history found.</p>
-                                    <p className="text-xs text-muted-foreground/60">Start your first bill to see it here!</p>
+                                    <p className="text-muted-foreground font-medium italic text-sm">No bills found for your account.</p>
+                                    <p className="text-xs text-muted-foreground/60">Create a bill or have a friend add your email to their bill!</p>
                                 </div>
                             </div>
                         ) : (
@@ -181,9 +204,19 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
 
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                                                    <h3 className="font-bold text-base sm:text-lg truncate flex-1 min-w-0 text-foreground">
-                                                        {bill.name || `Bill ${bill.id.slice(0, 8)}`}
-                                                    </h3>
+                                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                        <h3 className="font-bold text-base sm:text-lg truncate text-foreground">
+                                                            {bill.name || `Bill ${bill.id.slice(0, 8)}`}
+                                                        </h3>
+                                                        {bill.role && (
+                                                            <span className={bill.role === 'owner'
+                                                                ? "text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-foreground/10 text-foreground border border-foreground/20 shrink-0"
+                                                                : "text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20 shrink-0"
+                                                            }>
+                                                                {bill.role === 'owner' ? 'Owner' : 'Participant'}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     {bill.totalAmount !== undefined && (
                                                         <span className="text-foreground font-black tabular-nums text-sm sm:text-base shrink-0">
                                                             {formatCurrency(bill.totalAmount)}
@@ -231,7 +264,7 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                     </div>
                     <div className="flex items-center gap-1.5 sm:gap-2">
                         <History className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground/40" />
-                        <span>Auto-Save to Local DB</span>
+                        <span>RBAC &amp; Cloud Sync</span>
                     </div>
                 </div>
             </div>
