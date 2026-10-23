@@ -118,7 +118,7 @@ export function ItemRow({ item }: { item: Item }) {
                     <Input
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="h-10 sm:h-11 bg-background/50 border-foreground/5 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/40 font-bold px-3.5 sm:px-4 text-base sm:text-sm"
+                        className="h-9 bg-background/50 border-foreground/5 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/40 font-bold px-3 text-xs"
                         autoFocus
                         placeholder="Item name..."
                         onKeyDown={(e) => e.key === 'Enter' && handleSave()}
@@ -129,7 +129,7 @@ export function ItemRow({ item }: { item: Item }) {
                             <Input
                                 value={quantity}
                                 onChange={(e) => setQuantity(e.target.value)}
-                                className="h-10 bg-background/50 border-foreground/5 rounded-xl text-center font-bold"
+                                className="h-9 bg-background/50 border-foreground/5 rounded-xl text-center font-bold text-xs"
                                 type="number"
                                 min={1}
                                 onKeyDown={(e) => e.key === 'Enter' && handleSave()}
@@ -140,7 +140,7 @@ export function ItemRow({ item }: { item: Item }) {
                             <CurrencyInput
                                 value={price}
                                 onChange={setPrice}
-                                className="h-10 bg-background/50 border-foreground/5 rounded-xl text-right font-bold"
+                                className="h-9 bg-background/50 border-foreground/5 rounded-xl text-right font-bold text-xs"
                                 showCurrencySymbol={true}
                             />
                         </div>

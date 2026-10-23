@@ -154,7 +154,7 @@ export function BillConfiguration({
                                         placeholder="Bill name (e.g. Lunch at KFC)"
                                         value={billName}
                                         onChange={(e) => setBillName(e.target.value)}
-                                        className="pl-9 sm:pl-10 h-9 sm:h-10 bg-foreground/[0.03] border-border rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-medium text-xs sm:text-sm"
+                                        className="pl-9 h-9 bg-foreground/[0.03] border-border rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-medium text-xs"
                                     />
                                 </div>
                                 <div className="relative group">
@@ -163,7 +163,7 @@ export function BillConfiguration({
                                         placeholder="Location"
                                         value={location}
                                         onChange={(e) => setLocation(e.target.value)}
-                                        className="pl-9 sm:pl-10 h-9 sm:h-10 bg-foreground/[0.03] border-border rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-medium text-xs sm:text-sm"
+                                        className="pl-9 h-9 bg-foreground/[0.03] border-border rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-medium text-xs"
                                     />
                                 </div>
                             </div>
@@ -304,7 +304,7 @@ export function BillConfiguration({
                                                         <CurrencyInput
                                                             value={charge.amount}
                                                             onChange={(val) => updateGlobalCharge(charge.id, { amount: val })}
-                                                            className="h-9 sm:h-10 pl-9 sm:pl-10 text-xs bg-background border-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-foreground/20 rounded-xl font-bold"
+                                                            className="h-9 pl-9 text-xs bg-background border-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-foreground/20 rounded-xl font-bold"
                                                             placeholder="0"
                                                         />
                                                     </div>

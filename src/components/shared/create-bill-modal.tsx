@@ -82,7 +82,7 @@ export function CreateBillModal({ open, onOpenChange, onSubmit }: CreateBillModa
                   if (error) setError('');
                 }}
                 autoFocus
-                className="h-10 sm:h-11 bg-foreground/[0.03] border-border focus-visible:ring-foreground/20 rounded-xl font-medium text-base sm:text-sm"
+                className="h-9 bg-foreground/[0.03] border-border focus-visible:ring-1 focus-visible:ring-foreground/20 rounded-xl font-medium text-xs"
               />
               {error && (
                 <p className="text-[11px] font-bold text-destructive pl-1">{error}</p>
@@ -98,7 +98,7 @@ export function CreateBillModal({ open, onOpenChange, onSubmit }: CreateBillModa
                 placeholder="e.g. Gyu-Kaku, District 1"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="h-10 sm:h-11 bg-foreground/[0.03] border-border focus-visible:ring-foreground/20 rounded-xl font-medium text-base sm:text-sm"
+                className="h-9 bg-foreground/[0.03] border-border focus-visible:ring-1 focus-visible:ring-foreground/20 rounded-xl font-medium text-xs"
               />
             </div>
 
@@ -111,7 +111,7 @@ export function CreateBillModal({ open, onOpenChange, onSubmit }: CreateBillModa
                 placeholder="e.g. Alex"
                 value={hostName}
                 onChange={(e) => setHostName(e.target.value)}
-                className="h-10 sm:h-11 bg-foreground/[0.03] border-border focus-visible:ring-foreground/20 rounded-xl font-medium text-base sm:text-sm"
+                className="h-9 bg-foreground/[0.03] border-border focus-visible:ring-1 focus-visible:ring-foreground/20 rounded-xl font-medium text-xs"
               />
               <p className="text-[10px] text-muted-foreground/70 pl-1">
                 Creates the first participant and sets them as the primary payer.
@@ -135,14 +135,14 @@ export function CreateBillModal({ open, onOpenChange, onSubmit }: CreateBillModa
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="rounded-xl font-semibold w-full sm:w-auto h-10 touch-manipulation active:scale-95"
+              className="rounded-xl font-semibold w-full sm:w-auto h-9 text-xs touch-manipulation active:scale-95"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={!name.trim()}
-              className="rounded-xl font-semibold gap-2 px-5 bg-foreground text-background hover:bg-foreground/90 shadow-md w-full sm:w-auto h-10 touch-manipulation active:scale-95"
+              className="rounded-xl font-semibold gap-2 px-5 bg-foreground text-background hover:bg-foreground/90 shadow-md w-full sm:w-auto h-9 text-xs touch-manipulation active:scale-95"
             >
               Continue to Bill <ArrowRight className="w-4 h-4" />
             </Button>

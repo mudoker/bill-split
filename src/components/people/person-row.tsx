@@ -75,7 +75,7 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
                     <Input
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="h-10 bg-background/50 border-foreground/5 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-bold"
+                        className="h-9 bg-background/50 border-foreground/5 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-bold text-xs"
                         placeholder="Name..."
                         autoFocus
                         onKeyDown={(e) => e.key === 'Enter' && handleSave()}
@@ -103,7 +103,7 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
                         <CurrencyInput
                             value={editPaid}
                             onChange={(val) => setEditPaid(val)}
-                            className="h-10 bg-background/50 border-foreground/5 rounded-xl text-xs font-mono font-bold"
+                            className="h-9 bg-background/50 border-foreground/5 rounded-xl text-xs font-mono font-bold"
                             showCurrencySymbol={true}
                         />
                     </div>
@@ -114,7 +114,7 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
                         <CurrencyInput
                             value={editSponsor}
                             onChange={(val) => setEditSponsor(val)}
-                            className="h-10 bg-background/50 border-foreground/5 rounded-xl text-xs font-mono font-bold"
+                            className="h-9 bg-background/50 border-foreground/5 rounded-xl text-xs font-mono font-bold"
                             showCurrencySymbol={true}
                         />
                     </div>

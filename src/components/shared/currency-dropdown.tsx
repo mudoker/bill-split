@@ -135,7 +135,7 @@ export function CurrencyDropdown({
                         variant="outline"
                         disabled={disabled || isConverting}
                         className={cn(
-                            "w-full h-10 px-3 justify-between font-medium rounded-xl bg-foreground/[0.03] border-border hover:bg-foreground/[0.06] text-xs sm:text-sm",
+                            "w-full h-9 px-3 justify-between font-medium rounded-xl bg-foreground/[0.03] border-border hover:bg-foreground/[0.06] text-xs",
                             className
                         )}
                     >

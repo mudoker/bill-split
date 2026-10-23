@@ -108,15 +108,6 @@
     user-select: text;
   }
 
-  /* Prevent automatic iOS zoom on mobile while preserving responsive sizing */
-  @media screen and (max-width: 639px) {
-    input:not(.no-auto-zoom-override):not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]),
-    select:not(.no-auto-zoom-override),
-    textarea:not(.no-auto-zoom-override) {
-      font-size: 16px;
-    }
-  }
-
   /* Remove default number input spin arrows across all browsers */
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {

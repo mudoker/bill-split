@@ -83,7 +83,7 @@ export function ItemsSection() {
                                         placeholder="Item name (e.g. Wagyu Beef)..."
                                         value={newItemName}
                                         onChange={(e) => setNewItemName(e.target.value)}
-                                        className="h-8 sm:h-9 bg-background/60 border-foreground/10 rounded-lg focus-visible:ring-1 focus-visible:ring-primary/40 font-semibold px-2.5 sm:px-3 text-xs sm:text-sm placeholder:text-muted-foreground/60 placeholder:text-xs"
+                                        className="h-8 sm:h-9 bg-background/60 border-foreground/10 rounded-lg focus-visible:ring-1 focus-visible:ring-primary/40 font-semibold px-2.5 sm:px-3 text-xs placeholder:text-muted-foreground/60 placeholder:text-xs"
                                         onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
                                     />
                                     <div className="flex gap-2 items-end">

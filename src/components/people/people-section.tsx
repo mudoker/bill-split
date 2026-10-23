@@ -105,10 +105,10 @@ export function PeopleSection() {
                                             }
                                         }}
                                         onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-                                        className="h-10 sm:h-11 bg-background border-foreground/[0.05] rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-bold px-3.5 text-base sm:text-sm"
+                                        className="h-9 bg-background border-foreground/[0.05] rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-bold px-3 text-xs"
                                     />
-                                    <Button onClick={() => handleAdd()} size="icon" className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 bg-foreground text-background hover:bg-foreground/90 rounded-xl transition-all active:scale-95 shadow-sm">
-                                        <PlusCircle className="w-5 h-5" />
+                                    <Button onClick={() => handleAdd()} size="icon" className="h-9 w-9 shrink-0 bg-foreground text-background hover:bg-foreground/90 rounded-xl transition-all active:scale-95 shadow-sm">
+                                        <PlusCircle className="w-4 h-4" />
                                     </Button>
                                 </div>
 
