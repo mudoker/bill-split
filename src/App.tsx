@@ -49,6 +49,7 @@ function App() {
     hostId,
     currentBillId,
     resetBill,
+    loadSeedData,
     fetchHistory,
     setHostId,
     addGlobalCharge,
@@ -215,37 +216,10 @@ function App() {
             <LandingPage
               onNewBill={handleStartNewBill}
               onSelectBill={handleSelectBill}
-              onLoadDemo={IS_DEV ? async () => {
-                // Create a new demo bill via the API, then load it by id
-                const res = await fetch('/api/bills', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    data: {
-                      name: 'Demo Bill',
-                      location: 'Demo Location',
-                      people: [
-                        { id: crypto.randomUUID(), name: 'Alice', sponsorAmount: 0, paidAmount: 1000 },
-                        { id: crypto.randomUUID(), name: 'Bob', sponsorAmount: 0, paidAmount: 2000 }
-                      ],
-                      items: [
-                        { id: crypto.randomUUID(), name: 'Pizza', price: 1500, quantity: 2, assignments: {} },
-                        { id: crypto.randomUUID(), name: 'Soda', price: 500, quantity: 3, assignments: {} }
-                      ],
-                      globalCharges: [
-                        { id: crypto.randomUUID(), name: 'Service', amount: 10, type: 'percent' }
-                      ],
-                      hostId: null,
-                      qrCode: null
-                    }
-                  })
-                });
-                const result = await res.json();
-                if (result.id) {
-                  await fetchBill(result.id);
-                  setView('editor');
-                }
-              } : undefined}
+              onLoadDemo={() => {
+                loadSeedData();
+                setView('editor');
+              }}
             />
           </>
         ) : (

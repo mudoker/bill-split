@@ -72,7 +72,7 @@ export function PeopleSection() {
                             </span>
                         )}
                     </CardTitle>
-                    {IS_DEV && people.length === 0 && !isReadOnly && (
+                    {people.length === 0 && !isReadOnly && (
                         <Button
                             variant="ghost"
                             size="sm"
@@ -150,20 +150,20 @@ export function PeopleSection() {
                         </div>
                         {people.length === 0 && (
                             <div
-                                className={`flex flex-col items-center justify-center py-20 gap-6 rounded-3xl border border-dashed border-foreground/10 bg-muted/5 group ${IS_DEV && !isReadOnly ? 'hover:border-primary/20 transition-all cursor-pointer' : ''}`}
+                                className={`flex flex-col items-center justify-center py-20 gap-6 rounded-3xl border border-dashed border-foreground/10 bg-muted/5 group ${!isReadOnly ? 'hover:border-primary/20 transition-all cursor-pointer' : ''}`}
                                 onClick={() => {
-                                    if (IS_DEV && !isReadOnly) {
+                                    if (!isReadOnly) {
                                         loadSeedData();
                                     }
                                 }}
                             >
-                                <div className={`w-16 h-16 rounded-full bg-foreground/[0.03] flex items-center justify-center ${IS_DEV ? 'group-hover:bg-primary/10 transition-colors' : ''}`}>
-                                    <UserPlus className={`w-8 h-8 text-muted-foreground/30 ${IS_DEV ? 'group-hover:text-primary transition-colors' : ''}`} />
+                                <div className="w-16 h-16 rounded-full bg-foreground/[0.03] flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                                    <UserPlus className="w-8 h-8 text-muted-foreground/30 group-hover:text-primary transition-colors" />
                                 </div>
                                 <div className="text-center space-y-1.5 p-4">
                                     <p className="text-xs font-black text-muted-foreground/70 uppercase tracking-[0.2em] group-hover:text-foreground">Workspace is empty</p>
                                     <p className="text-[10px] text-muted-foreground/50 uppercase font-bold tracking-tighter leading-relaxed">
-                                        Start by adding friends{IS_DEV && <> or <span className="text-primary/60 underline decoration-dotted underline-offset-4">loading our BBQ demo</span></>}
+                                        Start by adding friends or <span className="text-primary/60 underline decoration-dotted underline-offset-4">loading our BBQ demo</span>
                                     </p>
                                 </div>
                             </div>

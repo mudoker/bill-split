@@ -104,30 +104,28 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                         onSubmit={onNewBill}
                     />
 
-                    {IS_DEV && (
-                        <div className="flex flex-wrap items-center justify-center gap-2 mt-1 sm:mt-2">
-                            {!user && (
-                                <Button
-                                    onClick={() => setIsDevLoginOpen(true)}
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-xs font-bold text-muted-foreground hover:text-foreground gap-1.5"
-                                >
-                                    <Sparkles className="w-3.5 h-3.5" /> Dev Mock Login
-                                </Button>
-                            )}
-                            {onLoadDemo && (
-                                <Button
-                                    onClick={onLoadDemo}
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-xs font-bold text-muted-foreground hover:text-foreground gap-1.5"
-                                >
-                                    <Database className="w-3.5 h-3.5" /> Load Demo Data
-                                </Button>
-                            )}
-                        </div>
-                    )}
+                    <div className="flex flex-wrap items-center justify-center gap-2 mt-1 sm:mt-2">
+                        {onLoadDemo && (
+                            <Button
+                                onClick={onLoadDemo}
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs font-bold text-muted-foreground hover:text-foreground gap-1.5 touch-manipulation active:scale-95"
+                            >
+                                <Sparkles className="w-3.5 h-3.5 text-primary" /> Try Sample Bill
+                            </Button>
+                        )}
+                        {IS_DEV && !user && (
+                            <Button
+                                onClick={() => setIsDevLoginOpen(true)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs font-bold text-muted-foreground hover:text-foreground gap-1.5"
+                            >
+                                <Sparkles className="w-3.5 h-3.5" /> Dev Mock Login
+                            </Button>
+                        )}
+                    </div>
                 </motion.div>
             </div>
 
