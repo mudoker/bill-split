@@ -69,19 +69,25 @@ In modern group activities (team dinners, road trips, group vacations, sports ma
                        └───────────────────────────────┘
 ```
 
-### Definitions:
+### Definitions & Payment Accounting Taxonomy:
+
+To ensure rigorous financial accounting, Ledger separates payments by source, destination, and liability:
+
 1. **Consumers (`Item.assignments: Record<PersonId, Quantity>`)**:
-   - Represents who enjoyed/consumed the item and in what proportion.
-   - Generates the participant's **Cost Liability** (what they owe).
+   - Captures who consumed the item and in what quantity.
+   - Generates the participant's **Consumption Liability** (what they owe for items).
 2. **Item Payers (`Item.payers: Record<PersonId, Amount>`)**:
-   - Represents who paid the merchant for this specific item and how much.
-   - Generates the participant's **Payment Credit** (what they contributed).
-3. **Bill-Level Direct Payments (`Person.paidAmount`)**:
-   - General upfront cash or transfers not tied to a specific item (e.g., venue deposit, cash given at the table, tips, or unallocated bill contributions).
-4. **Default / Fallback Payer**:
-   - If an item has no explicit `payers` assigned (`item.payers` is empty or undefined), it automatically falls back to:
-     - The **Primary Payer (Host)** if designated, OR
-     - The general bill pool (covered proportionally or remaining unpaid).
+   - Captures payments disbursed **directly to the merchant/venue** for this specific item.
+   - Generates the participant's **Item Payment Credit** (stored in integer minor units).
+3. **Bill-Level Direct Merchant Payments (`Person.paidAmount`) — Migration Contract**:
+   > [!IMPORTANT]
+   > **Explicit Accounting Contract for `Person.paidAmount`**:
+   > `Person.paidAmount` strictly represents **Direct Merchant Payments** made by that participant directly to the venue/merchant that are NOT tied to a specific item (e.g. an advance booking deposit paid to the restaurant, or cash handed to the waiter for the table).
+   >
+   > **Peer-to-Peer Advances vs Merchant Payments**:
+   > If a participant (e.g. Bob) transfers money directly to the Host (e.g. Alice) before or during dinner via bank transfer, that is an **Inter-Participant Peer Transfer**, NOT a merchant payment. Peer transfers reduce Bob's debt to Alice and reduce Alice's credit from Bob; they do NOT increase merchant payments. Entering peer transfers into `paidAmount` would artificially inflate merchant credits. Peer transfers are handled as pre-settlement balance offsets.
+4. **Assumed Merchant Coverage (`HostAssumedMerchantPayment`)**:
+   - If a bill has an unpaid merchant balance, and Host Coverage Mode is enabled, the Host explicitly assumes the outstanding merchant balance at settlement time.
 
 ---
 
@@ -95,10 +101,10 @@ In modern group activities (team dinners, road trips, group vacations, sports ma
 export interface Item {
   id: string;
   name: string;
-  price: number;
-  quantity: number;
+  price: number; // Total line item price in current currency
+  quantity: number; // Portion/unit count (>= 1)
   assignments: Record<string, number>; // personId -> quantity consumed
-  payers?: Record<string, number>;      // personId -> amount paid in current currency
+  payers?: Record<string, number>;      // personId -> amount paid to merchant in current currency
 }
 
 export interface ItemData {
@@ -116,9 +122,17 @@ export interface ItemData {
 To store item-level payer distributions in SQLite and PostgreSQL without floating-point precision loss:
 
 > [!IMPORTANT]
-> **Monetary Precision Standard**:
+> **Unified Minor-Unit Integer Storage Standard**:
 > Using floating-point types (`REAL`, `DOUBLE PRECISION`) causes IEEE 754 precision drift, leading to orphaned cents, dropped transfers, or unbalanced ledgers.
-> All monetary storage and calculations MUST operate either in **integer atomic currency units** (cents / minor units: e.g., 1050 for $10.50, 50000 for 50,000 ₫) or exact fixed-point `NUMERIC(12, 2)`.
+> To ensure 100% cross-database parity and eliminate precision loss, **BOTH SQLite and PostgreSQL store all monetary amounts as integer atomic minor units (e.g., cents for USD/EUR, integer dong for VND)**.
+>
+> | Currency | Real-World Amount | Stored Integer in DB |
+> | :--- | :--- | :--- |
+> | **USD** | `$10.50` | `1050` (cents) |
+> | **EUR** | `€10.50` | `1050` (cents) |
+> | **VND** | `10.5 ₫` (from split) | `11` (dong, auto half-up) |
+> | **VND** | `100,000 ₫` | `100000` (dong) |
+> | **JPY** | `1,500 ¥` | `1500` (yen) |
 
 ```sql
 -- SQLite Table Definition (amounts stored in integer minor units / cents)
@@ -131,11 +145,11 @@ CREATE TABLE IF NOT EXISTS item_payers (
   FOREIGN KEY(person_id) REFERENCES people(id) ON DELETE CASCADE
 );
 
--- PostgreSQL Table Definition (exact fixed-point numeric)
+-- PostgreSQL Table Definition (amounts stored in BIGINT integer minor units / cents)
 CREATE TABLE IF NOT EXISTS item_payers (
   item_id TEXT NOT NULL,
   person_id TEXT NOT NULL,
-  amount NUMERIC(12, 2) NOT NULL, -- Fixed-point decimal to prevent float drift
+  amount BIGINT NOT NULL, -- Stored as integer minor units (e.g. cents)
   PRIMARY KEY (item_id, person_id),
   FOREIGN KEY(item_id) REFERENCES items(id) ON DELETE CASCADE,
   FOREIGN KEY(person_id) REFERENCES people(id) ON DELETE CASCADE
@@ -161,12 +175,13 @@ await this.client.query(`
   CREATE TABLE IF NOT EXISTS item_payers (
     item_id TEXT NOT NULL,
     person_id TEXT NOT NULL,
-    amount NUMERIC(12, 2) NOT NULL,
+    amount BIGINT NOT NULL,
     PRIMARY KEY (item_id, person_id),
     FOREIGN KEY(item_id) REFERENCES items(id) ON DELETE CASCADE,
     FOREIGN KEY(person_id) REFERENCES people(id) ON DELETE CASCADE
   );
 `);
+```
 ```
 
 #### Read & Write Logic:
@@ -218,7 +233,8 @@ items: data.i.map((i: any) => ({
 The calculation of how much each participant **owes** is strictly grounded in actual consumption, with explicit mathematical rules governing item quantities, shares, and unassigned portions.
 
 #### 1. Item Semantic Definition
-- For each item $i$, $P_i$ denotes the **total line price**, and $Q_i \ge 1$ denotes the item **quantity** (units/portions).
+- For each item $i$, $P_i$ denotes the **total line price** in integer minor units (e.g. cents or dong), and $Q_i \ge 1$ denotes the item **quantity** (units/portions).
+- In the user interface, the per-unit price is displayed as $P_i / Q_i$, but line total liability is always anchored to $P_i$.
 - Each participant $p$ can be assigned a claimed quantity $q_{i, p} \ge 0$.
 - The total claimed quantity across all participants for item $i$ is:
   ```
@@ -236,11 +252,13 @@ Depending on the relationship between `ClaimedQty(i)` and `Q_i`, four precise re
   ```
 
 - **Case B: Oversubscribed (`ClaimedQty(i) > Q_i`)**:
-  Participants claimed more units than available on the line (e.g., 3 people sharing 2 pizzas without custom portions). The cost is scaled pro-rata across claimed shares:
-  ```
-  Share(p, i) = (q(i, p) / ClaimedQty(i)) * P_i
-  UnassignedCost(i) = 0
-  ```
+  Participants claimed more units than physically present on the line (e.g., 3 people claimed 1 whole pizza each on a 2-pizza line).
+  - **Primary Behavior (Validation Guard)**: The system displays an **Oversubscription Warning** and prompts participants to correct the claimed portions or increase line item quantity.
+  - **Recovery Mode (Pro-rata Scaling)**: If the group explicitly confirms sharing the available units, cost scales proportionally:
+    ```
+    Share(p, i) = (q(i, p) / ClaimedQty(i)) * P_i
+    UnassignedCost(i) = 0
+    ```
 
 - **Case C: Undersubscribed / Partially Assigned (`0 < ClaimedQty(i) < Q_i`)**:
   Participants claimed only a fraction of the available quantity (e.g. 1 out of 3 appetizers claimed).
@@ -258,14 +276,14 @@ Depending on the relationship between `ClaimedQty(i)` and `Q_i`, four precise re
   UnassignedCost(i) = P_i
   ```
 
-#### 3. Eligible Cohort for Unassigned Consumption
+#### 3. Eligible Cohort & Host Absorption for Unassigned Consumption
 To eliminate ambiguity over who absorbs unassigned items and leftover portions, Ledger establishes a defined **Eligible Splitter Cohort** ($E$):
 
 - **Rule 1: Bill-Wide Table Pool (Default)**:
   ```
   EligibleCohort E = All participants on the bill (people.map(p => p.id))
   ```
-  Every participant on the bill shares equally in unassigned food and communal items.
+  Every participant on the bill shares equally in unassigned food and communal items. Leftover indivisible cents are allocated using the Hamilton method.
 
 - **Rule 2: Active Consumers Cohort (Configurable)**:
   ```
@@ -274,13 +292,19 @@ To eliminate ambiguity over who absorbs unassigned items and leftover portions, 
   ```
   Only participants who actively ordered/consumed items split unassigned shared dishes; inactive members (e.g. late arrivals who had nothing) are not charged.
 
-- **Rule 3: Host Auto-Absorption (When Designated)**:
-  If a Host is designated and "Host covers unassigned items" is enabled, $U_i$ is not split among participants; instead, the Host absorbs the unassigned cost directly.
+- **Rule 3: Host Absorption (Explicit Accounting)**:
+  If a Host is designated and "Host covers unassigned items" is enabled:
+  ```
+  RawCost(host) += UnassignedCost(i)
+  ```
+  The unassigned liability is **explicitly added to the Host's liabilities** (and not charged to the cohort). This preserves total liability conservation: `Sum of RawCost(p) == Sum of P_i`.
 
 #### 4. Raw Cost Aggregation
 Each participant's total raw base consumption is:
 ```
-RawCost(p) = (Sum of Share(p, i) across all items i) + (UnassignedCost(i) / |E| for each i where p in E)
+RawCost(p) = (Sum of Share(p, i) across all items i)
+           + (UnassignedCost(i) / |E| for each i where p in E, if not host-absorbed)
+           + (UnassignedCost(i) if p == hostId and host-absorbed else 0)
 ```
 > **Conservation Invariant**: `Sum of RawCost(p) across all p == Sum of P_i across all items i` strictly holds.
 
@@ -293,15 +317,24 @@ RawCost(p) = (Sum of Share(p, i) across all items i) + (UnassignedCost(i) / |E| 
 > Per user specification, the **Sponsorship** feature (sponsor amounts, sponsor subsidies, and discount ratio adjustments) has been **completely removed**.
 > Liabilities are calculated directly and transparently from consumed items plus proportional taxes and fees.
 
-#### Proportional Extras (Taxes, Service Charges, Tips, Discounts):
-Global bill-level extras (`TotalExtras`) are allocated strictly in proportion to each participant's base raw consumption:
+#### Global Charges & Adjustments Sign Convention:
+- **Positive Charges (`PositiveExtras`)**: Taxes, service charges, venue fees, and gratuity/tips ($\ge 0$).
+- **Discounts (`Discounts`)**: Bill-wide coupons, merchant vouchers, or promotional discounts ($\ge 0$).
+- **Net Extras (`NetExtras`)**:
+  ```
+  NetExtras = PositiveExtras - Discounts
+  TotalBill = TotalItemCosts + NetExtras
+  ```
+
+#### Proportional Allocation of Net Extras:
+Net extras are allocated strictly in proportion to each participant's base raw consumption:
 ```
 TotalRawCosts = Sum of RawCost(p) across all participants
 
 If TotalRawCosts > 0:
-  ExtrasShare(p) = TotalExtras * (RawCost(p) / TotalRawCosts)
-Else (no items assigned yet):
-  ExtrasShare(p) = TotalExtras / |E| (split equally among eligible cohort)
+  ExtrasShare(p) = NetExtras * (RawCost(p) / TotalRawCosts)
+Else (e.g., drinks-only or communal bill before items assigned):
+  ExtrasShare(p) = NetExtras / |E| (split equally among eligible cohort E)
 ```
 
 #### Total Final Liability:
@@ -310,43 +343,64 @@ Because there is no sponsorship or discount subsidy, each participant's liabilit
 FinalPayable(p) = RawCost(p) + ExtrasShare(p)
 ```
 > **Total Liabilities Invariant**:
-> `Sum of FinalPayable(p) across all p == TotalBill` (where `TotalBill = TotalItemCosts + TotalExtras`).
+> `Sum of FinalPayable(p) across all p == TotalBill` (where `TotalBill = TotalItemCosts + NetExtras`).
 
 ---
 
-### 4.3 Contribution Calculation per Participant & Host Auto-Cover
+### 4.3 Merchant Payment Accounting, Host Assumed Coverage & Overpayment Reconciliation
 
-A participant's **Payment Credit** is the sum of their item-level payments and any bill-level direct contributions (cash, upfront deposit):
+Ledger maintains a rigorous distinction between **Merchant Settlement** (satisfying the venue's bill) and **Internal Group Settlement** (reconciling debts between participants).
+
+#### 1. Actual Recorded Merchant Payments
+A participant's recorded merchant payments consist of:
+1. `ItemPaid(p)`: Sum of explicit item-level payer amounts (`item.payers[p]`).
+2. `DirectMerchantPaid(p)`: Legitimate bill-level merchant payments (`Person.paidAmount`, e.g. advance venue deposit or cash paid at the counter).
 
 ```
-ItemPaid(p)   = Sum of (item.payers[p] || 0) across all items
-DirectPaid(p) = p.paidAmount || 0
+ActualMerchantPaid(p) = ItemPaid(p) + DirectMerchantPaid(p)
+TotalMerchantPaid     = Sum of ActualMerchantPaid(p) across all participants
 ```
 
-#### Unallocated Item Payments & Host Coverage:
-For each item $i$:
+#### 2. Item-Level Overpayment Reconciliation
+For each item $i$, let $A_i = \sum_p \text{item.payers}_i[p]$:
+- If $A_i > P_i$: **Overpayment Validation Error**.
+  Settlement is **BLOCKED** until the user resolves the excess $(A_i - P_i)$:
+  - **Option A (Correction)**: Fix the mistaken payer entry.
+  - **Option B (Convert to Tip)**: Categorize excess as a server tip, which adds to `PositiveExtras` and increases `TotalBill` to match payments.
+  - **Option C (Refund)**: Mark the excess as a refunded overpayment.
+  > Under no circumstances does the engine silently inflate unsupported payment credits into group debt.
+
+#### 3. Bill-Level Outstanding Merchant Balance & Host Assumed Coverage
+Comparing recorded payments to the merchant against the total bill:
 ```
-AllocatedItemPaid(i)   = Sum of item.payers[p] for item i
-UnallocatedItemPaid(i) = max(0, P_i - AllocatedItemPaid(i))
+OutstandingMerchantDue = max(0, TotalBill - TotalMerchantPaid)
 ```
 
-- **When a Host is Designated (`hostId` is not null)**:
-  The Host guarantees payment to the merchant for all unallocated item costs and all global charges (taxes/fees):
+- **When Host Coverage Mode is Enabled (`hostId` is designated and active)**:
+  The Host explicitly assumes responsibility for satisfying the remaining merchant receipt:
   ```
-  TotalUnallocatedItems = Sum of UnallocatedItemPaid(i) across all items i
-  HostAutoCover = TotalUnallocatedItems + TotalExtras
+  HostAssumedMerchantPayment = OutstandingMerchantDue
+  EffectivePaid(host)        = ActualMerchantPaid(host) + HostAssumedMerchantPayment
+  EffectivePaid(p)           = ActualMerchantPaid(p)  (for p != hostId)
   ```
-- **When No Host is Designated**:
-  Any gap between total payments and `TotalBill` triggers a visible Discrepancy Banner.
+  This guarantees that total effective merchant payments match the bill total:
+  ```
+  Sum of EffectivePaid(p) = TotalMerchantPaid + (TotalBill - TotalMerchantPaid) == TotalBill
+  ```
 
-#### Total Effective Paid Amount:
-```
-EffectivePaid(p) = ItemPaid(p) + DirectPaid(p) + (HostAutoCover if p == hostId else 0)
-```
+- **When No Host Coverage Mode (or No Host Designated)**:
+  If `OutstandingMerchantDue > 0`:
+  - The unpaid amount is an **Unsettled Merchant Liability**, NOT a peer debt between participants.
+  - The system displays a prominent banner: `Outstanding Merchant Balance: X ₫. Bill is not fully paid.`
+  - Peer-to-peer settlement is **BLOCKED** until all merchant costs are allocated.
+
+- **When Total Payments Exceed Total Bill (`TotalMerchantPaid > TotalBill`)**:
+  - The excess is flagged as an `Overpayment Discrepancy`.
+  - Settlement is blocked until the excess is allocated to a Tip or adjusted.
 
 ---
 
-### 4.4 Fixed-Point / Integer Arithmetic, Decimal-Only Rounding & Indivisible Cent Distribution (Addressing P1: Floating-Point Drift)
+### 4.4 Fixed-Point / Integer Arithmetic, Decimal-Only Rounding & Deterministic Hamilton Method
 
 > [!IMPORTANT]
 > **Zero Precision Drift via Integer Cent Arithmetic**:
@@ -361,148 +415,182 @@ EffectivePaid(p) = ItemPaid(p) + DirectPaid(p) + (HostAutoCover if p == hostId e
 > - **2-Decimal Currencies (USD, EUR, SGD, GBP)**:
 >   - Decimal fractions beyond 2 decimal places are rounded to the nearest cent: e.g. `$6.666` automatically rounds to `$6.67`; `$6.664` rounds to `$6.66`.
 
-#### Conversion to Atomic Minor Units:
+#### Exact String-to-Minor-Units Parser (Avoiding Float Math):
 ```typescript
-function toMinorUnits(amount: number, decimals: number = 0): number {
-  // Auto-round only the decimal portion to the nearest atomic minor unit
-  // e.g. VND (decimals=0): 6.666 -> 7; USD (decimals=2): 6.666 -> 667 cents
-  return Math.round(amount * Math.pow(10, decimals));
-}
+function parseToMinorUnits(input: string, decimals: number = 0): number {
+  const cleaned = input.trim().replace(/,/g, '');
+  if (!cleaned) return 0;
 
-function fromMinorUnits(cents: number, decimals: number = 0): number {
-  return cents / Math.pow(10, decimals);
+  const parts = cleaned.split('.');
+  const wholePart = BigInt(parts[0] || '0');
+
+  if (decimals === 0) {
+    if (parts.length > 1) {
+      // Half-up rounding on first decimal digit
+      const firstDecimal = parseInt(parts[1][0] || '0', 10);
+      return Number(wholePart + (firstDecimal >= 5 ? 1n : 0n));
+    }
+    return Number(wholePart);
+  }
+
+  // For 2-decimal currencies (e.g. USD)
+  const fracString = (parts[1] || '').padEnd(decimals + 1, '0');
+  const baseFrac = BigInt(fracString.slice(0, decimals));
+  const roundDigit = parseInt(fracString[decimals] || '0', 10);
+  const totalMinor = wholePart * BigInt(10 ** decimals) + baseFrac + (roundDigit >= 5 ? 1n : 0n);
+
+  return Number(totalMinor);
 }
 ```
 
-#### Indivisible Cent Distribution: The Largest Remainder (Hamilton) Method
-When splitting indivisible amounts (e.g. $10.00 split among 3 people = 333.333... cents each, or 20 ₫ split among 3 people = 6.666... ₫ each):
+#### Pure Integer Hamilton Method (Deterministic Remainder Distribution):
+To distribute an indivisible integer amount (e.g. 20 ₫ among 3 people, or taxes across fractional shares) without floating-point quotient or remainder:
 ```typescript
-function distributeIntegerCents(totalCents: number, weights: number[]): number[] {
-  const sumWeights = weights.reduce((a, b) => a + b, 0);
-  if (sumWeights === 0) {
-    const n = weights.length;
-    const base = Math.floor(totalCents / n);
-    const rem = totalCents % n;
-    return weights.map((_, i) => base + (i < rem ? 1 : 0));
+interface ParticipantWeight {
+  participantId: string;
+  weight: number; // Integer minor units (e.g. raw cost in cents)
+}
+
+function distributeIntegerMinorUnits(
+  totalMinorUnits: number,
+  participants: ParticipantWeight[]
+): Record<string, number> {
+  if (totalMinorUnits === 0 || participants.length === 0) {
+    return Object.fromEntries(participants.map(p => [p.participantId, 0]));
   }
 
-  // Step 1: Compute floor integer cents and fractional remainders
-  const rawShares = weights.map(w => (totalCents * w) / sumWeights);
-  const baseShares = rawShares.map(s => Math.floor(s));
-  const remainders = rawShares.map((s, idx) => ({ idx, rem: s - baseShares[idx] }));
+  const total = BigInt(totalMinorUnits);
+  const sumWeights = participants.reduce((sum, p) => sum + BigInt(p.weight), 0n);
 
-  // Step 2: Calculate leftover indivisible cents
-  const allocatedSum = baseShares.reduce((a, b) => a + b, 0);
-  let leftoverCents = totalCents - allocatedSum;
-
-  // Step 3: Sort remainders descending and assign 1 unit/cent to highest remainder
-  // e.g. 20 ₫ divided by 3 people yields raw 6.666... each:
-  // baseShares: [6, 6, 6] (sum 18, leftover 2 ₫)
-  // participants with highest remainders receive +1 ₫ -> [7, 7, 6] (sum 20 ₫)
-  remainders.sort((a, b) => b.rem - a.rem);
-  for (let i = 0; i < leftoverCents; i++) {
-    baseShares[remainders[i].idx] += 1;
+  if (sumWeights === 0n) {
+    // Equal distribution among participants
+    const n = BigInt(participants.length);
+    const base = Number(total / n);
+    const rem = Number(total % n);
+    // Sort deterministically by participantId
+    const sorted = [...participants].sort((a, b) => a.participantId.localeCompare(b.participantId));
+    const result: Record<string, number> = {};
+    sorted.forEach((p, idx) => {
+      result[p.participantId] = base + (idx < rem ? 1 : 0);
+    });
+    return result;
   }
 
-  // INVARIANT: sum(baseShares) === totalCents strictly
-  return baseShares;
+  // Step 1: Pure integer quotient and remainder via BigInt
+  const shares: Array<{ id: string; base: number; remainder: bigint }> = [];
+  let allocatedSum = 0;
+
+  participants.forEach(p => {
+    const w = BigInt(p.weight);
+    const numerator = total * w;
+    const base = Number(numerator / sumWeights);
+    const remainder = numerator % sumWeights;
+
+    shares.push({ id: p.participantId, base, remainder });
+    allocatedSum += base;
+  });
+
+  // Step 2: Leftover indivisible units
+  let leftover = totalMinorUnits - allocatedSum;
+
+  // Step 3: Sort by remainder descending, breaking ties deterministically by participantId ascending
+  shares.sort((a, b) => {
+    if (b.remainder !== a.remainder) {
+      return b.remainder > a.remainder ? 1 : -1;
+    }
+    return a.id.localeCompare(b.id);
+  });
+
+  // Step 4: Allocate 1 unit each to top remainders
+  for (let i = 0; i < leftover; i++) {
+    shares[i].base += 1;
+  }
+
+  // INVARIANT: Sum of all allocated bases === totalMinorUnits strictly
+  return Object.fromEntries(shares.map(s => [s.id, s.base]));
 }
 ```
 **Outcome**:
-- Guarantees `Sum of baseShares === totalCents` down to the exact single cent / dong.
-- Decimal fractions (e.g. 6.666...) naturally auto-round up to 7 while preserving the exact bill sum.
-- Eliminates rounding drift, orphaned pennies, and floating-point inequality.
+- Guarantees `Sum of shares === totalMinorUnits` strictly to the exact single cent/dong.
+- Pure integer math with **no floating-point intermediates**.
+- Deterministic tie-breaking by `participantId` ensures cross-platform reproducibility.
 
 ---
 
-### 4.5 Net Balances & Discrete Matching
+### 4.5 Net Balances & The Zero-Sum Settlement Invariant
 
 Operating on integer minor units, each participant's net balance is:
 ```
 Balance(p) = EffectivePaid(p) - FinalPayable(p)
 ```
 
-- `Balance(p) > 0`  -> **Creditor** (is owed money, paid more than their liability).
-- `Balance(p) < 0`  -> **Debtor** (owes money, paid less than their liability).
+- `Balance(p) > 0`  -> **Creditor** (paid more than liability; receives money).
+- `Balance(p) < 0`  -> **Debtor** (paid less than liability; must pay money).
 - `Balance(p) == 0` -> **Settled** (balance is exactly zero).
 
-Because calculations use integer conservation:
-- No fuzzy threshold (`|b| <= 0.01`) is needed for balance evaluation.
-- Every single cent owed is accounted for and settled.
+#### Formal Domain Proof of Zero-Sum Conservation:
+The zero-sum invariant does not rely on fabricating payments; it is the natural mathematical result of two domain conditions being satisfied:
+
+1. **Domain Condition 1 (Bill is Fully Settled to Merchant)**:
+   Under Host coverage or full allocation, total effective merchant payments equal the bill:
+   $$\sum_{p} \text{EffectivePaid}(p) \equiv \text{TotalBill}$$
+
+2. **Domain Condition 2 (All Liabilities Are Fully Reconciled)**:
+   By construction of item shares and proportional net extras:
+   $$\sum_{p} \text{FinalPayable}(p) \equiv \text{TotalBill}$$
+
+3. **Algebraic Invariant**:
+   $$\sum_{p} \text{Balance}(p) = \sum_{p} \text{EffectivePaid}(p) - \sum_{p} \text{FinalPayable}(p) = \text{TotalBill} - \text{TotalBill} \equiv 0$$
+
+> **Conclusion**: The ledger is zero-sum strictly because every cent of merchant liability is funded, and every cent of participant liability is accounted for.
 
 ---
 
-### 4.6 Settlement Topology, Algorithmic Analysis & Verification (Addressing P1: Algorithm Minimality & Zero-Sum Invariant)
+### 4.6 Settlement Algorithm: Precondition Guards & Topology
 
-#### Critical Evaluation of Settlement Claims:
+#### 1. Input Reconciliation Guard (`validateBalances`)
+Before executing any settlement transfers, the engine verifies that the ledger is balanced and integer-safe:
 
-1. **Critique: "The greedy algorithm does not guarantee the global minimum number of transactions."**
-   - **Evaluation: MATHEMATICALLY TRUE**.
-   - *Explanation*: The Minimum Cash Flow problem is proven to be **NP-hard** via reduction to the **Subset Sum / Partition Problem**.
-   - *Greedy Approximation*: The greedy algorithm (matching largest debtor with largest creditor) runs in $O(N \log N)$ and guarantees settling the ledger in at most **$N - 1$ transactions**. This is an optimal upper bound for general graphs and is the industry-standard heuristic used by Splitwise and major expense apps.
-   - *Sub-optimality Case*: When independent disjoint subsets of participants have net balances that sum to zero (e.g., Alice owes $50, Bob is owed $50; Charlie owes $30, David is owed $30), the true theoretical minimum is $N - K$ transactions (where $K$ is the number of disjoint zero-sum subsets, here $4 - 2 = 2$). In certain asymmetric distributions, a greedy match can split a balance across subgroups, requiring $N - 1$ transfers instead of $N - K$.
-   - *Resolution in Ledger*:
-     - **Default ($N \le 50$)**: Greedy algorithm ($O(N \log N)$) with integer cents. Fast, deterministic, and at most $N-1$ transfers.
-     - **Exact Global Minimum ($N \le 12$)**: Optional Subset-Sum Dynamic Programming partitioning to find maximum disjoint zero-sum components and yield the true theoretical global minimum ($N - K$ transfers).
+```typescript
+function validateBalances(balances: Record<string, number>): void {
+  const entries = Object.entries(balances);
 
-2. **Critique: "Balance(p) sums to zero only when total effective payments equal total final liabilities. Host auto-cover and discounts can break that equality."**
-   - **Evaluation: MATHEMATICALLY FALSE (Debunked)**.
-   - *Explanation*:
-     - **Discounts**: With the sponsor feature removed entirely, there are **no discount subsidies** or surplus modifications. Final liabilities are strictly:
-       `Sum of FinalPayable(p) == TotalBill`.
-     - **Host Auto-Cover**: Host auto-cover does **not** break equality—it was mathematically engineered specifically to **guarantee** equality!
-     - *Formal Algebraic Proof*:
-       Let `TotalBill = TotalItems + TotalExtras`.
-       Let total payments made by non-host participants at item and bill level be $P_{\text{others}} = \sum_{p \ne \text{host}} (\text{ItemPaid}(p) + \text{DirectPaid}(p))$.
-       Under Host auto-cover, the Host's effective payment is:
-       ```
-       EffectivePaid(host) = ItemPaid(host) + DirectPaid(host) + HostAutoCover
-       ```
-       Where:
-       ```
-       HostAutoCover = TotalBill - P_others - (ItemPaid(host) + DirectPaid(host))
-       ```
-       Substituting this into `EffectivePaid(host)`:
-       ```
-       EffectivePaid(host) = TotalBill - P_others
-       ```
-       Now summing across ALL participants:
-       ```
-       Sum of EffectivePaid(p) = P_others + EffectivePaid(host)
-                               = P_others + (TotalBill - P_others)
-                               = TotalBill
-       ```
-       Since `Sum of FinalPayable(p) == TotalBill`:
-       ```
-       Sum of Balance(p) = Sum of (EffectivePaid(p) - FinalPayable(p))
-                         = TotalBill - TotalBill
-                         = 0
-       ```
-       **Conclusion**: Total effective payments and total liabilities are identically equal under all valid configurations. The zero-sum invariant holds unconditionally.
+  for (const [id, val] of entries) {
+    if (!Number.isSafeInteger(val)) {
+      throw new Error(`Balance for participant ${id} is not a safe integer: ${val}`);
+    }
+  }
 
----
+  const sumBalances = entries.reduce((sum, [_, val]) => sum + BigInt(val), 0n);
+  if (sumBalances !== 0n) {
+    throw new Error(`Ledger balances do not reconcile to zero! Residual sum: ${sumBalances}`);
+  }
+}
+```
 
-### 4.7 Settlement Flow Implementations
+#### 2. Direct Settlement Transfers: Greedy Minimization ($N - 1$ Upper Bound)
+The greedy algorithm repeatedly matches the largest debtor with the largest creditor. It is guaranteed to settle any balanced group of $N$ participants in **at most $N - 1$ transactions**.
 
-#### Mode 1: Min-Cash-Flow Greedy Algorithm (Integer Cents)
 ```typescript
 interface TransferFlow {
   from: string;
   to: string;
-  amount: number; // in minor units / cents
+  amount: number; // in integer minor units / cents
 }
 
 function computeGreedyTransfers(balances: Record<string, number>): TransferFlow[] {
-  // balances are in integer minor units (e.g. cents)
+  // Precondition check: must reconcile to 0
+  validateBalances(balances);
+
   const debtors = Object.entries(balances)
     .filter(([_, b]) => b < 0)
     .map(([id, b]) => ({ id, amount: Math.abs(b) }))
-    .sort((a, b) => b.amount - a.amount);
+    .sort((a, b) => b.amount - a.amount || a.id.localeCompare(b.id));
 
   const creditors = Object.entries(balances)
     .filter(([_, b]) => b > 0)
     .map(([id, b]) => ({ id, amount: b }))
-    .sort((a, b) => b.amount - a.amount);
+    .sort((a, b) => b.amount - a.amount || a.id.localeCompare(b.id));
 
   const flows: TransferFlow[] = [];
   let d = 0;
@@ -524,13 +612,21 @@ function computeGreedyTransfers(balances: Record<string, number>): TransferFlow[
     if (creditor.amount === 0) c++;
   }
 
-  // INVARIANT: All debtors and creditors are exactly 0 (no orphaned cents)
+  // Post-condition validation: all debtors and creditors must be exactly 0
+  if (d < debtors.length || c < creditors.length) {
+    throw new Error("Settlement algorithm terminated with unsettled residuals");
+  }
+
   return flows;
 }
 ```
 
-#### Mode 2: Host-Centered Hub & Spoke (Preserved Alternative)
-If participants prefer routing all settlements through the designated Host (e.g. only Host has everyone's banking info):
+#### Algorithmic Complexity Clarification:
+- Finding the absolute theoretical minimum number of transactions across $N$ parties is **NP-hard** (reducible to Subset Sum / Partition).
+- The greedy algorithm achieves an optimal upper bound of $N - 1$ transfers in $O(N \log N)$ time.
+- For small groups ($N \le 12$), an optional Dynamic Programming Subset-Sum Partition solver can identify independent zero-sum subgroups to achieve the absolute global minimum ($N - K$ transfers, where $K$ is the number of disjoint zero-sum subsets).
+
+#### Alternative Mode: Host-Centered Hub & Spoke
 - Every debtor ($p \ne \text{host}$ where $\text{Balance}(p) < 0$) transfers $|\text{Balance}(p)|$ to Host.
 - Host transfers $\text{Balance}(p)$ to each creditor ($p \ne \text{host}$ where $\text{Balance}(p) > 0$).
 
@@ -575,32 +671,46 @@ In the item card, next to the existing **"Assign Shares / Splits"** button, intr
 
 ### 5.3 Summary Section: Net Balances & Multi-Creditor Settlement (`src/components/summary/summary-section.tsx`)
 
-1. **Splits Table Enhancement**:
-   Direct liabilities and payments breakdown (with Sponsor removed):
-   - `Participant | Subtotal | Extras (Tax/Tip) | Total Paid | Net Balance`
-   - Example:
-     - Alex: Subtotal 120k | Extras 12k | Paid 350k | Balance: +218k (Receives)
-     - Bob: Subtotal 150k | Extras 15k | Paid 165k | Balance: 0 (Settled)
-     - Charlie: Subtotal 80k | Extras 8k | Paid 0 | Balance: -88k (Owes)
-2. **Settlement Flows Card**:
-   - Distinct creditor and debtor groupings.
-   - Shows direct transfers: e.g. **Charlie pays Alex 88,000 ₫**.
-   - Copy payment text and individual QR code prompts.
+#### Fully Reconciled Example Fixture (350,000 ₫ Bill, 3 Participants):
+- **Bill Breakdown**: Items total: 320,000 ₫ | Proportional Extras (Taxes/Tip): 30,000 ₫ | Total Bill: 350,000 ₫.
+- **Consumption Subtotals**:
+  - Alex (Host): 120,000 ₫ raw cost + 11,250 ₫ extras = **131,250 ₫ liability**.
+  - Bob: 120,000 ₫ raw cost + 11,250 ₫ extras = **131,250 ₫ liability**.
+  - Charlie: 80,000 ₫ raw cost + 7,500 ₫ extras = **87,500 ₫ liability**.
+  - *Total Group Liabilities*: $131,250 + 131,250 + 87,500 = 350,000 ₫$.
+- **Merchant Payments**:
+  - Alex (Host) paid Steak: 200,000 ₫ to merchant.
+  - Bob paid Seafood Platter: 150,000 ₫ to merchant.
+  - Charlie paid: 0 ₫.
+  - *Total Merchant Payments*: $200,000 + 150,000 + 0 = 350,000 ₫$ (Fully paid, 0 unpaid merchant balance).
+
+#### Table Representation:
+| Participant | Subtotal | Extras (Tax/Tip) | Merchant Paid | Net Balance | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Alex (Host)** | 120,000 ₫ | 11,250 ₫ | 200,000 ₫ | **+68,750 ₫** | Creditor (Receives) |
+| **Bob** | 120,000 ₫ | 11,250 ₫ | 150,000 ₫ | **+18,750 ₫** | Creditor (Receives) |
+| **Charlie** | 80,000 ₫ | 7,500 ₫ | 0 ₫ | **-87,500 ₫** | Debtor (Pays) |
+| **Total** | **320,000 ₫** | **30,000 ₫** | **350,000 ₫** | **0 ₫** | **Strict Zero-Sum Conservation** |
+
+#### Direct Settlement Transfers:
+- **Charlie pays Alex 68,750 ₫**
+- **Charlie pays Bob 18,750 ₫**
+> Total transfers: 2 (guaranteed $\le N-1$). All participant balances reach exactly 0 ₫.
 
 ---
 
-## 6. Edge Cases & Safety Constraints
+## 6. Edge Cases, Currency Conversion & Safety Constraints
 
 | Scenario | Behavior |
 | :--- | :--- |
-| **No item payers specified** | Item is automatically attributed to `hostId` (100% backwards compatible with existing bills). |
-| **Item partially paid (underpaid)** | If `hostId` exists, host covers the remainder via `HostAutoCover`. If no host, discrepancy banner notifies user of unallocated payment. |
-| **Item overpaid (sum of payers > price)** | Real-time warning badge in popover; balance calculation honors actual amount paid, crediting payers accordingly. |
-| **Unassigned item portions** | Split equally among the designated Eligible Splitter Cohort $E$ (all bill participants by default), using Hamilton Largest Remainder method. |
-| **Indivisible cents in tax/splits** | Distribute leftover 1-cent residuals using the Largest Remainder (Hamilton) method to preserve `Sum(Allocated) == Total` strictly. |
-| **Person removed from bill** | When `removePerson(id)` is called, remove them from all `item.payers` maps as well as `item.assignments`. |
-| **Currency conversion** | When changing bill currency (e.g., VND ↔ USD), convert all values in `item.payers` alongside item prices and person amounts. |
-| **Participant both pays and consumes** | Accurately calculates net offset: if Alice paid $50 and ate $20, she receives $30. |
+| **No item payers specified** | If Host mode is enabled, unallocated merchant payment falls to `HostAssumedMerchantPayment`. If no host, outstanding merchant balance blocks group settlement. |
+| **Item partially paid (underpaid)** | If `hostId` exists, Host assumes remaining merchant balance via `HostAssumedMerchantPayment`. If no host, system displays `Outstanding Merchant Liability` banner. |
+| **Item overpaid (sum of payers > price)** | **Validation Error**: Blocks settlement. User must adjust entries, allocate excess to `PositiveExtras` (Merchant Tip), or record as refunded deposit. |
+| **Unassigned item portions** | If Host absorbs, added directly to `RawCost(host)`. Otherwise, split equally among defined Eligible Splitter Cohort $E$ using deterministic Hamilton method. |
+| **Indivisible minor units** | Distribute leftover 1-cent residuals using pure integer Hamilton method with deterministic tie-breaking by `participantId` ascending. |
+| **Pre-payments between participants** | Inter-participant advances (e.g. Venmo to host) must NOT be recorded as merchant `paidAmount`. They are applied as pre-settlement balance offsets. |
+| **Currency conversion policy** | When converting bill currency (e.g., VND ↔ USD), convert minor units via fixed exchange rate snapshot $R$: `toMinor = Math.round(fromMinor * R * 10^(toDec - fromDec))`. Preserves integer atomic units with zero decimal drift. |
+| **Participant removed from bill** | Purge participant from `item.payers`, `item.assignments`, and verify balance reconciliation before saving. |
 
 ---
 
@@ -608,54 +718,52 @@ In the item card, next to the existing **"Assign Shares / Splits"** button, intr
 
 ```mermaid
 flowchart TD
-    P1["Phase 1: Types & Data Model\n- Item.payers in types.ts\n- Store state & actions"] --> P2["Phase 2: DB Schema & Persistence\n- item_payers table in SQLite & Postgres\n- share.ts serialization"]
-    P2 --> P3["Phase 3: Mathematical Engine\n- useBillState.ts calculate()\n- Min-Cash-Flow optimal settlement"]
-    P3 --> P4["Phase 4: UI Components\n- ItemRow 'Paid By' popover\n- BillConfiguration summary\n- SummarySection tables"]
-    P4 --> P5["Phase 5: Verification & Tests\n- Automated bun test suite\n- Currency conversion & migration tests"]
+    P1["Phase 1: Types & Data Model\n- Item.payers in types.ts\n- Unified integer minor-unit schema"] --> P2["Phase 2: DB Schema & Persistence\n- SQLite INTEGER, Postgres BIGINT\n- String parser & share.ts"]
+    P2 --> P3["Phase 3: Mathematical Engine\n- Pure integer Hamilton allocation\n- HostAssumedMerchantPayment & validation"]
+    P3 --> P4["Phase 4: UI Components\n- ItemRow 'Paid By' popover\n- Overpayment & outstanding banners\n- Reconciled summary tables"]
+    P4 --> P5["Phase 5: Verification & Tests\n- Automated bun test suite\n- Invariant guards & edge case fixtures"]
 ```
 
 ### Phase 1: Data Types & Store Actions
 - Modify `db/types.ts` and `src/store/useBillStore.ts` to include `Item.payers?: Record<string, number>`.
-- Add store actions:
-  - `setItemPayers(itemId: string, payers: Record<string, number>): void`
-  - Ensure `removePerson` purges the person from `item.payers`.
-  - Update `setCurrency` to convert values inside `item.payers`.
+- Remove `sponsorAmount` from `Person` and `PersonData`.
+- Clarify `Person.paidAmount` strictly represents direct merchant payments.
 
 ### Phase 2: Database Adapters & Sharing
-- Create `item_payers` table in `db/sqlite.ts` and `db/postgres.ts`.
-- Update `getBill` and `saveBill` methods to fetch and persist item-level payers.
+- Create `item_payers` table: `INTEGER` in `db/sqlite.ts` and `BIGINT` in `db/postgres.ts` (both storing integer atomic minor units).
+- Implement `parseToMinorUnits` string parser to prevent float representation inaccuracies.
+- Update `getBill` and `saveBill` methods to fetch and persist item-level payers in minor units.
 - Update `serializeState` and `deserializeState` in `src/lib/share.ts`.
 
 ### Phase 3: Calculation & Settlement Engine
 - Update `useBillState.ts`:
-  - Remove all sponsor / surplus / discount ratio calculations.
-  - Implement exact item consumption logic respecting quantities, oversubscription, and partial assignment.
-  - Implement unassigned consumption distribution over the defined Eligible Splitter Cohort ($E$).
-  - Convert all internal monetary amounts to integer minor units (cents) at calculation boundaries.
-  - Implement the **Largest Remainder (Hamilton) Method** for indivisible cent allocations (taxes, fees, communal splits).
-  - Calculate total item payments per person and `HostAutoCover`.
-  - Implement `computeGreedyTransfers` with exact integer matching (no fuzzy float thresholds).
-  - Add discrepancy detection for unallocated gaps when no Host is designated.
+  - Implement exact item consumption logic with oversubscription warning guards.
+  - Implement unassigned consumption with explicit Host absorption (`RawCost(host) += U_i`) or table cohort distribution.
+  - Implement pure integer `distributeIntegerMinorUnits` (Hamilton method) using `BigInt` with deterministic ID tie-breaking.
+  - Implement `OutstandingMerchantDue` and `HostAssumedMerchantPayment`.
+  - Block settlement on item overpayment ($A_i > P_i$) or unassigned merchant debt without host.
+  - Implement `validateBalances` guard verifying safe integers and exact zero sum.
+  - Implement `computeGreedyTransfers` with post-execution verification.
 
 ### Phase 4: Frontend UI Components
 - Update `src/components/items/item-row.tsx`:
-  - Create the "Paid By" trigger and popover.
-  - Support single-payer select and multi-payer split (equal or custom).
-- Update `src/components/summary/bill-configuration.tsx` to display consolidated payments.
+  - Create the "Paid By" trigger and popover with single-payer and multi-payer split modes.
+  - Real-time overpayment warning badge and oversubscription alert.
+- Update `src/components/summary/bill-configuration.tsx` to display consolidated merchant payments.
 - Update `src/components/summary/summary-section.tsx`:
-  - Remove Sponsor column; show `Subtotal | Extras | Total Paid | Net Balance`.
-  - Display multi-creditor direct transfer cards.
+  - Display reconciled table: `Subtotal | Extras | Merchant Paid | Net Balance`.
+  - Direct settlement transfer cards with copyable payment instructions.
 
 ### Phase 5: Verification & Automated Tests
 - Write automated tests in `tests/multi-payer.test.ts` covering:
-  - **Decimal-only auto-rounding**: 20 ₫ split among 3 people auto-rounds 6.666... ₫ up to 7 ₫ (distributing 7 ₫, 7 ₫, 6 ₫ to total exactly 20 ₫, with no whole-digit truncation).
-  - **Indivisible cent conservation**: $10.00 split among 3 people equals exactly $3.34 + $3.33 + $3.33 ($10.00 total, 0 cents lost).
-  - **Item quantity & unassigned splits**: Item price $30, quantity 3, 1 portion claimed by Alice -> remaining $20 split among eligible cohort.
-  - **Single & multi-item multiple payers**: Bob ($60) & Charlie ($40) on a $100 dish.
-  - **Partial payments and host auto-cover**: Item $100, Bob pays $60, Host auto-covers $40.
-  - **Zero-sum balance invariant**: Exhaustive verification that `Sum(Balances) === 0` holds exactly across all configurations.
-  - **Greedy transfer termination**: Verifies that every transfer completely zeroes out debtors/creditors without residual pennies.
-  - **Currency conversion**: Switching USD ↔ VND correctly scales all `item.payers` amounts.
+  - **Single & multi-item multiple payers**: Reconciled test fixture matching Section 5.3 (350k bill, Alex 200k, Bob 150k -> Charlie pays Alex 68.75k, Charlie pays Bob 18.75k).
+  - **Host coverage with explicit direct merchant payments**: Verifies that direct payments are not double-counted and invariant holds.
+  - **Item overpayment guard**: Verifies settlement is blocked when $A_i > P_i$.
+  - **Unpaid merchant balance guard**: Verifies settlement is blocked when no host is designated and bill is partially paid.
+  - **Balance reconciliation guard (`validateBalances`)**: Verifies error is thrown if sum of balances is non-zero.
+  - **Decimal-only auto-rounding**: 20 ₫ split among 3 people auto-rounds 6.666... ₫ up to 7 ₫ (distributing 7 ₫, 7 ₫, 6 ₫ to total exactly 20 ₫).
+  - **Pure integer Hamilton conservation**: $10.00 split among 3 people equals exactly $3.34 + $3.33 + $3.33, with deterministic tie-breaking by participant ID.
+  - **Currency conversion**: Switching USD ↔ VND correctly converts integer atomic units with zero decimal drift.
 
 ---
 
@@ -664,5 +772,5 @@ flowchart TD
 > [!IMPORTANT]
 > **Key Design Decisions for User Alignment**:
 > 1. **Default Payer Preference**: When an item has no explicit payer, should it default to the **Primary Host** (current behavior) or remain **Unassigned** until explicitly chosen? *(Recommended: Default to Host for smooth, effortless entry).*
-> 2. **Settlement Flow Style**: For groups with multiple payers, do you prefer **Direct Optimal Transfers** (minimizes total transactions across everyone, like Splitwise) or a **Host-as-Clearinghouse** mode (all money flows strictly through the host)? *(Recommended: Default to Optimal Transfers with an optional Host-Clearinghouse toggle).*
-> 3. **Partial Item Payments**: If an item costs $100 and someone enters that Bob paid $60, should the remaining $40 automatically fall back to the Host? *(Recommended: Yes, automatically covered by Host with a subtle indicator).*
+> 2. **Settlement Flow Style**: For groups with multiple payers, do you prefer **Direct Transfers (Greedy Minimization)** (minimizes transactions across everyone in $O(N \log N)$, at most $N-1$ transfers) or a **Host-as-Clearinghouse** mode (all money flows strictly through the host)? *(Recommended: Default to Direct Transfers with an optional Host-Clearinghouse toggle).*
+> 3. **Item Overpayment Handling**: If an item price is $100 and payers enter $120 total, should the app **Block settlement until corrected** or offer an **Add $20 as Tip** quick action? *(Recommended: Offer one-click "Add as Server Tip" button).*
