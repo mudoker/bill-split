@@ -1,4 +1,4 @@
-const SW_VERSION = "1.0.0";
+const SW_VERSION = "1.0.1";
 const CACHE_NAME = `ledger-v${SW_VERSION}`;
 const STATIC_ASSETS = [
   "/",
@@ -6,6 +6,8 @@ const STATIC_ASSETS = [
   "/logo-192.png",
   "/logo-512.png",
   "/maskable-icon.png",
+  "/apple-touch-icon.png",
+  "/favicon.ico",
   "/manifest.json",
 ];
 
