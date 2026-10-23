@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, TableIcon, BarChart3, PieChartIcon, CheckCircle2, AlertTriangle, Share2, Eye, Copy, Receipt, Tag, TrendingUp, Wallet, LayoutGrid, ArrowRight, QrCode, MapPin } from "lucide-react";
+import { Download, TableIcon, BarChart3, PieChartIcon, CheckCircle2, AlertTriangle, Share2, Eye, Copy, Receipt, Tag, TrendingUp, Wallet, LayoutGrid, ArrowRight, QrCode, MapPin, ExternalLink, Check } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -75,15 +75,13 @@ export function SummarySection() {
 
     return (
         <Card id="summary-card" className="w-full h-full flex flex-col border-none shadow-none md:border md:shadow-sm bg-background">
-
-
-            <CardHeader className="flex flex-row items-center justify-between pb-2 pt-3 sm:pt-4 px-3 sm:px-4 md:px-6 md:pt-6 shrink-0 gap-2">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 pt-2.5 sm:pt-4 px-2 xs:px-3 sm:px-4 md:px-6 md:pt-6 shrink-0 gap-1.5 sm:gap-2">
                 <div className="space-y-0.5 min-w-0 flex-1">
-                    <CardTitle className="text-base sm:text-xl font-black uppercase tracking-widest flex items-center gap-1.5 sm:gap-2 text-foreground truncate max-w-[160px] xs:max-w-xs sm:max-w-md">
+                    <CardTitle className="text-sm xs:text-base sm:text-xl font-black uppercase tracking-widest flex items-center gap-1.5 sm:gap-2 text-foreground truncate max-w-[150px] xs:max-w-xs sm:max-w-md">
                         <Receipt className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" /> <span className="truncate">{billName || "Summary"}</span>
                     </CardTitle>
                     {location && (
-                        <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center gap-1 font-medium pl-5 sm:pl-7 truncate">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1 font-medium pl-5 sm:pl-7 truncate">
                             <MapPin className="w-3 h-3 text-muted-foreground shrink-0" />
                             <span className="truncate">{location}</span>
                         </p>
@@ -96,7 +94,7 @@ export function SummarySection() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-8 gap-1.5 text-foreground font-bold hover:bg-primary/10 hover:text-primary transition-all border-foreground/10 px-2.5 sm:px-3 text-xs"
+                                    className="h-8 gap-1.5 text-foreground font-bold hover:bg-primary/10 hover:text-primary transition-all border-foreground/10 px-2 sm:px-3 text-xs"
                                     title="Show Host Payment QR"
                                 >
                                     <QrCode className="w-3.5 h-3.5" />
@@ -125,26 +123,53 @@ export function SummarySection() {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8 gap-1.5 text-foreground font-bold hover:bg-primary/10 hover:text-primary transition-all border-foreground/10 px-2.5 sm:px-3 text-xs"
+                                className="h-8 gap-1.5 text-foreground font-bold hover:bg-primary/10 hover:text-primary transition-all border-foreground/10 px-2 sm:px-3 text-xs"
                             >
                                 <Share2 className="w-3.5 h-3.5" />
                                 <span className="hidden sm:inline">Share</span>
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-56 p-2 bg-background/95 backdrop-blur-xl border-primary/20" align="end">
-                            <div className="flex flex-col gap-1">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className={cn("justify-start h-9 text-xs gap-2 font-bold", copiedView && "bg-primary/10 text-primary")}
-                                    onClick={handleCopyShare}
-                                >
-                                    <Eye className="w-3.5 h-3.5" />
-                                    <div className="flex-1 text-left">
-                                        <div className="uppercase tracking-tighter">{copiedView ? "Copied!" : "View-only Link"}</div>
+                        <PopoverContent className="w-80 p-3 bg-card/95 backdrop-blur-xl border-border rounded-2xl shadow-2xl" align="end">
+                            <div className="space-y-2.5">
+                                <div className="space-y-0.5">
+                                    <div className="text-xs font-black uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                                        <Eye className="w-3.5 h-3.5 text-primary" /> Read-Only Share Link
                                     </div>
-                                    <Copy className="w-3 h-3 opacity-40" />
-                                </Button>
+                                    <p className="text-[10px] text-muted-foreground leading-tight">
+                                        Anyone with this link can view the bill without logging in. Editing is strictly disabled.
+                                    </p>
+                                </div>
+                                <div className="flex gap-1.5">
+                                    <Button
+                                        size="sm"
+                                        className={cn("flex-1 h-9 text-xs gap-2 font-bold", copiedView ? "bg-emerald-600 hover:bg-emerald-600 text-white" : "bg-foreground text-background")}
+                                        onClick={handleCopyShare}
+                                    >
+                                        {copiedView ? (
+                                            <>
+                                                <Check className="w-3.5 h-3.5" /> Link Copied!
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Copy className="w-3.5 h-3.5" /> Copy Share Link
+                                            </>
+                                        )}
+                                    </Button>
+                                    {currentBillId && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-9 px-2.5 text-xs font-bold"
+                                            onClick={() => {
+                                                const url = generateShareUrl({ people, items, globalCharges, hostId, currentBillId }, true);
+                                                window.open(url, '_blank');
+                                            }}
+                                            title="Open shared view in new tab"
+                                        >
+                                            <ExternalLink className="w-3.5 h-3.5" />
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         </PopoverContent>
                     </Popover>
@@ -154,57 +179,57 @@ export function SummarySection() {
                 </div>
             </CardHeader>
             <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
-                <ScrollArea className="flex-1 px-3 sm:px-4 md:px-6">
-                    <div className="space-y-4 sm:space-y-6 pt-3 pb-8 sm:py-6 pr-1 sm:pr-3">
+                <ScrollArea className="flex-1 px-1.5 xs:px-2.5 sm:px-4 md:px-6">
+                    <div className="space-y-3.5 sm:space-y-6 pt-2 pb-8 sm:py-6 pr-0.5 sm:pr-2">
                         {/* Summary Stats */}
-                        <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
-                            <div className="bg-card/30 rounded-xl sm:rounded-2xl p-2 xs:p-2.5 sm:p-4 border border-foreground/5 transition-all hover:border-primary/20 group" title={`Items Subtotal: ${formatCurrency(totalItemCost)}`}>
-                                <div className="text-[9px] sm:text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1 group-hover:text-primary transition-colors">Items</div>
-                                <div className="text-[11px] xs:text-xs sm:text-sm font-bold text-foreground tabular-nums truncate tracking-tight">{formatCurrency(totalItemCost)}</div>
+                        <div className="grid grid-cols-3 gap-1 xs:gap-1.5 sm:gap-3">
+                            <div className="bg-card/30 rounded-xl sm:rounded-2xl p-1.5 xs:p-2 sm:p-4 border border-foreground/5 transition-all hover:border-primary/20 group min-w-0" title={`Items Subtotal: ${formatCurrency(totalItemCost)}`}>
+                                <div className="text-[8px] xs:text-[9px] sm:text-[10px] text-muted-foreground uppercase font-black tracking-wider sm:tracking-widest mb-0.5 sm:mb-1 group-hover:text-primary transition-colors truncate">Items</div>
+                                <div className="text-[10px] xs:text-xs sm:text-sm font-bold text-foreground tabular-nums truncate tracking-tight">{formatCurrency(totalItemCost)}</div>
                             </div>
-                            <div className="bg-amber-500/10 rounded-xl sm:rounded-2xl p-2 xs:p-2.5 sm:p-4 border border-amber-500/20 transition-all hover:bg-amber-500/20" title={`Extras/Taxes: ${formatCurrency(totalExtras)}`}>
-                                <div className="text-[9px] sm:text-[10px] text-amber-600 dark:text-amber-400 uppercase font-black tracking-widest mb-1">Extras</div>
-                                <div className="text-[11px] xs:text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400 tabular-nums truncate tracking-tight">+{formatCurrency(totalExtras)}</div>
+                            <div className="bg-amber-500/10 rounded-xl sm:rounded-2xl p-1.5 xs:p-2 sm:p-4 border border-amber-500/20 transition-all hover:bg-amber-500/20 min-w-0" title={`Extras/Taxes: ${formatCurrency(totalExtras)}`}>
+                                <div className="text-[8px] xs:text-[9px] sm:text-[10px] text-amber-600 dark:text-amber-400 uppercase font-black tracking-wider sm:tracking-widest mb-0.5 sm:mb-1 truncate">Extras</div>
+                                <div className="text-[10px] xs:text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400 tabular-nums truncate tracking-tight">+{formatCurrency(totalExtras)}</div>
                             </div>
-                            <div className="relative overflow-hidden bg-primary/10 rounded-xl sm:rounded-2xl p-2 xs:p-2.5 sm:p-4 border border-primary/20 transition-all hover:bg-primary/20 group text-primary" title={`Total Bill: ${formatCurrency(totalBill)}`}>
+                            <div className="relative overflow-hidden bg-primary/10 rounded-xl sm:rounded-2xl p-1.5 xs:p-2 sm:p-4 border border-primary/20 transition-all hover:bg-primary/20 group text-primary min-w-0" title={`Total Bill: ${formatCurrency(totalBill)}`}>
                                 <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110" />
-                                <div className="text-[9px] sm:text-[10px] uppercase font-black tracking-[0.15em] sm:tracking-[0.2em] mb-1 opacity-90 text-primary">Total Bill</div>
-                                <div className="text-xs xs:text-sm sm:text-xl font-black tabular-nums tracking-tight drop-shadow-sm text-primary truncate">{formatCurrency(totalBill)}</div>
+                                <div className="text-[8px] xs:text-[9px] sm:text-[10px] uppercase font-black tracking-wider sm:tracking-[0.2em] mb-0.5 sm:mb-1 opacity-90 text-primary truncate">Total Bill</div>
+                                <div className="text-[11px] xs:text-xs sm:text-sm md:text-xl font-black tabular-nums tracking-tight drop-shadow-sm text-primary truncate">{formatCurrency(totalBill)}</div>
                             </div>
                         </div>
 
                         {totalSurplus > 0.01 && (
-                            <div className="bg-primary/5 rounded-xl p-2.5 sm:p-3 border border-primary/20 flex items-center justify-center gap-2">
-                                <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-                                <span className="text-xs text-primary font-black uppercase tracking-tight text-center">Sponsor surplus: {formatCurrency(totalSurplus)}</span>
+                            <div className="bg-primary/5 rounded-xl p-2 sm:p-3 border border-primary/20 flex items-center justify-center gap-2">
+                                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
+                                <span className="text-[11px] sm:text-xs text-primary font-black uppercase tracking-tight text-center">Sponsor surplus: {formatCurrency(totalSurplus)}</span>
                             </div>
                         )}
 
                         {/* Tabbed Content */}
                         <Tabs defaultValue="table" className="w-full">
-                            <TabsList className="grid w-full grid-cols-3 h-9 sm:h-10 bg-muted/20 p-1 border border-foreground/5 rounded-xl">
-                                <TabsTrigger value="table" className="text-[11px] sm:text-xs gap-1 sm:gap-1.5 font-bold uppercase transition-all data-[state=active]:bg-background data-[state=active]:text-primary py-1">
-                                    <TableIcon className="w-3.5 h-3.5" /> Splits
+                            <TabsList className="grid w-full grid-cols-3 h-8 sm:h-10 bg-muted/20 p-0.5 sm:p-1 border border-foreground/5 rounded-xl">
+                                <TabsTrigger value="table" className="text-[10px] xs:text-[11px] sm:text-xs px-1 sm:px-2 gap-1 sm:gap-1.5 font-bold uppercase transition-all data-[state=active]:bg-background data-[state=active]:text-primary py-1">
+                                    <TableIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" /> Splits
                                 </TabsTrigger>
-                                <TabsTrigger value="pie" className="text-[11px] sm:text-xs gap-1 sm:gap-1.5 font-bold uppercase transition-all data-[state=active]:bg-background data-[state=active]:text-primary py-1">
-                                    <PieChartIcon className="w-3.5 h-3.5" /> Charts
+                                <TabsTrigger value="pie" className="text-[10px] xs:text-[11px] sm:text-xs px-1 sm:px-2 gap-1 sm:gap-1.5 font-bold uppercase transition-all data-[state=active]:bg-background data-[state=active]:text-primary py-1">
+                                    <PieChartIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" /> Charts
                                 </TabsTrigger>
-                                <TabsTrigger value="bar" className="text-[11px] sm:text-xs gap-1 sm:gap-1.5 font-bold uppercase transition-all data-[state=active]:bg-background data-[state=active]:text-primary py-1">
-                                    <BarChart3 className="w-3.5 h-3.5" /> Compare
+                                <TabsTrigger value="bar" className="text-[10px] xs:text-[11px] sm:text-xs px-1 sm:px-2 gap-1 sm:gap-1.5 font-bold uppercase transition-all data-[state=active]:bg-background data-[state=active]:text-primary py-1">
+                                    <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" /> Compare
                                 </TabsTrigger>
                             </TabsList>
 
                             {/* TABLE TAB */}
-                            <TabsContent value="table" className="mt-4 space-y-4 sm:space-y-6">
+                            <TabsContent value="table" className="mt-3 sm:mt-4 space-y-3.5 sm:space-y-6">
                                 <div className="rounded-xl sm:rounded-2xl border border-foreground/5 bg-card/30 overflow-hidden shadow-sm shadow-black/5">
-                                    <div className="overflow-x-auto">
+                                    <div className="overflow-x-auto w-full">
                                         <Table className="w-full min-w-[280px]">
                                             <TableHeader>
                                                 <TableRow className="bg-muted/30 border-b border-foreground/5">
-                                                    <TableHead className="px-2.5 sm:px-4 py-2 sm:py-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground">Participant</TableHead>
-                                                    <TableHead className="text-right px-2.5 sm:px-4 py-2 sm:py-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">Subtotal</TableHead>
-                                                    <TableHead className="text-right px-2.5 sm:px-4 py-2 sm:py-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">Sponsor</TableHead>
-                                                    <TableHead className="text-right px-2.5 sm:px-4 py-2 sm:py-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-primary whitespace-nowrap">Final Pay</TableHead>
+                                                    <TableHead className="px-2 xs:px-2.5 sm:px-4 py-2 sm:py-3 text-[9px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-widest text-muted-foreground">Participant</TableHead>
+                                                    <TableHead className="text-right px-1.5 xs:px-2.5 sm:px-4 py-2 sm:py-3 text-[9px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-widest text-muted-foreground whitespace-nowrap">Subtotal</TableHead>
+                                                    <TableHead className="text-right px-1.5 xs:px-2.5 sm:px-4 py-2 sm:py-3 text-[9px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-widest text-muted-foreground whitespace-nowrap">Sponsor</TableHead>
+                                                    <TableHead className="text-right px-2 xs:px-2.5 sm:px-4 py-2 sm:py-3 text-[9px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-widest text-primary whitespace-nowrap">Final Pay</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
@@ -218,21 +243,33 @@ export function SummarySection() {
                                                 {people.map((p) => {
                                                     const total = totalCosts[p.id] || 0;
                                                     const pay = finalPayables[p.id] || 0;
+                                                    const isAppMember = Boolean(p.userId || p.email);
                                                     return (
                                                         <TableRow key={p.id} className="hover:bg-primary/[0.02] transition-colors border-b border-foreground/5 last:border-0">
-                                                            <TableCell className="font-bold px-2.5 sm:px-4 py-2.5 sm:py-3">
-                                                                <span className="truncate max-w-[80px] xs:max-w-[120px] sm:max-w-[160px] block text-xs sm:text-sm" title={p.name}>{p.name}</span>
+                                                            <TableCell className="font-bold px-2 xs:px-2.5 sm:px-4 py-2 sm:py-2.5">
+                                                                <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+                                                                    <span className="truncate max-w-[70px] xs:max-w-[100px] sm:max-w-[160px] block text-xs sm:text-sm" title={p.name}>{p.name}</span>
+                                                                    {isAppMember ? (
+                                                                        <span className="text-[7px] xs:text-[8px] font-black uppercase px-1 py-0.2 rounded bg-primary/10 text-primary border border-primary/20 shrink-0">
+                                                                            Member
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="text-[7px] xs:text-[8px] font-black uppercase px-1 py-0.2 rounded bg-muted text-muted-foreground border border-border shrink-0">
+                                                                            Anon
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                             </TableCell>
-                                                            <TableCell className="text-right text-muted-foreground px-2.5 sm:px-4 py-2.5 sm:py-3 whitespace-nowrap text-xs tabular-nums">
+                                                            <TableCell className="text-right text-muted-foreground px-1.5 xs:px-2.5 sm:px-4 py-2 sm:py-2.5 whitespace-nowrap text-xs tabular-nums">
                                                                 {formatCurrency(total)}
                                                             </TableCell>
-                                                            <TableCell className="text-right px-2.5 sm:px-4 py-2.5 sm:py-3 whitespace-nowrap text-xs tabular-nums">
+                                                            <TableCell className="text-right px-1.5 xs:px-2.5 sm:px-4 py-2 sm:py-2.5 whitespace-nowrap text-xs tabular-nums">
                                                                 {p.sponsorAmount > 0
                                                                     ? <span className="text-emerald-700 dark:text-emerald-400 font-bold">-{formatCurrency(p.sponsorAmount)}</span>
                                                                     : <span className="text-muted-foreground/30">—</span>
                                                                 }
                                                             </TableCell>
-                                                            <TableCell className="text-right font-black px-2.5 sm:px-4 py-2.5 sm:py-3 whitespace-nowrap text-xs tabular-nums">
+                                                            <TableCell className="text-right font-black px-2 xs:px-2.5 sm:px-4 py-2 sm:py-2.5 whitespace-nowrap text-xs sm:text-sm tabular-nums">
                                                                 <span className={pay < 0.01 ? "text-primary" : "text-foreground"}>
                                                                     {pay < 0.01 ? "✓ PAID" : formatCurrency(pay)}
                                                                 </span>
@@ -245,7 +282,7 @@ export function SummarySection() {
                                     </div>
                                     {/* Verification Footer */}
                                     {people.length > 0 && (
-                                        <div className="border-t border-foreground/5 px-3 sm:px-4 py-2 sm:py-2.5 bg-muted/10 flex items-center justify-between text-[9px] sm:text-[10px] flex-wrap gap-1">
+                                        <div className="border-t border-foreground/5 px-2.5 sm:px-4 py-2 sm:py-2.5 bg-muted/10 flex items-center justify-between text-[9px] sm:text-[10px] flex-wrap gap-1">
                                             <div className="flex items-center gap-1.5 sm:gap-2">
                                                 {isBalanced
                                                     ? <><CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" /><span className="text-primary font-black uppercase tracking-widest">Balanced</span></>
@@ -260,19 +297,19 @@ export function SummarySection() {
                                 </div>
 
                                 {people.length > 0 && (
-                                    <div className="relative p-3.5 sm:p-6 rounded-2xl sm:rounded-3xl bg-foreground/[0.02] border border-primary/10 overflow-hidden shadow-xl shadow-black/10 transition-all hover:bg-foreground/[0.03]">
+                                    <div className="relative p-2.5 xs:p-3 sm:p-6 rounded-2xl sm:rounded-3xl bg-foreground/[0.02] border border-primary/10 overflow-hidden shadow-xl shadow-black/10 transition-all hover:bg-foreground/[0.03]">
                                         <div className="relative z-10">
-                                            <div className="flex items-center justify-between mb-4 sm:mb-8">
+                                            <div className="flex items-center justify-between mb-3 sm:mb-8">
                                                 <div className="space-y-0.5 sm:space-y-1">
-                                                    <h4 className="text-[11px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-primary">Settlement Flows</h4>
-                                                    <p className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase">Optimized Peer-to-Peer Payments</p>
+                                                    <h4 className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary">Settlement Flows</h4>
+                                                    <p className="text-[8px] sm:text-[10px] font-bold text-muted-foreground uppercase">Optimized Peer-to-Peer Payments</p>
                                                 </div>
-                                                <div className="px-2.5 sm:px-3 py-1 bg-primary text-black rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 shrink-0">
+                                                <div className="px-2 sm:px-3 py-0.5 sm:py-1 bg-primary text-black rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 shrink-0">
                                                     Plan Ready
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-2.5 sm:space-y-4">
+                                            <div className="space-y-2 sm:space-y-4">
                                                 {settlementFlows.length > 0 ? (
                                                     settlementFlows.map((flow, idx) => {
                                                         const debtor = people.find(p => p.id === flow.from);
@@ -280,30 +317,30 @@ export function SummarySection() {
                                                         if (!debtor || !creditor) return null;
 
                                                         return (
-                                                            <div key={idx} className="flex items-center gap-2 sm:gap-4 bg-background/40 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-foreground/5 transition-transform hover:scale-[1.01]">
-                                                                <div className="flex flex-col items-center gap-1 min-w-[48px] sm:min-w-[60px]">
-                                                                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-foreground/5 flex items-center justify-center font-black text-xs border border-foreground/10 text-foreground shrink-0">
+                                                            <div key={idx} className="flex items-center gap-1.5 sm:gap-4 bg-background/50 p-2 sm:p-3 rounded-xl sm:rounded-2xl border border-foreground/5 w-full min-w-0">
+                                                                <div className="flex flex-col items-center gap-0.5 shrink-0 w-11 xs:w-12 sm:w-14">
+                                                                    <div className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 rounded-full bg-foreground/5 flex items-center justify-center font-black text-xs border border-foreground/10 text-foreground shrink-0">
                                                                         {debtor.name[0]}
                                                                     </div>
-                                                                    <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-tighter truncate max-w-[48px] sm:max-w-[60px]">{debtor.name}</span>
+                                                                    <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-tighter truncate max-w-[44px] xs:max-w-[48px] sm:max-w-[56px] text-center">{debtor.name}</span>
                                                                 </div>
 
-                                                                <div className="flex-1 flex flex-col items-center gap-0.5 sm:gap-1 min-w-0">
-                                                                    <div className="text-xs sm:text-sm font-black text-primary tabular-nums italic truncate max-w-full">{formatCurrency(flow.amount)}</div>
-                                                                    <div className="w-full h-1 bg-primary/5 rounded-full overflow-hidden relative">
-                                                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/40 to-transparent animate-shimmer" />
-                                                                        <ArrowRight className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-primary opacity-50" />
+                                                                <div className="flex-1 flex flex-col items-center gap-0.5 sm:gap-1 min-w-0 px-1">
+                                                                    <div className="text-[11px] xs:text-xs sm:text-sm font-black text-primary tabular-nums italic truncate max-w-full">{formatCurrency(flow.amount)}</div>
+                                                                    <div className="w-full h-1 bg-primary/10 rounded-full overflow-hidden relative">
+                                                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/50 to-transparent animate-shimmer" />
+                                                                        <ArrowRight className="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary opacity-60" />
                                                                     </div>
-                                                                    <div className="text-[8px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-muted-foreground flex items-center gap-1">
+                                                                    <div className="text-[7px] xs:text-[8px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] text-muted-foreground flex items-center gap-0.5">
                                                                         Transfer <ArrowRight className="w-2 h-2" />
                                                                     </div>
                                                                 </div>
 
-                                                                <div className="flex flex-col items-center gap-1 min-w-[48px] sm:min-w-[60px]">
-                                                                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary text-black flex items-center justify-center font-black text-xs shadow-lg shadow-primary/20 shrink-0">
+                                                                <div className="flex flex-col items-center gap-0.5 shrink-0 w-11 xs:w-12 sm:w-14">
+                                                                    <div className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 rounded-full bg-primary text-black flex items-center justify-center font-black text-xs shadow-lg shadow-primary/20 shrink-0">
                                                                         {creditor.name[0]}
                                                                     </div>
-                                                                    <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-tighter truncate max-w-[48px] sm:max-w-[60px]">{creditor.name}</span>
+                                                                    <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-tighter truncate max-w-[44px] xs:max-w-[48px] sm:max-w-[56px] text-center">{creditor.name}</span>
                                                                 </div>
                                                             </div>
                                                         );
