@@ -1,5 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
-import type { DatabaseAdapter, BillDetail, BillPayload, BillSummary } from './types';
+import type { DatabaseAdapter, BillDetail, BillPayload, BillSummary, User } from './types';
 
 interface BillRow {
   id: string;
@@ -7,6 +7,8 @@ interface BillRow {
   location: string | null;
   host_id: string | null;
   qr_code: string | null;
+  owner_id: string | null;
+  currency: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -16,6 +18,8 @@ interface PersonRow {
   name: string;
   sponsorAmount?: number;
   paidAmount?: number;
+  userId?: string | null;
+  email?: string | null;
 }
 
 interface ChargeRow {
@@ -43,11 +47,21 @@ interface BillSummaryRow {
   updated_at: string;
   custom_name: string | null;
   location: string | null;
+  owner_id: string | null;
   first_item_name: string | null;
   item_count: number;
   subtotal: number | null;
   fixed_extras: number | null;
   percent_extras: number | null;
+}
+
+interface UserRow {
+  id: string;
+  email: string;
+  name: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export class SqliteAdapter implements DatabaseAdapter {
@@ -61,14 +75,26 @@ export class SqliteAdapter implements DatabaseAdapter {
 
   async init(): Promise<void> {
     this.db.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        name TEXT,
+        avatar_url TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
       CREATE TABLE IF NOT EXISTS bills (
         id TEXT PRIMARY KEY,
         name TEXT,
         location TEXT,
         host_id TEXT,
         qr_code TEXT,
+        owner_id TEXT,
+        currency TEXT DEFAULT 'VND',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE SET NULL
       );
 
       CREATE TABLE IF NOT EXISTS people (
@@ -77,7 +103,10 @@ export class SqliteAdapter implements DatabaseAdapter {
         name TEXT NOT NULL,
         sponsor_amount REAL DEFAULT 0,
         paid_amount REAL DEFAULT 0,
-        FOREIGN KEY(bill_id) REFERENCES bills(id) ON DELETE CASCADE
+        user_id TEXT,
+        email TEXT,
+        FOREIGN KEY(bill_id) REFERENCES bills(id) ON DELETE CASCADE,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
       );
 
       CREATE TABLE IF NOT EXISTS items (
@@ -107,21 +136,130 @@ export class SqliteAdapter implements DatabaseAdapter {
         FOREIGN KEY(bill_id) REFERENCES bills(id) ON DELETE CASCADE
       );
     `);
+
+    // Check and add missing columns if upgrading an existing SQLite database
+    const billColumns = this.db.prepare("PRAGMA table_info(bills)").all() as Array<{ name: string }>;
+    const billColNames = new Set(billColumns.map(c => c.name));
+    if (!billColNames.has('owner_id')) {
+      this.db.exec('ALTER TABLE bills ADD COLUMN owner_id TEXT;');
+    }
+    if (!billColNames.has('currency')) {
+      this.db.exec("ALTER TABLE bills ADD COLUMN currency TEXT DEFAULT 'VND';");
+    }
+
+    const peopleColumns = this.db.prepare("PRAGMA table_info(people)").all() as Array<{ name: string }>;
+    const peopleColNames = new Set(peopleColumns.map(c => c.name));
+    if (!peopleColNames.has('user_id')) {
+      this.db.exec('ALTER TABLE people ADD COLUMN user_id TEXT;');
+    }
+    if (!peopleColNames.has('email')) {
+      this.db.exec('ALTER TABLE people ADD COLUMN email TEXT;');
+    }
   }
 
-  async getBill(id: string): Promise<BillDetail | null> {
+  async getUserByEmail(email: string): Promise<User | null> {
+    const row = this.db.prepare('SELECT * FROM users WHERE LOWER(email) = LOWER(?)').get(email.trim()) as UserRow | undefined;
+    if (!row) return null;
+    return {
+      id: String(row.id),
+      email: String(row.email),
+      name: row.name ? String(row.name) : null,
+      avatar_url: row.avatar_url ? String(row.avatar_url) : null,
+      created_at: String(row.created_at),
+      updated_at: String(row.updated_at),
+    };
+  }
+
+  async getUserById(id: string): Promise<User | null> {
+    const row = this.db.prepare('SELECT * FROM users WHERE id = ?').get(id) as UserRow | undefined;
+    if (!row) return null;
+    return {
+      id: String(row.id),
+      email: String(row.email),
+      name: row.name ? String(row.name) : null,
+      avatar_url: row.avatar_url ? String(row.avatar_url) : null,
+      created_at: String(row.created_at),
+      updated_at: String(row.updated_at),
+    };
+  }
+
+  async upsertUser(user: { id?: string; email: string; name?: string | null; avatar_url?: string | null }): Promise<User> {
+    const cleanEmail = user.email.trim().toLowerCase();
+    const existing = await this.getUserByEmail(cleanEmail);
+    const userId = existing?.id || user.id || crypto.randomUUID();
+
+    if (existing) {
+      this.db.prepare(`
+        UPDATE users
+        SET name = COALESCE(?, name),
+            avatar_url = COALESCE(?, avatar_url),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).run(user.name || null, user.avatar_url || null, existing.id);
+    } else {
+      this.db.prepare(`
+        INSERT INTO users (id, email, name, avatar_url, updated_at)
+        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `).run(userId, cleanEmail, user.name || null, user.avatar_url || null);
+    }
+
+    // Auto-link existing participants with matching email
+    this.db.prepare('UPDATE people SET user_id = ? WHERE LOWER(email) = LOWER(?) AND user_id IS NULL').run(userId, cleanEmail);
+
+    const saved = await this.getUserById(userId);
+    if (!saved) throw new Error('Failed to retrieve user after upsert');
+    return saved;
+  }
+
+  async searchUsers(query: string): Promise<Array<{ id: string; email: string; name: string | null; avatar_url: string | null }>> {
+    const term = `%${query.trim().toLowerCase()}%`;
+    const rows = this.db.prepare(
+      'SELECT id, email, name, avatar_url FROM users WHERE LOWER(email) LIKE ? OR LOWER(name) LIKE ? LIMIT 10'
+    ).all(term, term) as unknown as UserRow[];
+
+    return rows.map(r => ({
+      id: String(r.id),
+      email: String(r.email),
+      name: r.name ? String(r.name) : null,
+      avatar_url: r.avatar_url ? String(r.avatar_url) : null,
+    }));
+  }
+
+  async getBill(id: string, userId?: string | null, isShare: boolean = false): Promise<BillDetail | null> {
     const bill = this.db.prepare('SELECT * FROM bills WHERE id = ?').get(id) as unknown as BillRow | undefined;
     if (!bill) return null;
 
+    let userEmail: string | null = null;
+    if (userId) {
+      const u = await this.getUserById(userId);
+      if (u) userEmail = u.email;
+    }
+
+    const isOwner = Boolean(userId && bill.owner_id === userId);
+
+    const participantCheck = this.db.prepare(
+      'SELECT id FROM people WHERE bill_id = ? AND (user_id = ? OR (email IS NOT NULL AND LOWER(email) = LOWER(?)))'
+    ).all(id, userId || 'none', userEmail || 'none');
+    const isParticipant = participantCheck.length > 0;
+
+    if (!isShare && !isOwner && !isParticipant) {
+      return null;
+    }
+
+    const role: 'owner' | 'participant' | 'viewer' = isOwner ? 'owner' : (isParticipant ? 'participant' : 'viewer');
+    const isReadOnly = isShare || !isOwner;
+
     const people = (
       this.db.prepare(
-        'SELECT id, name, sponsor_amount as sponsorAmount, paid_amount as paidAmount FROM people WHERE bill_id = ?'
+        'SELECT id, name, sponsor_amount as sponsorAmount, paid_amount as paidAmount, user_id as userId, email FROM people WHERE bill_id = ?'
       ).all(id) as unknown as PersonRow[]
     ).map(p => ({
       id: String(p.id),
       name: String(p.name),
       sponsorAmount: Number(p.sponsorAmount || 0),
       paidAmount: Number(p.paidAmount || 0),
+      userId: p.userId ? String(p.userId) : null,
+      email: p.email ? String(p.email) : null,
     }));
 
     const globalCharges = (
@@ -155,9 +293,14 @@ export class SqliteAdapter implements DatabaseAdapter {
 
     return {
       id: String(bill.id),
+      owner_id: bill.owner_id ? String(bill.owner_id) : null,
+      role,
+      isReadOnly,
       data: {
         name: bill.name ?? null,
         location: bill.location ?? null,
+        currency: bill.currency ?? 'VND',
+        ownerId: bill.owner_id ? String(bill.owner_id) : null,
         people,
         items,
         globalCharges,
@@ -169,20 +312,39 @@ export class SqliteAdapter implements DatabaseAdapter {
     };
   }
 
-  async saveBill(billId: string, data: BillPayload): Promise<void> {
-    const { name = null, location = null, people = [], items = [], globalCharges = [], hostId = null, qrCode = null } = data;
+  async saveBill(billId: string, data: BillPayload, userId?: string | null): Promise<void> {
+    const {
+      name = null,
+      location = null,
+      people = [],
+      items = [],
+      globalCharges = [],
+      hostId = null,
+      qrCode = null,
+      currency = 'VND'
+    } = data;
 
     this.db.exec('BEGIN TRANSACTION;');
     try {
-      const existing = this.db.prepare('SELECT id FROM bills WHERE id = ?').get(billId);
+      const existing = this.db.prepare('SELECT id, owner_id FROM bills WHERE id = ?').get(billId) as BillRow | undefined;
+      if (existing) {
+        if (existing.owner_id && userId && existing.owner_id !== userId) {
+          throw new Error('Forbidden: Only the bill owner can edit this bill');
+        }
+      }
+
+      const ownerId = existing
+        ? (existing.owner_id || userId || null)
+        : (userId || data.ownerId || null);
+
       if (existing) {
         this.db.prepare(
-          'UPDATE bills SET name = ?, location = ?, host_id = ?, qr_code = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-        ).run(name, location, hostId, qrCode, billId);
+          'UPDATE bills SET name = ?, location = ?, host_id = ?, qr_code = ?, currency = ?, owner_id = COALESCE(owner_id, ?), updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+        ).run(name, location, hostId, qrCode, currency, ownerId, billId);
       } else {
         this.db.prepare(
-          'INSERT INTO bills (id, name, location, host_id, qr_code) VALUES (?, ?, ?, ?, ?)'
-        ).run(billId, name, location, hostId, qrCode);
+          'INSERT INTO bills (id, name, location, host_id, qr_code, currency, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+        ).run(billId, name, location, hostId, qrCode, currency, ownerId);
       }
 
       this.db.prepare('DELETE FROM item_assignments WHERE item_id IN (SELECT id FROM items WHERE bill_id = ?)').run(billId);
@@ -191,10 +353,28 @@ export class SqliteAdapter implements DatabaseAdapter {
       this.db.prepare('DELETE FROM global_charges WHERE bill_id = ?').run(billId);
 
       const insertPerson = this.db.prepare(
-        'INSERT INTO people (id, bill_id, name, sponsor_amount, paid_amount) VALUES (?, ?, ?, ?, ?)'
+        'INSERT INTO people (id, bill_id, name, sponsor_amount, paid_amount, user_id, email) VALUES (?, ?, ?, ?, ?, ?, ?)'
       );
       for (const p of people) {
-        insertPerson.run(p.id, billId, p.name, Number(p.sponsorAmount || 0), Number(p.paidAmount || 0));
+        let pUserId = p.userId || null;
+        const pEmail = p.email ? p.email.trim().toLowerCase() : null;
+
+        if (pEmail && !pUserId) {
+          const registered = await this.getUserByEmail(pEmail);
+          if (registered) {
+            pUserId = registered.id;
+          }
+        }
+
+        if (userId && (p.id === hostId || (!hostId && people.length === 1 && !pUserId && !pEmail))) {
+          pUserId = userId;
+          if (!pEmail) {
+            const u = await this.getUserById(userId);
+            if (u) p.email = u.email;
+          }
+        }
+
+        insertPerson.run(p.id, billId, p.name, Number(p.sponsorAmount || 0), Number(p.paidAmount || 0), pUserId, p.email || null);
       }
 
       const insertItem = this.db.prepare(
@@ -227,12 +407,25 @@ export class SqliteAdapter implements DatabaseAdapter {
     }
   }
 
-  async deleteBill(billId: string): Promise<boolean> {
+  async deleteBill(billId: string, userId?: string | null): Promise<boolean> {
+    if (userId) {
+      const bill = this.db.prepare('SELECT owner_id FROM bills WHERE id = ?').get(billId) as BillRow | undefined;
+      if (bill && bill.owner_id && bill.owner_id !== userId) {
+        throw new Error('Forbidden: Only the bill owner can delete this bill');
+      }
+    }
     const res = this.db.prepare('DELETE FROM bills WHERE id = ?').run(billId);
     return Number(res.changes || 0) > 0;
   }
 
-  async listBills(): Promise<BillSummary[]> {
+  async listBills(userId?: string | null): Promise<BillSummary[]> {
+    if (!userId) {
+      return [];
+    }
+
+    const u = await this.getUserById(userId);
+    const userEmail = u?.email ? u.email.toLowerCase() : '';
+
     const query = this.db.prepare(`
       SELECT
         b.id,
@@ -240,16 +433,23 @@ export class SqliteAdapter implements DatabaseAdapter {
         b.updated_at,
         b.name as custom_name,
         b.location,
+        b.owner_id,
         (SELECT name FROM items WHERE bill_id = b.id LIMIT 1) as first_item_name,
         (SELECT COUNT(*) FROM items WHERE bill_id = b.id) as item_count,
-        (SELECT SUM(price) FROM items WHERE bill_id = b.id) as subtotal,
-        (SELECT SUM(amount) FROM global_charges WHERE bill_id = b.id AND type = 'fixed') as fixed_extras,
-        (SELECT SUM(amount) FROM global_charges WHERE bill_id = b.id AND type = 'percent') as percent_extras
+        (SELECT COALESCE(SUM(price * quantity), 0) FROM items WHERE bill_id = b.id) as subtotal,
+        (SELECT COALESCE(SUM(amount), 0) FROM global_charges WHERE bill_id = b.id AND type = 'fixed') as fixed_extras,
+        (SELECT COALESCE(SUM(amount), 0) FROM global_charges WHERE bill_id = b.id AND type = 'percent') as percent_extras
       FROM bills b
+      WHERE b.owner_id = ?
+         OR EXISTS (
+           SELECT 1 FROM people p
+           WHERE p.bill_id = b.id
+           AND (p.user_id = ? OR (p.email IS NOT NULL AND LOWER(p.email) = ?))
+         )
       ORDER BY b.updated_at DESC
     `);
 
-    const bills = query.all() as unknown as BillSummaryRow[];
+    const bills = query.all(userId, userId, userEmail) as unknown as BillSummaryRow[];
 
     return bills.map(b => {
       let total = Number(b.subtotal || 0);
@@ -257,6 +457,7 @@ export class SqliteAdapter implements DatabaseAdapter {
       total += (percentSum / 100) * total;
       total += Number(b.fixed_extras || 0);
       const itemCount = Number(b.item_count || 0);
+      const isOwner = b.owner_id === userId;
 
       return {
         id: String(b.id),
@@ -265,6 +466,9 @@ export class SqliteAdapter implements DatabaseAdapter {
         name: b.custom_name || (b.first_item_name ? b.first_item_name + (itemCount > 1 ? ` & ${itemCount - 1} more` : '') : 'Empty Bill'),
         location: b.location ?? null,
         totalAmount: total,
+        owner_id: b.owner_id ? String(b.owner_id) : null,
+        role: isOwner ? 'owner' : 'participant',
+        is_owner: isOwner,
       };
     });
   }
