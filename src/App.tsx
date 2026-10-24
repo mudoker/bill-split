@@ -173,6 +173,7 @@ function App() {
 
   const handleSelectBill = (id: string | 'current') => {
     if (id === 'current') {
+      if (!user) return;
       setView('editor');
       return;
     }

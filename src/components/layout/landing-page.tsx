@@ -31,7 +31,7 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
         }
     }, [isHydrated, fetchHistory, user]);
 
-    const hasActiveLocalData = people.length > 0 || items.length > 0;
+    const hasActiveLocalData = Boolean(user) && (people.length > 0 || items.length > 0);
 
     return (
         <div className="flex-1 flex flex-col min-h-0 bg-background">
@@ -70,7 +70,10 @@ export function LandingPage({ onNewBill, onSelectBill, onLoadDemo }: LandingPage
                     <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-4 justify-center w-full max-w-sm sm:max-w-none">
                         {hasActiveLocalData && (
                             <Button
-                                onClick={() => onSelectBill('current')}
+                                onClick={() => {
+                                    if (!user) return;
+                                    onSelectBill('current');
+                                }}
                                 variant="outline"
                                 size="lg"
                                 className="h-11 sm:h-14 px-5 sm:px-8 text-sm sm:text-lg font-bold gap-2 rounded-xl sm:rounded-2xl border-2 transition-all hover:bg-foreground/5 w-full sm:w-auto touch-manipulation active:scale-95"
