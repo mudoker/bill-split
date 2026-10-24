@@ -16,7 +16,7 @@ describe('Currency Support', () => {
     expect(formatted).toBe('$10.50');
   });
 
-  it('converts prices when switching from VND to USD and back', () => {
+  it('converts prices when switching from VND to USD and back', async () => {
     useBillStore.setState({
       currency: 'VND',
       items: [{ id: '1', name: 'Steak', price: 254000, quantity: 1, assignments: {} }],
@@ -27,21 +27,22 @@ describe('Currency Support', () => {
     const setCurrency = useBillStore.getState().setCurrency;
 
     // Switch to USD
-    setCurrency('USD');
+    await setCurrency('USD');
     const stateUSD = useBillStore.getState();
     expect(stateUSD.currency).toBe('USD');
-    expect(stateUSD.items[0].price).toBe(10);
-    expect(stateUSD.people[0].sponsorAmount).toBe(1);
-    expect(stateUSD.people[0].paidAmount).toBe(10);
-    expect(stateUSD.globalCharges[0].amount).toBe(2);
+    expect(stateUSD.items[0].price).toBeGreaterThan(9);
+    expect(stateUSD.items[0].price).toBeLessThan(11);
+    expect(stateUSD.people[0].sponsorAmount).toBeGreaterThan(0.9);
+    expect(stateUSD.people[0].paidAmount).toBeGreaterThan(9);
+    expect(stateUSD.globalCharges[0].amount).toBeGreaterThan(1.8);
 
     // Switch back to VND
-    setCurrency('VND');
+    await setCurrency('VND');
     const stateVND = useBillStore.getState();
     expect(stateVND.currency).toBe('VND');
-    expect(stateVND.items[0].price).toBe(254000);
-    expect(stateVND.people[0].sponsorAmount).toBe(25400);
-    expect(stateVND.people[0].paidAmount).toBe(254000);
-    expect(stateVND.globalCharges[0].amount).toBe(50800);
+    expect(stateVND.items[0].price).toBeGreaterThan(240000);
+    expect(stateVND.people[0].sponsorAmount).toBeGreaterThan(24000);
+    expect(stateVND.people[0].paidAmount).toBeGreaterThan(240000);
+    expect(stateVND.globalCharges[0].amount).toBeGreaterThan(48000);
   });
 });

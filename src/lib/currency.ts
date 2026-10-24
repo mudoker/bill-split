@@ -1,3 +1,5 @@
+import { useQuery } from '@tanstack/react-query';
+
 export interface CurrencyInfo {
     code: string;
     name: string;
@@ -156,7 +158,165 @@ export const getCurrencyInfo = (currencyCode: string): CurrencyInfo => {
 };
 
 const FRANKFURTER_BASE_URL = 'https://api.frankfurter.dev/v2';
-const ONE_HOUR_MS = 60 * 60 * 1000;
+export const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
+const ONE_HOUR_MS = EIGHT_HOURS_MS; // Backwards compatible alias, now 8 hours cache
+const VND_RATES_CACHE_KEY = 'fx_rates_vnd_catalogue_v2';
+
+export interface VndRatesResult {
+    rates: Record<string, number>; // code -> VND amount per 1 unit
+    retrievedAt: number; // timestamp in ms
+    dateString?: string;
+}
+
+export function formatVndRate(rate: number | undefined): string {
+    if (!rate || isNaN(rate)) return '';
+    if (rate >= 1000) {
+        return Math.round(rate).toLocaleString('vi-VN') + ' ₫';
+    }
+    if (rate >= 10) {
+        return rate.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' ₫';
+    }
+    if (rate >= 1) {
+        return rate.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₫';
+    }
+    return rate.toLocaleString('vi-VN', { minimumFractionDigits: 3, maximumFractionDigits: 4 }) + ' ₫';
+}
+
+export function formatVndRateCompact(rate: number | undefined): string {
+    if (!rate || isNaN(rate)) return '';
+    if (rate >= 1_000_000) {
+        return (rate / 1_000_000).toFixed(1) + 'M ₫';
+    }
+    if (rate >= 1_000) {
+        return (rate / 1_000).toFixed(1) + 'k ₫';
+    }
+    if (rate >= 1) {
+        return rate.toFixed(1) + ' ₫';
+    }
+    return rate.toFixed(2) + ' ₫';
+}
+
+export async function fetchVndRates(forceRefresh = false): Promise<VndRatesResult> {
+    if (!forceRefresh && typeof window !== 'undefined') {
+        try {
+            const raw = localStorage.getItem(VND_RATES_CACHE_KEY);
+            if (raw) {
+                const parsed: VndRatesResult = JSON.parse(raw);
+                if (
+                    parsed &&
+                    typeof parsed.retrievedAt === 'number' &&
+                    Date.now() - parsed.retrievedAt < EIGHT_HOURS_MS &&
+                    parsed.rates &&
+                    Object.keys(parsed.rates).length > 0
+                ) {
+                    return parsed;
+                }
+            }
+        } catch {
+            // ignore
+        }
+    }
+
+    const fallbackRates: Record<string, number> = {
+        VND: 1,
+        USD: 25814,
+        EUR: 28965,
+        GBP: 34560,
+        JPY: 164.1,
+        SGD: 20206,
+        THB: 765.7,
+        AUD: 17200,
+        CAD: 18700,
+        CHF: 30000,
+        CNY: 3625,
+        KRW: 19.5,
+        HKD: 3310,
+        TWD: 800,
+        MYR: 5900,
+        IDR: 1.6,
+        PHP: 450,
+        INR: 305,
+        NZD: 15600,
+        AED: 7020,
+        SAR: 6880,
+    };
+
+    try {
+        const res = await fetch(`${FRANKFURTER_BASE_URL}/rates`);
+        if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                const eurToVndItem = data.find((r: any) => (r.quote || '').toUpperCase() === 'VND');
+                const eurToVnd = eurToVndItem ? Number(eurToVndItem.rate) : 28965;
+                const rates: Record<string, number> = {
+                    VND: 1,
+                    EUR: eurToVnd,
+                };
+
+                for (const item of data) {
+                    const quote = (item.quote || '').toUpperCase();
+                    const eurToQuote = Number(item.rate);
+                    if (quote && eurToQuote > 0) {
+                        rates[quote] = eurToVnd / eurToQuote;
+                    }
+                }
+
+                // Add fallback rates for any missing
+                Object.entries(fallbackRates).forEach(([code, rate]) => {
+                    if (!rates[code]) rates[code] = rate;
+                });
+
+                const result: VndRatesResult = {
+                    rates,
+                    retrievedAt: Date.now(),
+                    dateString: eurToVndItem?.date || new Date().toISOString().slice(0, 10),
+                };
+
+                if (typeof window !== 'undefined') {
+                    try {
+                        localStorage.setItem(VND_RATES_CACHE_KEY, JSON.stringify(result));
+                    } catch {
+                        // ignore
+                    }
+                }
+
+                return result;
+            }
+        }
+    } catch (e) {
+        console.warn('[Currency] Failed to fetch rates relative to VND:', e);
+    }
+
+    // Fallback to existing stale cache if present
+    if (typeof window !== 'undefined') {
+        try {
+            const raw = localStorage.getItem(VND_RATES_CACHE_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed?.rates) return parsed;
+            }
+        } catch {
+            // ignore
+        }
+    }
+
+    return {
+        rates: fallbackRates,
+        retrievedAt: Date.now(),
+        dateString: new Date().toISOString().slice(0, 10),
+    };
+}
+
+export function useVndRates() {
+    return useQuery({
+        queryKey: ['fx_vnd_rates'],
+        queryFn: () => fetchVndRates(false),
+        staleTime: EIGHT_HOURS_MS,
+        gcTime: EIGHT_HOURS_MS,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+    });
+}
 
 interface CachedRate {
     rate: number;
