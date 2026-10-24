@@ -1,8 +1,10 @@
+'use client';
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, PlusCircle, Check, X, Heart, Pencil, Banknote, User } from "lucide-react";
+import { Trash2, Check, X, Heart, Pencil, Banknote, User, Crown, Plus } from "lucide-react";
 import { useBillStore, type Person } from "@/store/useBillStore";
 import { formatCurrency } from "@/lib/format";
 import { CurrencyInput } from "@/components/shared/currency-input";
@@ -27,8 +29,10 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
     const avatarGradient = getAvatarColor(person.name);
     const initials = getInitials(person.name);
     const isAppMember = Boolean(person.userId || person.email);
+    const isHost = person.id === hostId;
 
-    const handleStartEdit = () => {
+    const handleStartEdit = (e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
         if (isReadOnly) return;
         setEditName(person.name);
         setEditEmail(person.email || '');
@@ -37,9 +41,10 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
         setIsEditing(true);
     };
 
-    const handleSave = () => {
+    const handleSave = (e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
         onUpdate(person.id, {
-            name: editName,
+            name: editName.trim() || person.name,
             email: editEmail.trim() || null,
             sponsorAmount: editSponsor,
             paidAmount: editPaid
@@ -47,7 +52,8 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
         setIsEditing(false);
     };
 
-    const handleCancel = () => {
+    const handleCancel = (e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
         setEditName(person.name);
         setEditEmail(person.email || '');
         setEditSponsor(person.sponsorAmount);
@@ -57,149 +63,193 @@ export function PersonRow({ person, index, onUpdate, onRemove }: PersonRowProps)
 
     if (isEditing) {
         return (
-            <div className="border border-foreground/15 bg-card/60 rounded-2xl p-4 space-y-3.5 animate-in fade-in zoom-in-95 duration-200 shadow-md">
+            <div className="border border-border/80 bg-card/90 backdrop-blur-md rounded-2xl p-4 space-y-3.5 animate-in fade-in zoom-in-95 duration-200 shadow-md">
                 <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-foreground/80 uppercase tracking-[0.2em]">Edit Participant</span>
-                    <div className="flex gap-1">
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-foreground/5 rounded-lg" onClick={handleCancel}>
-                            <X className="w-3.5 h-3.5" />
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <Pencil className="w-3.5 h-3.5 text-primary" /> Edit Participant
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg"
+                            onClick={handleCancel}
+                        >
+                            <X className="w-3.5 h-3.5 mr-1" /> Cancel
                         </Button>
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-foreground hover:bg-foreground/10 rounded-lg" onClick={handleSave}>
-                            <Check className="w-3.5 h-3.5" />
+                        <Button
+                            size="sm"
+                            className="h-7 px-3 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs"
+                            onClick={handleSave}
+                        >
+                            <Check className="w-3.5 h-3.5 mr-1" /> Save
                         </Button>
                     </div>
                 </div>
 
-                <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black uppercase text-foreground/60 tracking-widest pl-1">Identity</Label>
+                <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-muted-foreground pl-1">Name</Label>
                     <Input
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="h-9 bg-background/50 border-foreground/5 rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-bold text-xs"
-                        placeholder="Name..."
+                        className="h-9 bg-background/80 border-border/80 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/40 font-semibold text-xs"
+                        placeholder="Participant name..."
                         autoFocus
                         onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                     />
                 </div>
 
-                <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black uppercase text-foreground/60 tracking-widest pl-1">
-                        User Email (Optional - Leave blank for Anon)
+                <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-muted-foreground pl-1">
+                        Email <span className="font-normal text-muted-foreground/60">(Optional)</span>
                     </Label>
                     <Input
                         type="email"
                         value={editEmail}
                         onChange={(e) => setEditEmail(e.target.value)}
-                        className="h-9 bg-background/50 border-foreground/5 rounded-xl text-xs font-medium"
-                        placeholder="e.g. friend@example.com"
+                        className="h-9 bg-background/80 border-border/80 rounded-xl text-xs font-medium"
+                        placeholder="friend@example.com"
                     />
                 </div>
 
                 <div className="person-edit-grid">
-                    <div className="space-y-1.5 min-w-0">
-                        <Label className="text-[10px] font-black uppercase text-foreground/60 tracking-widest pl-1 flex items-center gap-1.5">
-                            <Banknote className="w-3 h-3 text-emerald-700 dark:text-emerald-400" /> Paid
+                    <div className="space-y-1 min-w-0">
+                        <Label className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 pl-1 flex items-center gap-1.5">
+                            <Banknote className="w-3.5 h-3.5" /> Amount Paid
                         </Label>
                         <CurrencyInput
                             value={editPaid}
                             onChange={(val) => setEditPaid(val)}
-                            className="h-9 bg-background/50 border-foreground/5 rounded-xl text-xs font-mono font-bold"
+                            className="h-9 bg-background/80 border-border/80 rounded-xl text-xs font-mono font-bold"
                             showCurrencySymbol={true}
                         />
                     </div>
-                    <div className="space-y-1.5 min-w-0">
-                        <Label className="text-[10px] font-black uppercase text-foreground/60 tracking-widest pl-1 flex items-center gap-1.5">
-                            <Heart className="w-3 h-3 text-amber-600 dark:text-amber-400" /> Sponsor
+                    <div className="space-y-1 min-w-0">
+                        <Label className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 pl-1 flex items-center gap-1.5">
+                            <Heart className="w-3.5 h-3.5" /> Sponsor Amount
                         </Label>
                         <CurrencyInput
                             value={editSponsor}
                             onChange={(val) => setEditSponsor(val)}
-                            className="h-9 bg-background/50 border-foreground/5 rounded-xl text-xs font-mono font-bold"
+                            className="h-9 bg-background/80 border-border/80 rounded-xl text-xs font-mono font-bold"
                             showCurrencySymbol={true}
                         />
                     </div>
                 </div>
-                <p className="text-[10px] text-muted-foreground font-medium italic px-1">Tip: If no email is provided, this person is an Anon participant.</p>
             </div>
         );
     }
 
     return (
         <div
-            className="group relative flex items-center justify-between gap-2.5 p-2.5 sm:p-3 bg-card border border-foreground/[0.05] rounded-xl hover:bg-card/80 hover:border-foreground/20 transition-all duration-200 cursor-default animate-in fade-in slide-in-from-bottom-2"
-            style={{ animationDelay: `${index * 50}ms` }}
+            onClick={() => !isReadOnly && handleStartEdit()}
+            className={cn(
+                "group relative flex items-center justify-between gap-3 p-3 bg-card/70 backdrop-blur-xs border border-border/60 rounded-2xl hover:bg-card hover:border-foreground/20 hover:shadow-sm transition-all duration-200 animate-in fade-in slide-in-from-bottom-2",
+                !isReadOnly && "cursor-pointer"
+            )}
+            style={{ animationDelay: `${index * 40}ms` }}
         >
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <div className={cn(
-                    "w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0 shadow-sm",
-                    avatarGradient
-                )}>
-                    {initials}
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+                {/* Modern Gradient Avatar with Crown for Host */}
+                <div className="relative shrink-0">
+                    <div className={cn(
+                        "w-10 h-10 rounded-2xl flex items-center justify-center text-white font-bold text-xs shadow-2xs border border-white/20 select-none",
+                        avatarGradient
+                    )}>
+                        {initials}
+                    </div>
+                    {isHost && (
+                        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-xs border border-background">
+                            <Crown className="w-2.5 h-2.5" />
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex flex-col min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                        <span className="font-black text-sm tracking-tight text-foreground truncate" title={person.name}>
+                    <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm tracking-tight text-foreground truncate" title={person.name}>
                             {person.name}
                         </span>
-                        {/* Anon or Member Badge */}
-                        {isAppMember ? (
+
+                        {/* Host Badge */}
+                        {isHost && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 text-[10px] font-semibold shrink-0">
+                                Host
+                            </span>
+                        )}
+
+                        {/* Registered Member Badge (Only if app user) */}
+                        {isAppMember && !isHost && (
                             <span
-                                className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20 text-[9px] font-black uppercase tracking-wider shrink-0"
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20 text-[10px] font-medium shrink-0"
                                 title={person.email ? `Registered user: ${person.email}` : "App User"}
                             >
                                 <User className="w-2.5 h-2.5" /> Member
                             </span>
-                        ) : (
-                            <span
-                                className="inline-flex items-center px-1.5 py-0.2 rounded bg-muted/70 text-muted-foreground border border-border text-[9px] font-black uppercase tracking-wider shrink-0"
-                                title="Guest participant (no account in app)"
-                            >
-                                Anon
-                            </span>
                         )}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
-                        {/* Host Badge - Pays Remaining */}
-                        {person.id === hostId && (
-                            <div className="flex items-center gap-1 px-2 py-0.5 bg-foreground/5 rounded-full border border-foreground/10">
-                                <span className="text-[10px] font-black text-foreground/80 tabular-nums uppercase">Pays Remaining</span>
+                    {/* Email subtitle if present */}
+                    {person.email && (
+                        <span className="text-[11px] text-muted-foreground truncate leading-tight mt-0.5">
+                            {person.email}
+                        </span>
+                    )}
+
+                    {/* Financial Status Indicators */}
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                        {isHost && (
+                            <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-foreground/[0.04] rounded-full border border-foreground/[0.08] text-[10px] font-medium text-muted-foreground">
+                                <span>Pays remaining</span>
                             </div>
                         )}
 
-                        {/* Guest Paid Badge (Only if NOT host) */}
-                        {person.id !== hostId && person.paidAmount > 0 && (
-                            <div className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
-                                <Banknote className="w-3 h-3 text-emerald-700 dark:text-emerald-400" />
-                                <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 tabular-nums uppercase">{formatCurrency(person.paidAmount)} paid</span>
+                        {!isHost && person.paidAmount > 0 && (
+                            <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 rounded-full border border-emerald-500/20 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                                <Banknote className="w-3 h-3 shrink-0" />
+                                <span>{formatCurrency(person.paidAmount)} paid</span>
                             </div>
                         )}
 
                         {person.sponsorAmount > 0 && (
-                            <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 rounded-full border border-amber-500/20">
-                                <Heart className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-                                <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 tabular-nums uppercase">{formatCurrency(person.sponsorAmount)} spon.</span>
+                            <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-500/10 rounded-full border border-rose-500/20 text-[10px] font-semibold text-rose-600 dark:text-rose-400 tabular-nums">
+                                <Heart className="w-3 h-3 fill-rose-500/30 text-rose-500 shrink-0" />
+                                <span>{formatCurrency(person.sponsorAmount)} spon.</span>
                             </div>
                         )}
-                        {!(person.paidAmount > 0) && !(person.sponsorAmount > 0) && !isReadOnly && person.id !== hostId && (
+
+                        {!(person.paidAmount > 0) && !(person.sponsorAmount > 0) && !isReadOnly && !isHost && (
                             <button
-                                className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-foreground/[0.05] border border-foreground/[0.1] text-[9px] font-black uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all touch-manipulation active:scale-95"
+                                type="button"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/40 hover:bg-muted text-[10px] font-medium text-muted-foreground hover:text-foreground border border-border/40 transition-colors touch-manipulation active:scale-95"
                                 onClick={handleStartEdit}
                             >
-                                <PlusCircle className="w-2.5 h-2.5" /> Sponsor
+                                <Plus className="w-2.5 h-2.5" /> Add sponsor / paid
                             </button>
                         )}
                     </div>
                 </div>
             </div>
 
+            {/* Quick Actions */}
             {!isReadOnly && (
-                <div className="flex items-center gap-0.5 shrink-0">
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/5 rounded-lg touch-manipulation active:scale-95" onClick={handleStartEdit} title="Edit">
+                <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-xl touch-manipulation active:scale-95 transition-colors"
+                        onClick={handleStartEdit}
+                        title="Edit participant"
+                    >
                         <Pencil className="w-3.5 h-3.5" />
                     </Button>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-lg touch-manipulation active:scale-95" onClick={() => onRemove(person.id)} title="Remove">
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl touch-manipulation active:scale-95 transition-colors"
+                        onClick={() => onRemove(person.id)}
+                        title="Remove participant"
+                    >
                         <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                 </div>

@@ -14,16 +14,16 @@ export const CHART_COLORS = [
 
 // Avatar gradient palette
 export const AVATAR_COLORS = [
-    'bg-neutral-800',
-    'bg-neutral-700',
-    'bg-neutral-600',
-    'bg-neutral-500',
-    'bg-zinc-800',
-    'bg-zinc-700',
-    'bg-stone-800',
-    'bg-slate-800',
-    'bg-slate-700',
-    'bg-black',
+    'bg-gradient-to-br from-indigo-500 to-violet-600',
+    'bg-gradient-to-br from-blue-500 to-cyan-600',
+    'bg-gradient-to-br from-emerald-500 to-teal-600',
+    'bg-gradient-to-br from-rose-500 to-pink-600',
+    'bg-gradient-to-br from-amber-500 to-orange-600',
+    'bg-gradient-to-br from-fuchsia-500 to-purple-600',
+    'bg-gradient-to-br from-teal-500 to-emerald-600',
+    'bg-gradient-to-br from-sky-500 to-indigo-600',
+    'bg-gradient-to-br from-red-500 to-rose-600',
+    'bg-gradient-to-br from-violet-500 to-fuchsia-600',
 ];
 
 /** Deterministic color from a name string */
@@ -35,7 +35,13 @@ export function getAvatarColor(name: string): string {
     return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
-/** Extract initials from a full name (max 2 chars) */
+/** Extract clean initials from a name (max 2 characters, ignoring parentheses/symbols) */
 export function getInitials(name: string): string {
-    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    if (!name) return '?';
+    // Clean brackets, parentheses and punctuation
+    const clean = name.replace(/[^\p{L}\p{N}\s]/gu, ' ').trim();
+    const parts = clean.split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return name.slice(0, 1).toUpperCase() || '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }

@@ -393,7 +393,7 @@ export const useBillStore = create<BillState>()(
                     hostId: alexId,
                     qrCode: null,
                     people: [
-                        { id: alexId, name: "Alex (Host)", sponsorAmount: 0, paidAmount: conv(1800000) },
+                        { id: alexId, name: "Alex", sponsorAmount: 0, paidAmount: conv(1800000) },
                         { id: bobId, name: "Bob", sponsorAmount: 0, paidAmount: conv(200000) },
                         { id: charlieId, name: "Charlie", sponsorAmount: conv(500000), paidAmount: 0 },
                         { id: davidId, name: "David", sponsorAmount: 0, paidAmount: 0 },

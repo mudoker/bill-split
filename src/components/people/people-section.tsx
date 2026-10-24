@@ -1,9 +1,11 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { UserPlus, PlusCircle, Sparkles, UserCheck } from "lucide-react";
+import { Users, UserPlus, Sparkles, UserCheck, Plus } from "lucide-react";
 import { useBillStore } from "@/store/useBillStore";
 import { PersonRow } from "./person-row";
 import { QuickInsights } from "../summary/quick-insights";
@@ -16,7 +18,7 @@ interface UserSuggestion {
 }
 
 export function PeopleSection() {
-    const { people, addPerson, updatePerson, removePerson, isReadOnly, loadSeedData } = useBillStore();
+    const { people, addPerson, updatePerson, removePerson, isReadOnly, loadSeedData, hostId } = useBillStore();
     const [newName, setNewName] = useState("");
     const [suggestions, setSuggestions] = useState<UserSuggestion[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -58,42 +60,60 @@ export function PeopleSection() {
         }
     };
 
+    const hostPerson = people.find((p) => p.id === hostId);
+
     return (
-        <Card className="w-full h-full flex flex-col min-h-0 border-0 md:border md:border-foreground/[0.05] bg-transparent md:bg-card/20 overflow-hidden shadow-none rounded-none md:rounded-2xl">
-            <CardHeader className="pb-1.5 pt-0 px-1.5 sm:px-4 md:px-5 md:pt-5 shrink-0">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                    <CardTitle className="text-lg sm:text-xl font-black uppercase tracking-widest flex items-center gap-2 text-foreground">
-                        <UserPlus className="w-4 h-4 sm:w-5 sm:h-5 text-foreground/80 shrink-0" />
-                        Participants
-                        {people.length > 0 && (
-                            <span className="text-[10px] font-black bg-foreground/5 text-muted-foreground px-2 py-0.5 rounded-full border border-foreground/10">
-                                {people.length}
-                            </span>
-                        )}
-                    </CardTitle>
+        <Card className="w-full h-full flex flex-col min-h-0 border-0 md:border md:border-border/50 bg-transparent md:bg-card/30 overflow-hidden shadow-none rounded-none md:rounded-2xl">
+            {/* Clean, Modern Header */}
+            <CardHeader className="pb-2.5 pt-0 px-2 sm:px-4 md:px-5 md:pt-4 shrink-0">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-foreground/[0.04] border border-foreground/[0.08] flex items-center justify-center text-foreground shrink-0 shadow-2xs">
+                            <Users className="w-4 h-4 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground truncate">
+                                    Participants
+                                </h2>
+                                {people.length > 0 && (
+                                    <span className="text-[11px] font-semibold text-muted-foreground bg-foreground/[0.05] border border-foreground/[0.08] px-2 py-0.5 rounded-full">
+                                        {people.length}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-[11px] sm:text-xs text-muted-foreground truncate font-normal">
+                                {hostPerson
+                                    ? `${hostPerson.name} pays remaining balance`
+                                    : 'Add friends to split the bill with'}
+                            </p>
+                        </div>
+                    </div>
+
                     {people.length === 0 && !isReadOnly && (
                         <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={loadSeedData}
-                            className="h-7 sm:h-8 gap-1.5 text-[10px] font-black uppercase tracking-widest text-foreground/80 hover:bg-foreground/10 transition-all border border-foreground/20 rounded-full px-3"
+                            className="h-8 gap-1.5 text-xs font-semibold rounded-xl border-border/80 hover:bg-foreground/5 shadow-2xs shrink-0"
                         >
-                            <Sparkles className="w-3.5 h-3.5" /> Demo Sample
+                            <Sparkles className="w-3.5 h-3.5 text-primary" />
+                            <span>Demo sample</span>
                         </Button>
                     )}
                 </div>
-                <CardDescription className="text-[10px] uppercase font-bold tracking-tight text-muted-foreground/90">
-                    Add registered members or Anon friends
-                </CardDescription>
             </CardHeader>
+
             <CardContent className="flex-1 min-h-0 p-0 overflow-hidden flex flex-col container-query-pane">
-                <ScrollArea className="flex-1 min-h-0 h-full px-1 sm:px-4 md:px-5">
-                    <div className="space-y-2.5 sm:space-y-5 py-1.5 pr-1 sm:pr-2">
+                <ScrollArea className="flex-1 min-h-0 h-full px-2 sm:px-4 md:px-5">
+                    <div className="space-y-3 sm:space-y-4 py-1 pr-1 sm:pr-2">
+                        {/* Unified Modern Add Participant Bar */}
                         {!isReadOnly && (
                             <div className="relative group">
-                                <div className="relative flex gap-2">
+                                <div className="relative flex items-center">
+                                    <UserPlus className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none group-focus-within:text-foreground transition-colors" />
                                     <Input
-                                        placeholder="Add participant name or email..."
+                                        placeholder="Add friend name or email..."
                                         value={newName}
                                         onChange={(e) => {
                                             const val = e.target.value;
@@ -104,28 +124,34 @@ export function PeopleSection() {
                                             }
                                         }}
                                         onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-                                        className="h-9 bg-background border-foreground/[0.05] rounded-xl focus-visible:ring-1 focus-visible:ring-foreground/20 font-bold px-3 text-xs"
+                                        className="h-10 pl-10 pr-20 bg-background/80 backdrop-blur-sm border-border/80 rounded-2xl focus-visible:ring-1 focus-visible:ring-primary/40 font-medium text-xs sm:text-sm shadow-2xs hover:border-foreground/20 transition-all"
                                     />
-                                    <Button onClick={() => handleAdd()} size="icon" className="h-9 w-9 shrink-0 bg-foreground text-background hover:bg-foreground/90 rounded-xl transition-all active:scale-95 shadow-sm">
-                                        <PlusCircle className="w-4 h-4" />
+                                    <Button
+                                        onClick={() => handleAdd()}
+                                        disabled={!newName.trim()}
+                                        size="sm"
+                                        className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 px-3 text-xs font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none shadow-2xs"
+                                    >
+                                        <Plus className="w-3.5 h-3.5 mr-1" />
+                                        <span>Add</span>
                                     </Button>
                                 </div>
 
                                 {/* Autocomplete dropdown for app users */}
                                 {showSuggestions && suggestions.length > 0 && (
-                                    <div className="absolute z-20 left-0 right-12 mt-1 bg-card border border-border rounded-xl shadow-xl p-1 max-h-48 overflow-y-auto">
-                                        <div className="px-2 py-1 text-[10px] font-bold text-muted-foreground uppercase">
-                                            Found App Users
+                                    <div className="absolute z-30 left-0 right-0 mt-1.5 bg-card/98 backdrop-blur-xl border border-border rounded-2xl shadow-2xl p-1.5 max-h-48 overflow-y-auto">
+                                        <div className="px-2.5 py-1 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                                            Registered App Users
                                         </div>
                                         {suggestions.map((s) => (
                                             <button
                                                 key={s.id}
                                                 type="button"
                                                 onClick={() => handleAdd(s.email, s.id, s.name || s.email.split('@')[0])}
-                                                className="w-full text-left px-2.5 py-1.5 hover:bg-foreground/5 rounded-lg flex items-center justify-between text-xs"
+                                                className="w-full text-left px-2.5 py-2 hover:bg-muted/60 rounded-xl flex items-center justify-between text-xs transition-colors"
                                             >
-                                                <div className="min-w-0">
-                                                    <span className="font-bold text-foreground block truncate">{s.name || s.email}</span>
+                                                <div className="min-w-0 pr-2">
+                                                    <span className="font-semibold text-foreground block truncate">{s.name || s.email}</span>
                                                     <span className="text-[10px] text-muted-foreground block truncate">{s.email}</span>
                                                 </div>
                                                 <UserCheck className="w-3.5 h-3.5 text-primary shrink-0" />
@@ -136,6 +162,7 @@ export function PeopleSection() {
                             </div>
                         )}
 
+                        {/* Participant Grid */}
                         <div className="people-grid">
                             {people.map((person, index) => (
                                 <PersonRow
@@ -147,27 +174,31 @@ export function PeopleSection() {
                                 />
                             ))}
                         </div>
+
+                        {/* Empty State */}
                         {people.length === 0 && (
                             <div
-                                className={`flex flex-col items-center justify-center py-20 gap-6 rounded-3xl border border-dashed border-foreground/10 bg-muted/5 group ${!isReadOnly ? 'hover:border-primary/20 transition-all cursor-pointer' : ''}`}
+                                className={`flex flex-col items-center justify-center py-16 px-4 gap-4 rounded-3xl border border-dashed border-border/70 bg-muted/10 group ${!isReadOnly ? 'hover:border-primary/40 transition-all cursor-pointer' : ''}`}
                                 onClick={() => {
                                     if (!isReadOnly) {
                                         loadSeedData();
                                     }
                                 }}
                             >
-                                <div className="w-16 h-16 rounded-full bg-foreground/[0.03] flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                                    <UserPlus className="w-8 h-8 text-muted-foreground/30 group-hover:text-primary transition-colors" />
+                                <div className="w-14 h-14 rounded-2xl bg-foreground/[0.04] border border-foreground/[0.06] flex items-center justify-center group-hover:bg-primary/10 transition-colors shadow-2xs">
+                                    <UserPlus className="w-7 h-7 text-muted-foreground/40 group-hover:text-primary transition-colors" />
                                 </div>
-                                <div className="text-center space-y-1.5 p-4">
-                                    <p className="text-xs font-black text-muted-foreground/70 uppercase tracking-[0.2em] group-hover:text-foreground">Workspace is empty</p>
-                                    <p className="text-[10px] text-muted-foreground/50 uppercase font-bold tracking-tighter leading-relaxed">
-                                        Start by adding friends or <span className="text-primary/60 underline decoration-dotted underline-offset-4">loading our BBQ demo</span>
+                                <div className="text-center space-y-1">
+                                    <p className="text-sm font-semibold text-foreground">No participants added yet</p>
+                                    <p className="text-xs text-muted-foreground leading-relaxed max-w-xs">
+                                        Type a name above or <span className="text-primary font-medium underline underline-offset-4">load sample BBQ session</span> to get started.
                                     </p>
                                 </div>
                             </div>
                         )}
-                        <div className="pt-2 mt-2 pb-2 sm:pb-6 border-t border-foreground/[0.03]">
+
+                        {/* Refined Quick Insights */}
+                        <div className="pt-2 mt-2 pb-2 sm:pb-6 border-t border-border/40">
                             <QuickInsights />
                         </div>
                     </div>
