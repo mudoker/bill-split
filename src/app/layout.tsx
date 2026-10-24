@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import '@/index.css';
 import { ViewportUnzoom } from '@/components/shared/viewport-unzoom';
 import { PwaRegister } from '@/components/shared/pwa-register';
+import { QueryProvider } from '@/components/providers/query-provider';
 
 export const metadata: Metadata = {
   title: 'Ledger',
@@ -45,9 +46,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased selection:bg-foreground/20">
-        <ViewportUnzoom />
-        <PwaRegister />
-        {children}
+        <QueryProvider>
+          <ViewportUnzoom />
+          <PwaRegister />
+          {children}
+        </QueryProvider>
       </body>
     </html>
   );
